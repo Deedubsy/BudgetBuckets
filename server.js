@@ -139,9 +139,9 @@ app.get('/test/*', (req, res, next) => {
 
 // Final fallback for other paths (but not files with extensions)
 app.get('*', (req, res, next) => {
-  // If it's a file request that wasn't found, return 404
+  // If it's a file request that wasn't found, return proper 404
   if (path.extname(req.path)) {
-    return res.status(404).json({ error: 'File not found', path: req.path });
+    return res.status(404).send('File not found');
   }
   
   // For paths without extensions, serve the login page
