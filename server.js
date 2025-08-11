@@ -79,12 +79,26 @@ app.get('/__/health', (req, res) => {
   res.status(200).json({ status: 'healthy', service: 'budget-buckets' });
 });
 
-// Specific HTML page routes (only for exact paths)
+// Root path - serve index.html which redirects to login
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'auth', 'login.html'));
+  // Check if index.html exists, otherwise serve login directly
+  const indexPath = path.join(__dirname, 'index.html');
+  const loginPath = path.join(__dirname, 'auth', 'login.html');
+  
+  // Prefer index.html for cleaner redirect
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      // Fallback to direct login page
+      res.sendFile(loginPath);
+    }
+  });
 });
 
 app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'auth', 'login.html'));
+});
+
+app.get('/auth/login.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'auth', 'login.html'));
 });
 
