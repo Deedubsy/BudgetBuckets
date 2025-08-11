@@ -48,10 +48,21 @@ app.use(helmet({
 // Enable gzip compression
 app.use(compression());
 
-// Serve static files from root directory
+// Serve static files from root directory with proper MIME types
 app.use(express.static(path.join(__dirname), {
   maxAge: '1h',
   setHeaders: (res, filepath) => {
+    // Set proper MIME types explicitly
+    if (filepath.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    } else if (filepath.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    } else if (filepath.endsWith('.html')) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    } else if (filepath.endsWith('.json')) {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    }
+    
     // Set longer cache for assets
     if (filepath.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg)$/)) {
       res.setHeader('Cache-Control', 'public, max-age=31536000');
@@ -68,7 +79,7 @@ app.get('/__/health', (req, res) => {
   res.status(200).json({ status: 'healthy', service: 'budget-buckets' });
 });
 
-// Route handlers for SPA
+// Specific HTML page routes (only for exact paths)
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'auth', 'login.html'));
 });
@@ -81,36 +92,60 @@ app.get('/app', (req, res) => {
   res.sendFile(path.join(__dirname, 'app', 'index.html'));
 });
 
-app.get('/app/*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'app', 'index.html'));
-});
-
-app.get('/auth/*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'auth', 'login.html'));
-});
-
 app.get('/test', (req, res) => {
   res.sendFile(path.join(__dirname, 'test.html'));
-});
-
-app.get('/test/*', (req, res) => {
-  const testFile = req.params[0];
-  const validTestFiles = ['smoke-test.html', 'network-diagnostic.html'];
-  
-  if (validTestFiles.includes(testFile)) {
-    res.sendFile(path.join(__dirname, 'test', testFile));
-  } else {
-    res.sendFile(path.join(__dirname, 'test', 'smoke-test.html'));
-  }
 });
 
 app.get('/environment', (req, res) => {
   res.sendFile(path.join(__dirname, 'environment-switcher.html'));
 });
 
-// 404 handler - redirect to login
-app.use((req, res) => {
-  res.status(404).sendFile(path.join(__dirname, 'auth', 'login.html'));
+// Specific test file routes
+app.get('/test/smoke-test.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'test', 'smoke-test.html'));
+});
+
+app.get('/test/network-diagnostic.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'test', 'network-diagnostic.html'));
+});
+
+// SPA fallback routes - only if no static file was found
+app.get('/app/*', (req, res, next) => {
+  // Only serve the HTML if this isn't a request for a static file
+  if (!path.extname(req.path) || req.path.endsWith('.html')) {
+    res.sendFile(path.join(__dirname, 'app', 'index.html'));
+  } else {
+    next(); // Let the static middleware or 404 handler deal with it
+  }
+});
+
+app.get('/auth/*', (req, res, next) => {
+  // Only serve the HTML if this isn't a request for a static file
+  if (!path.extname(req.path) || req.path.endsWith('.html')) {
+    res.sendFile(path.join(__dirname, 'auth', 'login.html'));
+  } else {
+    next(); // Let the static middleware or 404 handler deal with it
+  }
+});
+
+app.get('/test/*', (req, res, next) => {
+  // Only serve the HTML if this isn't a request for a static file
+  if (!path.extname(req.path) || req.path.endsWith('.html')) {
+    res.sendFile(path.join(__dirname, 'test.html'));
+  } else {
+    next(); // Let the static middleware or 404 handler deal with it
+  }
+});
+
+// Final fallback for other paths (but not files with extensions)
+app.get('*', (req, res, next) => {
+  // If it's a file request that wasn't found, return 404
+  if (path.extname(req.path)) {
+    return res.status(404).json({ error: 'File not found', path: req.path });
+  }
+  
+  // For paths without extensions, serve the login page
+  res.sendFile(path.join(__dirname, 'auth', 'login.html'));
 });
 
 // Error handler
