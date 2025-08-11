@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Buckets - Test</title>
+    <style>
+        body { font-family: system-ui; margin: 40px; background: #0a0a0a; color: #e4e4e4; }
+        button { padding: 10px 20px; margin: 5px; background: #4a9eff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #3b82e6; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #0f2a1a; border: 1px solid #2d5a3d; color: #4ade80; }
+        .error { background: #2a0f0f; border: 1px solid #5a2d2d; color: #ef4444; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Firebase Integration Test</h1>
+    <p>This page tests the Firebase setup without authentication requirements.</p>
+    
+    <button onclick="testFirebaseInit()">Test Firebase Initialization</button>
+    <button onclick="testModuleImports()">Test Module Imports</button>
+    <button onclick="testAuthHelpers()">Test Auth Helpers</button>
+    <button onclick="window.location.href='/auth/login.html'">Go to Login</button>
+    
+    <div id="results"></div>
+
+    <script type="module">
+        window.testResults = document.getElementById('results');
+        
+        function addResult(message, success = true) {
+            const div = document.createElement('div');
+            div.className = `result ${success ? 'success' : 'error'}`;
+            div.textContent = `${success ? '✅' : '❌'} ${message}`;
+            testResults.appendChild(div);
+        }
+        
+        window.testFirebaseInit = async function() {
+            try {
+                // Test if Firebase module loads
+                const { authHelpers } = await import('./auth/firebase.js');
+                addResult('Firebase module imported successfully');
+                
+                if (authHelpers && typeof authHelpers.waitForAuth === 'function') {
+                    addResult('Auth helpers loaded correctly');
+                } else {
+                    addResult('Auth helpers missing or incorrect', false);
+                }
+            } catch (error) {
+                addResult(`Firebase init failed: ${error.message}`, false);
+                console.error('Firebase test error:', error);
+            }
+        };
+        
+        window.testModuleImports = async function() {
+            try {
+                // Test cloud store import
+                const cloudStore = await import('./app/cloud-store.js');
+                if (cloudStore.default && typeof cloudStore.default.healthCheck === 'function') {
+                    addResult('Cloud store module loaded correctly');
+                } else {
+                    addResult('Cloud store missing or incorrect', false);
+                }
+                
+                // Test auth guard import
+                const { authGuard } = await import('./auth/guard.js');
+                if (authGuard && typeof authGuard.requireAuth === 'function') {
+                    addResult('Auth guard module loaded correctly');
+                } else {
+                    addResult('Auth guard missing or incorrect', false);
+                }
+            } catch (error) {
+                addResult(`Module import failed: ${error.message}`, false);
+                console.error('Module import error:', error);
+            }
+        };
+        
+        window.testAuthHelpers = async function() {
+            try {
+                const { authHelpers } = await import('./auth/firebase.js');
+                
+                // Test auth state (should be null/false when not signed in)
+                const isAuth = authHelpers.isAuthenticated();
+                addResult(`Auth state check: ${isAuth ? 'authenticated' : 'not authenticated'}`);
+                
+                const currentUser = authHelpers.getCurrentUser();
+                addResult(`Current user: ${currentUser ? currentUser.uid : 'none'}`);
+                
+                addResult('Auth helpers working correctly');
+                
+            } catch (error) {
+                addResult(`Auth helpers test failed: ${error.message}`, false);
+                console.error('Auth helpers test error:', error);
+            }
+        };
+        
+        // Auto-run basic tests
+        setTimeout(() => {
+            testFirebaseInit();
+        }, 1000);
+    </script>
+</body>
+</html>

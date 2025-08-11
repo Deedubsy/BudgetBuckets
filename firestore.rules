@@ -1,0 +1,98 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions for authentication and authorization
+    function signedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+    
+    function isValidString(value) {
+      return value is string && value.size() > 0 && value.size() <= 500;
+    }
+    
+    function isValidNumber(value) {
+      return value is number && value >= 0;
+    }
+    
+    // Validate user profile data
+    function isValidUserProfile() {
+      return request.resource.data.keys().hasAll(['email']) &&
+             isValidString(request.resource.data.email) &&
+             (!('displayName' in request.resource.data) || isValidString(request.resource.data.displayName)) &&
+             (!('defaultFrequency' in request.resource.data) || 
+              request.resource.data.defaultFrequency in ['Weekly', 'Fortnightly', 'Monthly', 'Yearly']) &&
+             (!('currency' in request.resource.data) || isValidString(request.resource.data.currency));
+    }
+    
+    // Validate budget data structure
+    function isValidBudgetData() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['name', 'settings']) &&
+             isValidString(data.name) &&
+             data.name.size() <= 100 &&
+             isValidBudgetSettings(data.settings) &&
+             (!('expenses' in data) || data.expenses is list) &&
+             (!('savings' in data) || data.savings is list);
+    }
+    
+    function isValidBudgetSettings(settings) {
+      return settings.keys().hasAll(['incomeAmount', 'incomeFrequency', 'currency']) &&
+             isValidNumber(settings.incomeAmount) &&
+             settings.incomeFrequency in ['Weekly', 'Fortnightly', 'Monthly', 'Yearly'] &&
+             isValidString(settings.currency);
+    }
+    
+    // User profiles and data
+    match /users/{uid} {
+      // Users can create their own profile during registration
+      allow create: if signedIn() && 
+                       isOwner(uid) && 
+                       isValidUserProfile();
+      
+      // Users can read their own profile
+      allow read: if signedIn() && isOwner(uid);
+      
+      // Users can update their own profile with valid data
+      allow update: if signedIn() && 
+                       isOwner(uid) && 
+                       isValidUserProfile();
+      
+      // Profile deletion not allowed (data retention)
+      allow delete: if false;
+      
+      // Budget documents under user
+      match /budgets/{budgetId} {
+        // Users can create budgets with valid data
+        allow create: if signedIn() && 
+                         isOwner(uid) && 
+                         isValidBudgetData();
+        
+        // Users can read their own budgets
+        allow read: if signedIn() && isOwner(uid);
+        
+        // Users can update their own budgets with valid data
+        allow update: if signedIn() && 
+                         isOwner(uid) && 
+                         isValidBudgetData();
+        
+        // Users can delete their own budgets
+        allow delete: if signedIn() && isOwner(uid);
+      }
+      
+      // Health check documents (temporary test documents)
+      match /health-check/{testId} {
+        allow read, write, delete: if signedIn() && isOwner(uid);
+      }
+    }
+    
+    // Deny all other access patterns
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

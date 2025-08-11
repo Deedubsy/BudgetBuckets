@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Environment Switcher</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #e4e4e4;
+            padding: 40px;
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .current-env {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 6px;
+        }
+        .emulators { background: #0f2a1a; border: 1px solid #2d5a3d; color: #4ade80; }
+        .production { background: #2a0f1a; border: 1px solid #5a2d3d; color: #f87171; }
+        button {
+            background: #4a9eff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 16px;
+        }
+        button:hover { background: #3b82e6; }
+        .secondary { background: #6b7280; }
+        .secondary:hover { background: #4b5563; }
+        .warning {
+            background: #2a1f0f;
+            border: 1px solid #5a4d2d;
+            color: #f59e0b;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .info {
+            background: #0f1a2a;
+            border: 1px solid #2d3d5a;
+            color: #60a5fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        ul { text-align: left; }
+        a { color: #4a9eff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Firebase Environment Switcher</h1>
+    
+    <div class="card">
+        <h2>Current Environment</h2>
+        <div id="currentEnv" class="current-env">Detecting...</div>
+        
+        <button onclick="switchToEmulators()">🔧 Use Emulators</button>
+        <button onclick="switchToProduction()">🌐 Use Production</button>
+        <button onclick="resetToAuto()" class="secondary">🔄 Auto-Detect</button>
+    </div>
+    
+    <div class="card">
+        <h2>Environment Guide</h2>
+        
+        <div class="info">
+            <h3>🔧 Emulators (Development)</h3>
+            <ul>
+                <li><strong>Best for:</strong> Development, testing, offline work</li>
+                <li><strong>Requires:</strong> <code>firebase emulators:start</code></li>
+                <li><strong>Data:</strong> Local only, reset when emulator restarts</li>
+                <li><strong>Cost:</strong> Free (no Firebase quotas)</li>
+            </ul>
+        </div>
+        
+        <div class="warning">
+            <h3>🌐 Production (Live Firebase)</h3>
+            <ul>
+                <li><strong>Best for:</strong> Real usage, persistent data</li>
+                <li><strong>Requires:</strong> Internet connection</li>
+                <li><strong>Data:</strong> Synced across devices, persistent</li>
+                <li><strong>Cost:</strong> Firebase pricing applies</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h2>Quick Actions</h2>
+        <button onclick="window.open('/test/smoke-test.html', '_blank')">🧪 Run Smoke Test</button>
+        <button onclick="window.open('/test/network-diagnostic.html', '_blank')">🔍 Network Diagnostics</button>
+        <button onclick="window.open('/auth/login.html', '_blank')">🔐 Open Login</button>
+        <button onclick="window.open('/app/index.html', '_blank')">📱 Open App</button>
+    </div>
+    
+    <div class="card">
+        <h2>Emulator Setup</h2>
+        <p>To use emulators, run this command in your project directory:</p>
+        <pre style="background: #111; padding: 15px; border-radius: 4px; text-align: left;">firebase emulators:start</pre>
+        <p>Then visit <a href="http://localhost:4000" target="_blank">localhost:4000</a> for the emulator UI.</p>
+    </div>
+
+    <script>
+        function getCurrentEnvironment() {
+            const manualOverride = localStorage.getItem('firebase-environment');
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            
+            if (manualOverride === 'production') {
+                return { env: 'production', mode: 'Manual Override' };
+            } else if (manualOverride === 'emulators') {
+                return { env: 'emulators', mode: 'Manual Override' };
+            } else {
+                return { env: isLocal ? 'emulators' : 'production', mode: 'Auto-Detect' };
+            }
+        }
+
+        function updateDisplay() {
+            const { env, mode } = getCurrentEnvironment();
+            const envEl = document.getElementById('currentEnv');
+            
+            envEl.className = `current-env ${env}`;
+            envEl.innerHTML = `
+                <strong>${env === 'emulators' ? '🔧 Emulators' : '🌐 Production'}</strong><br>
+                <small>${mode}</small>
+            `;
+        }
+
+        function switchToEmulators() {
+            localStorage.setItem('firebase-environment', 'emulators');
+            updateDisplay();
+            alert('✅ Switched to Emulators!\n\n📝 Make sure to run: firebase emulators:start\n🔄 Refresh any open app pages.');
+        }
+
+        function switchToProduction() {
+            if (confirm('⚠️ Switch to Production Firebase?\n\nThis will use real Firebase services and may incur costs.')) {
+                localStorage.setItem('firebase-environment', 'production');
+                updateDisplay();
+                alert('✅ Switched to Production!\n\n🔄 Refresh any open app pages.');
+            }
+        }
+
+        function resetToAuto() {
+            localStorage.removeItem('firebase-environment');
+            updateDisplay();
+            alert('✅ Reset to Auto-Detect!\n\n🔄 Environment will be determined by URL (localhost = emulators).');
+        }
+
+        // Initialize
+        updateDisplay();
+    </script>
+</body>
+</html>

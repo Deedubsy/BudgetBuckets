@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Buckets - Smoke Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #e4e4e4;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-result {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+        }
+        .success {
+            background: #0f2a1a;
+            border: 1px solid #2d5a3d;
+            color: #4ade80;
+        }
+        .error {
+            background: #2a0f0f;
+            border: 1px solid #5a2d2d;
+            color: #ef4444;
+        }
+        .warning {
+            background: #2a1f0f;
+            border: 1px solid #5a4d2d;
+            color: #f59e0b;
+        }
+        button {
+            background: #4a9eff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #3b82e6;
+        }
+        button:disabled {
+            background: #333;
+            cursor: not-allowed;
+        }
+        #testResults {
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #333;
+            border-radius: 50%;
+            border-top-color: #4a9eff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Budget Buckets Smoke Test</h1>
+        <p>This test validates Firebase authentication and Firestore operations.</p>
+        
+        <div class="test-section">
+            <h2>Test Controls</h2>
+            <button id="runAllBtn">Run All Tests</button>
+            <button id="runAuthBtn">Test Authentication</button>
+            <button id="runFirestoreBtn">Test Firestore Operations</button>
+            <button id="runHealthCheckBtn">Run Health Check</button>
+            <button id="networkDiagBtn">🔍 Network Diagnostics</button>
+            <button id="clearBtn">Clear Results</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>Test Results</h2>
+            <div id="testResults"></div>
+        </div>
+    </div>
+
+    <!-- Firebase Modular SDK -->
+    <script type="module">
+        import { authHelpers, firestoreHelpers } from '../auth/firebase.js';
+        import cloudStore from '../app/cloud-store.js';
+
+        class SmokeTest {
+            constructor() {
+                this.results = document.getElementById('testResults');
+                this.testUser = null;
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                document.getElementById('runAllBtn').addEventListener('click', () => this.runAllTests());
+                document.getElementById('runAuthBtn').addEventListener('click', () => this.testAuthentication());
+                document.getElementById('runFirestoreBtn').addEventListener('click', () => this.testFirestoreOperations());
+                document.getElementById('runHealthCheckBtn').addEventListener('click', () => this.runHealthCheck());
+                document.getElementById('networkDiagBtn').addEventListener('click', () => {
+                    window.open('/test/network-diagnostic.html?autorun=true', '_blank');
+                });
+                document.getElementById('clearBtn').addEventListener('click', () => this.clearResults());
+                
+                // Listen for Firebase initialization failures
+                window.addEventListener('firebaseInitFailed', (event) => {
+                    this.log(`🚨 Firebase initialization failed: ${event.detail.error}`, 'error');
+                    this.log(`💡 Try the Network Diagnostics tool to troubleshoot`, 'warning');
+                });
+            }
+
+            log(message, type = 'info') {
+                const timestamp = new Date().toISOString().substr(11, 12);
+                const prefix = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+                const line = `[${timestamp}] ${prefix} ${message}\n`;
+                
+                this.results.textContent += line;
+                this.results.scrollTop = this.results.scrollHeight;
+
+                // Also log to console
+                console.log(line.trim());
+            }
+
+            clearResults() {
+                this.results.textContent = '';
+            }
+
+            async runAllTests() {
+                this.clearResults();
+                this.log('🚀 Starting comprehensive smoke test suite...');
+                
+                try {
+                    await this.testAuthentication();
+                    await this.testFirestoreOperations();
+                    await this.runHealthCheck();
+                    this.log('🎉 All smoke tests completed successfully!', 'success');
+                } catch (error) {
+                    this.log(`💥 Smoke test suite failed: ${error.message}`, 'error');
+                }
+            }
+
+            async testAuthentication() {
+                this.log('🔐 Testing authentication system...');
+                
+                try {
+                    // Check network connectivity first
+                    if (!navigator.onLine) {
+                        throw new Error('Device appears to be offline');
+                    }
+                    
+                    this.log('📡 Network status: Online');
+                    
+                    // Test auth state initialization with timeout
+                    this.log('Waiting for auth initialization...');
+                    const authPromise = authHelpers.waitForAuth();
+                    const timeoutPromise = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Auth initialization timeout after 15 seconds')), 15000)
+                    );
+                    
+                    const user = await Promise.race([authPromise, timeoutPromise]);
+                    
+                    if (user) {
+                        this.testUser = user;
+                        this.log(`User authenticated: ${user.uid}`, 'success');
+                        this.log(`Email: ${user.email}`, 'success');
+                        
+                        // Test token retrieval
+                        this.log('Testing ID token retrieval...');
+                        const token = await authHelpers.getIdToken();
+                        if (token && typeof token === 'string') {
+                            this.log('ID token retrieved successfully', 'success');
+                        } else {
+                            throw new Error('Invalid ID token received');
+                        }
+                    } else {
+                        this.log('No authenticated user found', 'warning');
+                        this.log('Please sign in manually to test authenticated operations', 'warning');
+                    }
+                } catch (error) {
+                    this.log(`Authentication test failed: ${error.message}`, 'error');
+                    throw error;
+                }
+            }
+
+            async testFirestoreOperations() {
+                this.log('🔥 Testing Firestore operations...');
+                
+                if (!this.testUser) {
+                    const user = await authHelpers.waitForAuth();
+                    if (!user) {
+                        this.log('Skipping Firestore tests - no authenticated user', 'warning');
+                        return;
+                    }
+                    this.testUser = user;
+                }
+
+                try {
+                    const uid = this.testUser.uid;
+                    
+                    // Test user profile operations
+                    this.log('Testing user profile operations...');
+                    await cloudStore.ensureUserProfile(this.testUser);
+                    this.log('User profile ensured successfully', 'success');
+                    
+                    const profile = await cloudStore.getUserProfile(uid);
+                    this.log(`Profile retrieved: ${profile.email}`, 'success');
+                    
+                    // Test budget operations
+                    this.log('Testing budget CRUD operations...');
+                    
+                    // Create test budget
+                    const testBudget = {
+                        name: 'Smoke Test Budget',
+                        settings: {
+                            incomeAmount: 5000,
+                            incomeFrequency: 'Monthly',
+                            currency: 'AUD'
+                        },
+                        expenses: [],
+                        savings: []
+                    };
+                    
+                    this.log('Creating test budget...');
+                    const createdBudget = await cloudStore.createBudget(uid, testBudget);
+                    this.log(`Budget created with ID: ${createdBudget.id}`, 'success');
+                    
+                    // Read budget
+                    this.log('Reading created budget...');
+                    const readBudget = await cloudStore.readBudget(uid, createdBudget.id);
+                    if (readBudget.name === testBudget.name) {
+                        this.log('Budget read successfully', 'success');
+                    } else {
+                        throw new Error('Budget data mismatch on read');
+                    }
+                    
+                    // Update budget
+                    this.log('Updating test budget...');
+                    const updateData = {
+                        ...readBudget,
+                        name: 'Updated Smoke Test Budget',
+                        settings: {
+                            ...readBudget.settings,
+                            incomeAmount: 6000
+                        }
+                    };
+                    
+                    const updatedBudget = await cloudStore.updateBudget(uid, createdBudget.id, updateData);
+                    if (updatedBudget.name === 'Updated Smoke Test Budget') {
+                        this.log('Budget updated successfully', 'success');
+                    } else {
+                        throw new Error('Budget update failed');
+                    }
+                    
+                    // List budgets
+                    this.log('Testing budget listing...');
+                    const budgets = await cloudStore.listBudgets(uid);
+                    const foundBudget = budgets.find(b => b.id === createdBudget.id);
+                    if (foundBudget) {
+                        this.log(`Budget found in list (${budgets.length} total)`, 'success');
+                    } else {
+                        throw new Error('Created budget not found in list');
+                    }
+                    
+                    // Delete test budget
+                    this.log('Cleaning up test budget...');
+                    await cloudStore.deleteBudget(uid, createdBudget.id);
+                    this.log('Test budget deleted successfully', 'success');
+                    
+                } catch (error) {
+                    this.log(`Firestore operations failed: ${error.message}`, 'error');
+                    throw error;
+                }
+            }
+
+            async runHealthCheck() {
+                this.log('🏥 Running comprehensive health check...');
+                
+                try {
+                    const healthResult = await cloudStore.healthCheck();
+                    
+                    if (healthResult.status === 'healthy') {
+                        this.log(`Health check passed for user: ${healthResult.user}`, 'success');
+                    } else {
+                        this.log(`Health check failed: ${healthResult.error}`, 'error');
+                        if (healthResult.details) {
+                            this.log(`Details: ${healthResult.details}`, 'error');
+                        }
+                    }
+                } catch (error) {
+                    this.log(`Health check failed: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        // Initialize smoke test when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            window.smokeTest = new SmokeTest();
+            console.log('🧪 Smoke test initialized');
+        });
+
+        // Auto-run tests if url parameter is present
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('autorun') === 'true') {
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    if (window.smokeTest) {
+                        window.smokeTest.runAllTests();
+                    }
+                }, 1000);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Network Diagnostic</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #e4e4e4;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .test-section {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .result {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .success { background: #0f2a1a; border: 1px solid #2d5a3d; color: #4ade80; }
+        .error { background: #2a0f0f; border: 1px solid #5a2d2d; color: #ef4444; }
+        .warning { background: #2a1f0f; border: 1px solid #5a4d2d; color: #f59e0b; }
+        .info { background: #0f1a2a; border: 1px solid #2d3d5a; color: #60a5fa; }
+        button {
+            background: #4a9eff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #3b82e6; }
+        button:disabled { background: #333; cursor: not-allowed; }
+        pre { 
+            background: #111; 
+            padding: 15px; 
+            border-radius: 4px; 
+            overflow-x: auto; 
+            font-size: 12px;
+        }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Firebase Network Diagnostic Tool</h1>
+        <p>This tool helps diagnose network connectivity issues with Firebase services.</p>
+        
+        <div class="test-section">
+            <h2>Quick Actions</h2>
+            <button onclick="runAllDiagnostics()">🚀 Run All Diagnostics</button>
+            <button onclick="testBasicConnectivity()">🌐 Test Basic Connectivity</button>
+            <button onclick="testFirebaseEndpoints()">🔥 Test Firebase Endpoints</button>
+            <button onclick="testDNSResolution()">🔍 Test DNS Resolution</button>
+            <button onclick="clearResults()">🧹 Clear Results</button>
+        </div>
+        
+        <div class="grid">
+            <div class="test-section">
+                <h2>Environment Info</h2>
+                <div id="envInfo"></div>
+            </div>
+            
+            <div class="test-section">
+                <h2>Network Status</h2>
+                <div id="networkStatus"></div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Diagnostic Results</h2>
+            <div id="results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Configuration Check</h2>
+            <div id="configCheck"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        const results = document.getElementById('results');
+        const envInfo = document.getElementById('envInfo');
+        const networkStatus = document.getElementById('networkStatus');
+        const configCheck = document.getElementById('configCheck');
+
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            div.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            results.appendChild(div);
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function clearResults() {
+            results.innerHTML = '';
+        }
+
+        // Environment Information
+        function displayEnvironmentInfo() {
+            const info = {
+                'User Agent': navigator.userAgent,
+                'URL': window.location.href,
+                'Protocol': window.location.protocol,
+                'Host': window.location.host,
+                'Port': window.location.port || 'default',
+                'Online Status': navigator.onLine ? '✅ Online' : '❌ Offline',
+                'Connection Type': navigator.connection?.effectiveType || 'Unknown',
+                'Language': navigator.language,
+                'Timezone': Intl.DateTimeFormat().resolvedOptions().timeZone,
+                'Cookies Enabled': navigator.cookieEnabled ? '✅ Yes' : '❌ No',
+                'Local Storage': typeof Storage !== 'undefined' ? '✅ Available' : '❌ Not available'
+            };
+
+            envInfo.innerHTML = Object.entries(info)
+                .map(([key, value]) => `<div class="result info"><strong>${key}:</strong> ${value}</div>`)
+                .join('');
+        }
+
+        // Network Status Monitoring
+        function monitorNetworkStatus() {
+            function updateStatus() {
+                const online = navigator.onLine;
+                networkStatus.innerHTML = `
+                    <div class="result ${online ? 'success' : 'error'}">
+                        Status: ${online ? '🟢 Online' : '🔴 Offline'}
+                    </div>
+                    <div class="result info">
+                        Last Updated: ${new Date().toLocaleTimeString()}
+                    </div>
+                `;
+            }
+
+            updateStatus();
+            window.addEventListener('online', updateStatus);
+            window.addEventListener('offline', updateStatus);
+            setInterval(updateStatus, 30000); // Update every 30 seconds
+        }
+
+        // Basic connectivity test
+        window.testBasicConnectivity = async function() {
+            addResult('🌐 Testing basic internet connectivity...', 'info');
+            
+            const testUrls = [
+                'https://www.google.com/favicon.ico',
+                'https://firebase.googleapis.com/',
+                'https://identitytoolkit.googleapis.com/',
+                'https://firestore.googleapis.com/'
+            ];
+
+            for (const url of testUrls) {
+                try {
+                    const startTime = Date.now();
+                    const response = await fetch(url, { 
+                        method: 'HEAD', 
+                        mode: 'no-cors',
+                        cache: 'no-cache'
+                    });
+                    const duration = Date.now() - startTime;
+                    addResult(`✅ ${url} - ${duration}ms`, 'success');
+                } catch (error) {
+                    addResult(`❌ ${url} - ${error.message}`, 'error');
+                }
+            }
+        };
+
+        // Test Firebase endpoints specifically
+        window.testFirebaseEndpoints = async function() {
+            addResult('🔥 Testing Firebase service endpoints...', 'info');
+            
+            const projectId = 'budgetbuckets-79b3b';
+            const endpoints = [
+                `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyAyQnI3I5IRm2MZ16ttVaaA-8bneE3lWeo`,
+                `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`,
+                `https://${projectId}.firebaseapp.com/`,
+                `https://securetoken.googleapis.com/v1/token?key=AIzaSyAyQnI3I5IRm2MZ16ttVaaA-8bneE3lWeo`
+            ];
+
+            for (const endpoint of endpoints) {
+                try {
+                    const startTime = Date.now();
+                    // Use a simple GET request to test connectivity
+                    const response = await fetch(endpoint, {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const duration = Date.now() - startTime;
+                    
+                    if (response.status < 500) {
+                        addResult(`✅ ${endpoint} - Status: ${response.status} (${duration}ms)`, 'success');
+                    } else {
+                        addResult(`⚠️ ${endpoint} - Status: ${response.status} (${duration}ms)`, 'warning');
+                    }
+                } catch (error) {
+                    addResult(`❌ ${endpoint} - ${error.message}`, 'error');
+                    
+                    // Additional error details
+                    if (error.name === 'TypeError' && error.message.includes('network')) {
+                        addResult(`   └─ Network error - Check internet connection, firewall, or DNS`, 'error');
+                    } else if (error.message.includes('CORS')) {
+                        addResult(`   └─ CORS error - This is normal for some endpoints`, 'info');
+                    }
+                }
+            }
+        };
+
+        // DNS Resolution test
+        window.testDNSResolution = async function() {
+            addResult('🔍 Testing DNS resolution...', 'info');
+            
+            const domains = [
+                'firebase.googleapis.com',
+                'identitytoolkit.googleapis.com',
+                'firestore.googleapis.com',
+                'budgetbuckets-79b3b.firebaseapp.com'
+            ];
+
+            for (const domain of domains) {
+                try {
+                    const startTime = Date.now();
+                    // Use a simple fetch to test DNS resolution
+                    await fetch(`https://${domain}/favicon.ico`, { 
+                        method: 'HEAD', 
+                        mode: 'no-cors',
+                        signal: AbortSignal.timeout(5000)
+                    });
+                    const duration = Date.now() - startTime;
+                    addResult(`✅ DNS: ${domain} resolved (${duration}ms)`, 'success');
+                } catch (error) {
+                    if (error.name === 'TimeoutError') {
+                        addResult(`⚠️ DNS: ${domain} - timeout (slow DNS)`, 'warning');
+                    } else {
+                        addResult(`❌ DNS: ${domain} - ${error.message}`, 'error');
+                    }
+                }
+            }
+        };
+
+        // Configuration check
+        async function checkFirebaseConfig() {
+            try {
+                addResult('🔧 Checking Firebase configuration...', 'info');
+                
+                const { authHelpers } = await import('../auth/firebase.js');
+                
+                // Check if Firebase is properly initialized
+                if (window.firebase) {
+                    addResult('✅ Firebase globally available', 'success');
+                    addResult(`📋 Environment: ${window.firebase.USE_EMULATORS ? 'Emulators' : 'Production'}`, 'info');
+                } else {
+                    addResult('❌ Firebase not globally available', 'error');
+                }
+                
+                // Check auth helpers
+                if (authHelpers && typeof authHelpers.waitForAuth === 'function') {
+                    addResult('✅ Auth helpers loaded', 'success');
+                } else {
+                    addResult('❌ Auth helpers missing', 'error');
+                }
+                
+                // Test auth state
+                try {
+                    const user = authHelpers.getCurrentUser();
+                    addResult(`👤 Current auth state: ${user ? `Signed in as ${user.email}` : 'Not signed in'}`, 'info');
+                } catch (error) {
+                    addResult(`❌ Auth state check failed: ${error.message}`, 'error');
+                }
+                
+            } catch (error) {
+                addResult(`❌ Firebase config check failed: ${error.message}`, 'error');
+                console.error('Config check error:', error);
+            }
+        }
+
+        // Run all diagnostics
+        window.runAllDiagnostics = async function() {
+            clearResults();
+            addResult('🚀 Starting comprehensive network diagnostics...', 'info');
+            
+            await testBasicConnectivity();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testDNSResolution();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testFirebaseEndpoints();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await checkFirebaseConfig();
+            
+            addResult('✅ All diagnostics completed!', 'success');
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            displayEnvironmentInfo();
+            monitorNetworkStatus();
+            checkFirebaseConfig();
+        });
+
+        // Auto-run basic tests if requested
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('autorun') === 'true') {
+            setTimeout(runAllDiagnostics, 2000);
+        }
+    </script>
+</body>
+</html>
