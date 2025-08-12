@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Budget Buckets — Simple Fortnightly Budgeting (AUD)</title>
+  <meta name="description" content="Budget Buckets is a simple, fast budgeting app built for Australian pay cycles. Track expenses and savings in buckets, convert weekly/fortnightly/monthly, and stay on top of your money." />
+  
+  <!-- TODO: Replace with your live domain -->
+  <link rel="canonical" href="https://your-domain.app/" />
+
+  <!-- Open Graph / Social -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Budget Buckets — Simple Fortnightly Budgeting (AUD)" />
+  <meta property="og:description" content="Buckets-based budgeting built for weekly & fortnightly pay cycles in AUD. Free calculators and a clean, fast app." />
+  <meta property="og:url" content="https://your-domain.app/" />
+  <meta property="og:image" content="/assets/og-image.png" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Budget Buckets — Simple Fortnightly Budgeting (AUD)" />
+  <meta name="twitter:description" content="Buckets-based budgeting built for weekly & fortnightly pay cycles in AUD." />
+  <meta name="twitter:image" content="/assets/og-image.png" />
+
+  <style>
+    :root{
+      --bg:#0b0f14;        /* page background */
+      --card:#10161d;      /* cards */
+      --muted:#9fb0c3;     /* secondary text */
+      --text:#e6edf3;      /* primary text */
+      --accent:#00cdd6;    /* brand accent (matches your app button) */
+      --accent-2:#5eead4;  /* soft accent */
+      --border:#1c2733;    /* subtle borders */
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+      --maxw: 1200px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{opacity:.9;text-decoration:underline}
+    img{max-width:100%;display:block}
+
+    /* Layout */
+    .container{max-width:var(--maxw);margin:0 auto;padding:24px}
+    header.site{position:sticky;top:0;z-index:50;background:linear-gradient(180deg, rgba(11,15,20,.9), rgba(11,15,20,.8));backdrop-filter:saturate(140%) blur(6px);border-bottom:1px solid var(--border)}
+    .nav{display:flex;align-items:center;gap:18px;justify-content:space-between}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.2px}
+    .brand .dot{width:14px;height:14px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 0 0 4px rgba(0,205,214,.15)}
+    .nav a{color:var(--text);opacity:.85}
+    .nav a:hover{opacity:1}
+    .nav .cta{padding:10px 16px;border-radius:999px;background:var(--accent);color:#032227;box-shadow:var(--shadow);font-weight:600;border:1px solid rgba(255,255,255,.06);text-decoration:none}
+
+    /* Hero */
+    .hero{padding:56px 0}
+    .hero .grid{display:grid;gap:28px;grid-template-columns:1.2fr .8fr}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .hero .pitch{padding:28px}
+    .eyebrow{display:inline-block;padding:6px 10px;border-radius:999px;background:#0e1821;border:1px solid var(--border);color:var(--muted);font-size:12px;letter-spacing:.3px;text-transform:uppercase}
+    h1{margin:.5rem 0 1rem;font-size:40px;line-height:1.15}
+    .lead{color:var(--muted);font-size:18px}
+    .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:12px;border:1px solid var(--border);background:#0f1720;color:var(--text);font-weight:600}
+    .btn.primary{background:var(--accent);color:#032227;border-color:transparent}
+
+    .hero .preview{padding:0;overflow:hidden}
+    .preview .frame{aspect-ratio:16/9;background:radial-gradient(1200px 400px at 20% -20%, rgba(0,205,214,.12), transparent), linear-gradient(#0e141b,#0b0f14);border-bottom-left-radius:var(--radius);border-bottom-right-radius:var(--radius);border-top-left-radius:var(--radius);border-top-right-radius:var(--radius);display:grid;place-items:center}
+    .preview .tag{margin-top:8px;padding:10px 14px;border-top:1px solid var(--border);background:#0d141b;color:var(--muted);border-bottom-left-radius:var(--radius);border-bottom-right-radius:var(--radius)}
+
+    /* Features */
+    .section{padding:36px 0}
+    .section h2{font-size:28px;margin:0 0 12px}
+    .muted{color:var(--muted)}
+    .features{display:grid;gap:16px;grid-template-columns:repeat(3,1fr)}
+    .feature{padding:18px;border-radius:14px;background:var(--card);border:1px solid var(--border)}
+    .kicker{font-size:13px;color:var(--accent-2);letter-spacing:.2px;text-transform:uppercase}
+
+    /* Tiles */
+    .tiles{display:grid;gap:16px;grid-template-columns:repeat(3,1fr)}
+    .tile{padding:20px;border-radius:14px;background:linear-gradient(180deg,#0e1620,#0c1117);border:1px solid var(--border)}
+    .tile h3{margin:0 0 6px}
+
+    /* How it works */
+    .steps{display:grid;gap:14px;grid-template-columns:repeat(3,1fr)}
+    .step{padding:18px;border-radius:14px;background:var(--card);border:1px solid var(--border)}
+    .step .num{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:999px;background:var(--accent);color:#032227;font-weight:800;margin-right:8px}
+
+    /* FAQ */
+    details{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
+    summary{cursor:pointer;font-weight:600}
+
+    /* Footer */
+    footer{padding:36px 0;border-top:1px solid var(--border);color:var(--muted)}
+    .footgrid{display:grid;gap:16px;grid-template-columns:2fr 1fr 1fr}
+    .footgrid a{color:var(--muted)}
+    .tiny{font-size:12px;color:var(--muted)}
+
+    /* Responsive */
+    @media (max-width: 1024px){
+      .hero .grid, .features, .tiles, .steps, .footgrid{grid-template-columns:1fr}
+      h1{font-size:34px}
+    }
+  </style>
+</head>
+<body>
+  <header class="site">
+    <div class="container nav">
+      <a class="brand" href="/">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Budget Buckets</span>
+      </a>
+      <nav aria-label="Primary">
+        <a href="/calculators.html">Calculators</a>
+        <a href="/guide/budget-buckets-method">Method</a>
+        <a href="/blog/">Blog</a>
+        <a class="cta" href="/auth/login.html">Open the App</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section class="hero container">
+      <div class="grid">
+        <div class="card pitch">
+          <span class="eyebrow">Built for Australian pay cycles</span>
+          <h1>Budgeting that fits your <em>fortnight</em>.</h1>
+          <p class="lead">Track expenses and savings in simple buckets. One global frequency (Weekly/Fortnightly/Monthly/Yearly), clean math, no spreadsheets. Free calculators included.</p>
+          <div class="actions">
+            <a class="btn primary" href="/auth/login.html">Try the App</a>
+            <a class="btn" href="/calculators.html#budget-calculator">Fortnightly Calculator</a>
+            <a class="btn" href="/guide/budget-buckets-method">How the Method Works</a>
+          </div>
+        </div>
+        <div class="card preview" aria-label="Product preview">
+          <div class="frame">
+            <!-- Optional: replace with a real screenshot of your app UI -->
+            <svg width="540" height="300" role="img" aria-label="App screenshot placeholder" viewBox="0 0 540 300">
+              <defs>
+                <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#00cdd6" stop-opacity=".35" />
+                  <stop offset="100%" stop-color="#5eead4" stop-opacity=".15" />
+                </linearGradient>
+              </defs>
+              <rect width="100%" height="100%" rx="16" fill="url(#g)" />
+              <g fill="#0b0f14" opacity=".85">
+                <rect x="20" y="20" width="140" height="18" rx="6" />
+                <rect x="20" y="60" width="500" height="44" rx="10" />
+                <rect x="20" y="120" width="500" height="44" rx="10" />
+                <rect x="20" y="180" width="500" height="44" rx="10" />
+              </g>
+            </svg>
+          </div>
+          <div class="tag">Preview — Replace with real screenshot for higher CTR</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Feature highlights -->
+    <section class="section container">
+      <h2>Why Budget Buckets?</h2>
+      <p class="muted">Purpose-built for Australia, with real-world pay cycles and plain-English controls.</p>
+      <div class="features">
+        <article class="feature">
+          <div class="kicker">Fortnight-first</div>
+          <h3>Weekly ⇄ Fortnightly ⇄ Monthly</h3>
+          <p class="muted">Switch the global income frequency and the app updates every bucket instantly. Calculators use AUD formatting via Intl APIs.</p>
+        </article>
+        <article class="feature">
+          <div class="kicker">Buckets not chaos</div>
+          <h3>Separate Expenses & Savings</h3>
+          <p class="muted">Organise by bucket, not categories. Toggle include/exclude, add bank account labels, and keep totals visible.</p>
+        </article>
+        <article class="feature">
+          <div class="kicker">Cloud sync</div>
+          <h3>Your data, in the cloud</h3>
+          <p class="muted">Secure sign-in with Email/Google. Profiles and budgets live in Firestore under your account.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Key pages tiles -->
+    <section class="section container">
+      <h2>Get started</h2>
+      <div class="tiles">
+        <a class="tile" href="/calculators.html#budget-calculator">
+          <h3>Fortnightly Budget Calculator (AUD)</h3>
+          <p class="muted">Convert weekly, fortnightly, monthly and see your totals instantly.</p>
+        </a>
+        <a class="tile" href="/calculators.html#savings-calculator">
+          <h3>Savings Rate & Time-to-Goal</h3>
+          <p class="muted">See how long it’ll take to reach a target with your current plan.</p>
+        </a>
+        <a class="tile" href="/guide/budget-buckets-method">
+          <h3>Budget Buckets Method</h3>
+          <p class="muted">A plain-English guide to setting up buckets that actually stick.</p>
+        </a>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="section container">
+      <h2>How it works</h2>
+      <div class="steps">
+        <div class="step"><span class="num">1</span><strong>Create your buckets.</strong> Add expenses and savings with a single global frequency.</div>
+        <div class="step"><span class="num">2</span><strong>Watch totals update.</strong> The sticky header shows monthly & fortnightly totals.</div>
+        <div class="step"><span class="num">3</span><strong>Stay consistent.</strong> Use the calculators and method guide to refine your plan.</div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section container">
+      <h2>FAQ</h2>
+      <details>
+        <summary>Is this free?</summary>
+        <p class="muted">Yes, the app is free while in active development. We may add a paid Pro tier later with advanced features.</p>
+      </details>
+      <details>
+        <summary>Does it support Australian pay cycles?</summary>
+        <p class="muted">Absolutely. Weekly and fortnightly are first-class, with clean conversions to monthly and yearly when needed.</p>
+      </details>
+      <details>
+        <summary>Where is my data stored?</summary>
+        <p class="muted">In your own secure Firestore account, scoped to your login. You can export/import at any time.</p>
+      </details>
+    </section>
+
+    <!-- CTA -->
+    <section class="section container">
+      <div class="card" style="padding:24px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap">
+        <div>
+          <h3 style="margin:0 0 6px">Ready to budget the easy way?</h3>
+          <p class="muted" style="margin:0">Open the app, add your first bucket, and see your totals in minutes.</p>
+        </div>
+        <a class="btn primary" href="/auth/login.html">Open the App</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footgrid">
+      <div>
+        <div class="brand"><span class="dot" aria-hidden="true"></span><span>Budget Buckets</span></div>
+        <p class="tiny">© <span id="year"></span> Budget Buckets. All rights reserved.</p>
+      </div>
+      <nav>
+        <strong class="tiny">Product</strong><br>
+        <a href="/auth/login.html">Open the App</a><br>
+        <a href="/calculators.html">Calculators</a><br>
+        <a href="/guide/budget-buckets-method">Method</a>
+      </nav>
+      <nav>
+        <strong class="tiny">Company</strong><br>
+        <a href="/privacy">Privacy</a><br>
+        <a href="/terms">Terms</a><br>
+        <a href="/contact">Contact</a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- Structured Data: SoftwareApplication -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Budget Buckets",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Web",
+    "offers": {"@type": "Offer", "price": "0", "priceCurrency": "AUD"},
+    "url": "https://your-domain.app/",
+    "creator": {"@type": "Organization", "name": "Budget Buckets"},
+    "description": "A simple web app for bucket-based budgeting with weekly and fortnightly support in AUD.",
+    "image": "https://your-domain.app/assets/og-image.png"
+  }
+  </script>
+
+  <!-- Structured Data: FAQPage (matches visible FAQ) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {"@type": "Question", "name": "Is this free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, the app is free while in active development. We may add a paid Pro tier later with advanced features."}},
+      {"@type": "Question", "name": "Does it support Australian pay cycles?", "acceptedAnswer": {"@type": "Answer", "text": "Absolutely. Weekly and fortnightly are first-class, with clean conversions to monthly and yearly when needed."}},
+      {"@type": "Question", "name": "Where is my data stored?", "acceptedAnswer": {"@type": "Answer", "text": "In your own secure Firestore account, scoped to your login. You can export/import at any time."}}
+    ]
+  }
+  </script>
+
+  <script>
+    // Small niceties
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

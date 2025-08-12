@@ -49,8 +49,10 @@ app.use(helmet({
 app.use(compression());
 
 // Serve static files from root directory with proper MIME types
+// Exclude index.html from being served automatically to allow our custom routing
 app.use(express.static(path.join(__dirname), {
   maxAge: '1h',
+  index: false, // Disable automatic index.html serving
   setHeaders: (res, filepath) => {
     // Set proper MIME types explicitly
     if (filepath.endsWith('.js')) {
@@ -79,19 +81,9 @@ app.get('/__/health', (req, res) => {
   res.status(200).json({ status: 'healthy', service: 'budget-buckets' });
 });
 
-// Root path - serve index.html which redirects to login
+// Root path - serve home.html as the main page
 app.get('/', (req, res) => {
-  // Check if index.html exists, otherwise serve login directly
-  const indexPath = path.join(__dirname, 'index.html');
-  const loginPath = path.join(__dirname, 'auth', 'login.html');
-  
-  // Prefer index.html for cleaner redirect
-  res.sendFile(indexPath, (err) => {
-    if (err) {
-      // Fallback to direct login page
-      res.sendFile(loginPath);
-    }
-  });
+  res.sendFile(path.join(__dirname, 'home.html'));
 });
 
 app.get('/login', (req, res) => {
@@ -108,6 +100,22 @@ app.get('/app', (req, res) => {
 
 app.get('/test', (req, res) => {
   res.sendFile(path.join(__dirname, 'test.html'));
+});
+
+app.get('/home', (req, res) => {
+  res.sendFile(path.join(__dirname, 'home.html'));
+});
+
+app.get('/home.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'home.html'));
+});
+
+app.get('/calculators', (req, res) => {
+  res.sendFile(path.join(__dirname, 'calculators.html'));
+});
+
+app.get('/calculators.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'calculators.html'));
 });
 
 app.get('/environment', (req, res) => {

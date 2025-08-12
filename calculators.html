@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Free Budget & Savings Calculators (AUD) — Budget Buckets</title>
+  <meta name="description" content="Two free tools: a Fortnightly Budget Calculator (AUD) and a Savings Rate & Time‑to‑Goal Calculator with compounding. Built for Australian weekly/fortnightly pay cycles." />
+  <link rel="canonical" href="https://your-domain.app/calculator/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Free Budget & Savings Calculators (AUD) — Budget Buckets" />
+  <meta property="og:description" content="Fortnightly Budget Calculator + Savings Rate & Time‑to‑Goal with compounding. Fast, free, and built for AUD." />
+  <meta property="og:image" content="/assets/og-calculators.png" />
+  <meta name="robots" content="index, follow" />
+  <style>
+    :root{
+      --bg:#0b0f14; --card:#10161d; --muted:#9fb0c3; --text:#e6edf3; --accent:#00cdd6; --accent2:#5eead4; --border:#1c2733;
+      --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.35); --maxw:1100px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .container{max-width:var(--maxw);margin:0 auto;padding:24px}
+    header{position:sticky;top:0;z-index:5;background:linear-gradient(180deg, rgba(11,15,20,.9), rgba(11,15,20,.75));backdrop-filter:saturate(140%) blur(6px);border-bottom:1px solid var(--border)}
+    .nav{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:700}
+    .dot{width:12px;height:12px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 0 4px rgba(0,205,214,.15)}
+    .cta{padding:10px 14px;border-radius:999px;background:var(--accent);color:#032227;border:1px solid transparent;box-shadow:var(--shadow)}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+    .tab{padding:10px 14px;border-radius:999px;border:1px solid var(--border);background:#0f1720;color:var(--text);cursor:pointer}
+    .tab[aria-selected="true"]{background:var(--accent);color:#032227;border-color:transparent}
+
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .section{padding:28px}
+    h1{margin:.25rem 0 0;font-size:36px}
+    h2{margin:0 0 12px;font-size:24px}
+    .muted{color:var(--muted)}
+    .grid-2{display:grid;gap:16px;grid-template-columns:1fr 1fr}
+    .grid-3{display:grid;gap:16px;grid-template-columns:repeat(3,1fr)}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    label{font-weight:600}
+    input,select,button{font:inherit}
+    input[type="number"], input[type="text"], select{background:#0f1720;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px;min-width:0}
+    input[type="number"]{width:140px}
+    button{background:#0f1720;color:var(--text);border:1px solid var(--border);border-radius:12px;padding:10px 14px;cursor:pointer}
+    button.primary{background:var(--accent);color:#032227;border-color:transparent}
+    table{width:100%;border-collapse:separate;border-spacing:0}
+    th,td{padding:10px;border-bottom:1px solid var(--border)}
+    th{text-align:left;color:var(--muted);font-weight:600}
+    tr:last-child td{border-bottom:none}
+    .right{text-align:right}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#0e1821;border:1px solid var(--border);color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.2px}
+    .kpi{padding:16px;border-radius:14px;background:linear-gradient(180deg,#0f1520,#0c1117);border:1px solid var(--border)}
+    .kpi .big{font-size:22px;font-weight:800}
+    .help{font-size:13px;color:var(--muted)}
+    .warn{color:#ffd166}
+    .good{color:#5eead4}
+    footer{padding:24px;border-top:1px solid var(--border);color:var(--muted)}
+
+    @media (max-width: 980px){.grid-2,.grid-3{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="brand"><span class="dot" aria-hidden="true"></span>Budget Buckets</div>
+      <nav>
+        <a href="/home.html">Home</a> · <a href="#budget-calculator">Budget Calculator</a> · <a href="#savings-calculator">Savings Calculator</a> · <a class="cta" href="/auth/login.html">Open the App</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card section" style="margin-top:16px">
+      <span class="pill">Free tools for Australia (AUD)</span>
+      <h1>Budget & Savings Calculators</h1>
+      <p class="muted">Fast, no-fuss calculators that speak weekly & fortnightly. Values format in AUD. Your inputs stay in your browser (no signup).</p>
+      <div class="tabs" role="tablist" aria-label="Calculator selector">
+        <button id="tab-budget" class="tab" role="tab" aria-selected="true" aria-controls="panel-budget">Fortnightly Budget Calculator</button>
+        <button id="tab-savings" class="tab" role="tab" aria-selected="false" aria-controls="panel-savings">Savings Rate & Time‑to‑Goal</button>
+      </div>
+    </section>
+
+    <!-- Fortnightly Budget Calculator -->
+    <section id="panel-budget" class="card section" role="tabpanel" aria-labelledby="tab-budget">
+      <a id="budget-calculator"></a>
+      <h2>Fortnightly Budget Calculator (AUD)</h2>
+      <p class="muted">Enter your income and expenses once using a single frequency. We convert across weekly, fortnightly, monthly, and yearly.
+      </p>
+
+      <div class="grid-2" style="margin-top:8px">
+        <div>
+          <div class="row" style="gap:14px;flex-wrap:wrap">
+            <label for="bc-income">Income</label>
+            <input id="bc-income" type="number" min="0" step="0.01" placeholder="0.00" />
+            <label for="bc-freq" class="sr-only">Frequency</label>
+            <select id="bc-freq" aria-label="Income frequency">
+              <option value="weekly">Weekly</option>
+              <option value="fortnightly" selected>Fortnightly</option>
+              <option value="monthly">Monthly</option>
+              <option value="yearly">Yearly</option>
+            </select>
+            <label for="bc-curr">Currency</label>
+            <select id="bc-curr">
+              <option value="AUD" selected>AUD</option>
+              <option value="NZD">NZD</option>
+              <option value="USD">USD</option>
+              <option value="GBP">GBP</option>
+            </select>
+            <button id="bc-clear" title="Clear all">Clear</button>
+          </div>
+
+          <h3 style="margin:16px 0 8px">Expenses</h3>
+          <div class="help">Amounts are interpreted as <strong id="bc-freq-label">fortnightly</strong>.</div>
+          <table id="bc-table" aria-label="Expense items">
+            <thead>
+              <tr><th>Item</th><th class="right">Amount</th><th class="right"> </th></tr>
+            </thead>
+            <tbody>
+              <!-- rows injected here -->
+            </tbody>
+          </table>
+          <div class="row" style="margin-top:10px">
+            <button id="bc-add" class="primary">Add expense</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="grid-2">
+            <div class="kpi"><div class="muted">Income / Weekly</div><div id="bc-inc-w" class="big">—</div></div>
+            <div class="kpi"><div class="muted">Expenses / Weekly</div><div id="bc-exp-w" class="big">—</div></div>
+            <div class="kpi"><div class="muted">Income / Fortnightly</div><div id="bc-inc-f" class="big">—</div></div>
+            <div class="kpi"><div class="muted">Expenses / Fortnightly</div><div id="bc-exp-f" class="big">—</div></div>
+            <div class="kpi"><div class="muted">Income / Monthly</div><div id="bc-inc-m" class="big">—</div></div>
+            <div class="kpi"><div class="muted">Expenses / Monthly</div><div id="bc-exp-m" class="big">—</div></div>
+            <div class="kpi"><div class="muted">Income / Yearly</div><div id="bc-inc-y" class="big">—</div></div>
+            <div class="kpi"><div class="muted">Expenses / Yearly</div><div id="bc-exp-y" class="big">—</div></div>
+          </div>
+          <div class="kpi" style="margin-top:12px">
+            <div class="muted">Leftover (Monthly)</div>
+            <div id="bc-leftover" class="big">—</div>
+            <div id="bc-leftover-note" class="help"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Savings Rate & Time-to-Goal -->
+    <section id="panel-savings" class="card section" role="tabpanel" aria-labelledby="tab-savings" hidden>
+      <a id="savings-calculator"></a>
+      <h2>Savings Rate & Time‑to‑Goal</h2>
+      <p class="muted">How long to reach a target with optional compounding? We compute months and the target date. Income is optional — if provided, we show your savings rate.</p>
+
+      <div class="grid-2" style="margin-top:8px">
+        <div>
+          <div class="row" style="gap:14px;flex-wrap:wrap">
+            <label for="sc-balance">Starting balance</label>
+            <input id="sc-balance" type="number" min="0" step="0.01" placeholder="0.00" />
+            <label for="sc-contrib">Contribution</label>
+            <input id="sc-contrib" type="number" min="0" step="0.01" placeholder="0.00" />
+            <select id="sc-freq" aria-label="Contribution frequency">
+              <option value="weekly">Weekly</option>
+              <option value="fortnightly" selected>Fortnightly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+          <div class="row" style="gap:14px;margin-top:10px">
+            <label for="sc-rate">Annual return</label>
+            <input id="sc-rate" type="number" min="0" max="50" step="0.1" value="0" />
+            <span class="muted">% p.a.</span>
+            <label for="sc-target">Target</label>
+            <input id="sc-target" type="number" min="0" step="0.01" placeholder="e.g. 10000" />
+            <label for="sc-curr">Currency</label>
+            <select id="sc-curr">
+              <option value="AUD" selected>AUD</option>
+              <option value="NZD">NZD</option>
+              <option value="USD">USD</option>
+              <option value="GBP">GBP</option>
+            </select>
+          </div>
+          <details style="margin-top:12px">
+            <summary>Optional: income for savings rate</summary>
+            <div class="row" style="gap:14px;margin-top:10px">
+              <label for="sc-income">Income</label>
+              <input id="sc-income" type="number" min="0" step="0.01" placeholder="0.00" />
+              <select id="sc-incfreq">
+                <option value="weekly">Weekly</option>
+                <option value="fortnightly" selected>Fortnightly</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </div>
+          </details>
+          <div class="row" style="margin-top:12px;gap:10px">
+            <button id="sc-calc" class="primary">Calculate</button>
+            <button id="sc-clear">Clear</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="grid-3">
+            <div class="kpi"><div class="muted">Monthly contribution</div><div id="sc-cm" class="big">—</div></div>
+            <div class="kpi"><div class="muted">Months to target</div><div id="sc-months" class="big">—</div></div>
+            <div class="kpi"><div class="muted">Target date</div><div id="sc-date" class="big">—</div></div>
+          </div>
+          <div class="kpi" style="margin-top:12px">
+            <div class="muted">Savings rate (optional)</div>
+            <div id="sc-ratepct" class="big">—</div>
+            <div class="help">If income is provided, we compute contribution ÷ income (monthly).</div>
+          </div>
+          <div class="kpi" style="margin-top:12px">
+            <div class="muted">Notes</div>
+            <div id="sc-note" class="help">Uses monthly compounding: r = (1 + annualRate)^(1/12) − 1. If rate = 0, we switch to linear math.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="container"><span class="muted">© <span id="year"></span> Budget Buckets — Calculators</span></footer>
+
+  <!-- Structured Data: Breadcrumbs -->
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"BreadcrumbList",
+    "itemListElement":[
+      {"@type":"ListItem","position":1,"name":"Home","item":"https://your-domain.app/"},
+      {"@type":"ListItem","position":2,"name":"Calculators","item":"https://your-domain.app/calculator/"}
+    ]
+  }
+  </script>
+
+  <script type="module">
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    const yearEl = $('#year'); yearEl.textContent = new Date().getFullYear();
+
+    // Tabs a11y wiring
+    const tabBudget = $('#tab-budget');
+    const tabSavings = $('#tab-savings');
+    const panelBudget = $('#panel-budget');
+    const panelSavings = $('#panel-savings');
+    function selectTab(which){
+      const isBudget = which === 'budget';
+      tabBudget.setAttribute('aria-selected', String(isBudget));
+      tabSavings.setAttribute('aria-selected', String(!isBudget));
+      panelBudget.hidden = !isBudget;
+      panelSavings.hidden = isBudget;
+      (isBudget ? panelBudget : panelSavings).focus?.();
+      history.replaceState({}, '', isBudget ? '#budget-calculator' : '#savings-calculator');
+    }
+    tabBudget.addEventListener('click', ()=>selectTab('budget'));
+    tabSavings.addEventListener('click', ()=>selectTab('savings'));
+    if (location.hash.includes('savings')) selectTab('savings');
+
+    // ---------- Budget Calculator ----------
+    const bc = {
+      income: $('#bc-income'), freq: $('#bc-freq'), curr: $('#bc-curr'),
+      table: $('#bc-table tbody'), add: $('#bc-add'), clear: $('#bc-clear'), freqLabel: $('#bc-freq-label'),
+      out: {
+        incW: $('#bc-inc-w'), incF: $('#bc-inc-f'), incM: $('#bc-inc-m'), incY: $('#bc-inc-y'),
+        expW: $('#bc-exp-w'), expF: $('#bc-exp-f'), expM: $('#bc-exp-m'), expY: $('#bc-exp-y'),
+        leftover: $('#bc-leftover'), note: $('#bc-leftover-note'),
+      }
+    };
+
+    const FREQ = {
+      weekly:    { perMonth: 52/12,  perFortnight: 0.5,  perWeek: 1,      perYear: 52 },
+      fortnightly:{ perMonth: 26/12, perFortnight: 1,    perWeek: 2,      perYear: 26 },
+      monthly:   { perMonth: 1,      perFortnight: 12/26,perWeek: 12/52,  perYear: 12 },
+      yearly:    { perMonth: 1/12,   perFortnight: 26/12,perWeek: 52/12,  perYear: 1 }
+    };
+    const fmt = (v,curr) => new Intl.NumberFormat('en-AU',{style:'currency',currency:curr}).format(isFinite(v)?v:0);
+
+    const LS_KEY = 'calc.fortnightly.v1';
+    function loadState(){
+      try{ return JSON.parse(localStorage.getItem(LS_KEY)) || { freq:'fortnightly', income:0, curr:'AUD', items:[] }; }
+      catch{ return { freq:'fortnightly', income:0, curr:'AUD', items:[] }; }
+    }
+    function saveState(state){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+
+    let state = loadState();
+    bc.income.value = state.income ?? 0;
+    bc.freq.value = state.freq || 'fortnightly';
+    bc.curr.value = state.curr || 'AUD';
+    bc.freqLabel.textContent = bc.freq.value;
+
+    function addRow(item={name:'', amount:0}){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="text" placeholder="e.g. Rent" value="${item.name?.replaceAll('"','&quot;')||''}" /></td>
+        <td class="right"><input type="number" min="0" step="0.01" value="${Number(item.amount||0)}" /></td>
+        <td class="right"><button title="Delete" aria-label="Delete row">🗑️</button></td>`;
+      bc.table.appendChild(tr);
+      tr.querySelector('button').addEventListener('click', ()=>{ tr.remove(); syncFromUI(); render(); });
+      for (const input of tr.querySelectorAll('input')) input.addEventListener('input', ()=>{ syncFromUI(); render(); });
+    }
+
+    function syncFromUI(){
+      const items = $$('tr', bc.table).map(tr=>{
+        const [nameEl, amtEl] = tr.querySelectorAll('input');
+        const amount = parseFloat(amtEl.value||'0');
+        return { name: nameEl.value.trim(), amount: isFinite(amount)&&amount>0?amount:0 };
+      });
+      state = { income: parseFloat(bc.income.value||'0'), freq: bc.freq.value, curr: bc.curr.value, items };
+      saveState(state);
+    }
+
+    function convertAll(baseVal, baseFreq){
+      const f = FREQ[baseFreq];
+      const monthly = baseVal * f.perMonth; // canonical
+      const weekly = monthly * (12/52);
+      const fortnightly = monthly * (12/26);
+      const yearly = monthly * 12;
+      return { weekly, fortnightly, monthly, yearly };
+    }
+
+    function calcTotals(){
+      const inc = parseFloat(bc.income.value||'0') || 0;
+      const expBase = state.items.reduce((s,i)=> s + (i.amount||0), 0);
+      const income = convertAll(inc, state.freq);
+      const expenses = convertAll(expBase, state.freq);
+      return { income, expenses };
+    }
+
+    function render(){
+      bc.freqLabel.textContent = bc.freq.value;
+      const { income, expenses } = calcTotals();
+      const curr = bc.curr.value;
+      bc.out.incW.textContent = fmt(income.weekly, curr);
+      bc.out.incF.textContent = fmt(income.fortnightly, curr);
+      bc.out.incM.textContent = fmt(income.monthly, curr);
+      bc.out.incY.textContent = fmt(income.yearly, curr);
+      bc.out.expW.textContent = fmt(expenses.weekly, curr);
+      bc.out.expF.textContent = fmt(expenses.fortnightly, curr);
+      bc.out.expM.textContent = fmt(expenses.monthly, curr);
+      bc.out.expY.textContent = fmt(expenses.yearly, curr);
+      const leftover = income.monthly - expenses.monthly;
+      bc.out.leftover.textContent = fmt(leftover, curr);
+      bc.out.note.textContent = leftover < 0 ? 'You are over by '+fmt(-leftover,curr)+' per month.' : 'You have '+fmt(leftover,curr)+' left per month.';
+    }
+
+    // init rows
+    if (!state.items?.length){ addRow({name:'Rent', amount:0}); addRow({name:'Groceries', amount:0}); }
+    else state.items.forEach(addRow);
+
+    // events
+    bc.add.addEventListener('click', ()=>{ addRow(); });
+    bc.clear.addEventListener('click', ()=>{ state={ freq:'fortnightly', income:0, curr:bc.curr.value, items:[] }; bc.income.value=0; bc.freq.value='fortnightly'; bc.table.innerHTML=''; addRow(); addRow(); syncFromUI(); render(); });
+    bc.income.addEventListener('input', ()=>{ syncFromUI(); render(); });
+    bc.freq.addEventListener('change', ()=>{ syncFromUI(); render(); });
+    bc.curr.addEventListener('change', ()=>{ syncFromUI(); render(); });
+    syncFromUI(); render();
+
+    // ---------- Savings Calculator ----------
+    const sc = {
+      balance: $('#sc-balance'), contrib: $('#sc-contrib'), freq: $('#sc-freq'), rate: $('#sc-rate'), target: $('#sc-target'),
+      curr: $('#sc-curr'), income: $('#sc-income'), incfreq: $('#sc-incfreq'), calc: $('#sc-calc'), clear: $('#sc-clear'),
+      out: { cm: $('#sc-cm'), months: $('#sc-months'), date: $('#sc-date'), ratepct: $('#sc-ratepct'), note: $('#sc-note') }
+    };
+
+    function toMonthly(amount, freq){
+      if (!isFinite(amount)||amount<=0) return 0;
+      switch(freq){
+        case 'weekly': return amount * 52/12;
+        case 'fortnightly': return amount * 26/12;
+        case 'monthly': return amount;
+        case 'yearly': return amount / 12;
+      }
+      return amount;
+    }
+
+    function monthsToGoal(P0, cMonthly, annualRate, target){
+      const r = Math.pow(1 + (annualRate/100), 1/12) - 1; // monthly compounding
+      if (!isFinite(P0)) P0 = 0; if (!isFinite(cMonthly)) cMonthly = 0; if (!isFinite(target)) target = 0;
+      if (target <= P0) return 0;
+      if (r <= 0){
+        if (cMonthly <= 0) return Infinity; // impossible
+        return Math.ceil((target - P0) / cMonthly);
+      }
+      // n = ln( (c + r*P0) / (c + r*P0 - r*A) ) / ln(1+r)
+      const numerator = cMonthly + r*P0;
+      const denom = cMonthly + r*P0 - r*target;
+      if (denom <= 0) return Infinity; // contribution too small for target at this rate
+      const n = Math.log(numerator/denom) / Math.log(1+r);
+      return Math.ceil(Math.max(0, n));
+    }
+
+    const fmtMoney = (v,c) => new Intl.NumberFormat('en-AU',{style:'currency',currency:c}).format(isFinite(v)?v:0);
+    const fmtPct = v => isFinite(v)? (v.toFixed(1)+'%') : '—';
+
+    function runSavings(){
+      const P0 = parseFloat(sc.balance.value||'0')||0;
+      const contrib = parseFloat(sc.contrib.value||'0')||0;
+      const cMonthly = toMonthly(contrib, sc.freq.value);
+      const rate = parseFloat(sc.rate.value||'0')||0;
+      const target = parseFloat(sc.target.value||'0')||0;
+      const months = monthsToGoal(P0, cMonthly, rate, target);
+      sc.out.cm.textContent = fmtMoney(cMonthly, sc.curr.value);
+      sc.out.months.textContent = months === Infinity ? '—' : String(months);
+      if (months === Infinity) {
+        sc.out.date.textContent = 'Unreachable with current inputs';
+        sc.out.note.innerHTML = 'Increase contribution or reduce target. If annual return is 0%, we use linear maths.';
+      } else {
+        const d = new Date(); d.setMonth(d.getMonth()+months);
+        sc.out.date.textContent = d.toLocaleDateString('en-AU', { year:'numeric', month:'long' });
+      }
+      // Savings rate (optional)
+      const inc = parseFloat(sc.income.value||'0')||0;
+      const incMonthly = inc>0 ? toMonthly(inc, sc.incfreq.value) : 0;
+      const ratePct = incMonthly>0 ? (cMonthly/incMonthly*100) : NaN;
+      sc.out.ratepct.textContent = isFinite(ratePct) ? fmtPct(ratePct) : '—';
+    }
+
+    sc.calc.addEventListener('click', runSavings);
+    sc.clear.addEventListener('click', ()=>{
+      sc.balance.value=''; sc.contrib.value=''; sc.rate.value='0'; sc.target.value=''; sc.income.value=''; runSavings();
+    });
+  </script>
+</body>
+</html>
