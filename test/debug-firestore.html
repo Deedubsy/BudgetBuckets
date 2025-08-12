@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Firestore Permissions</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #0a0a0a;
+            color: #e4e4e4;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        button {
+            background: #4a9eff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .success { color: #4ade80; }
+        .error { color: #ef4444; }
+        .info { color: #60a5fa; }
+        pre { 
+            background: #1a1a1a; 
+            padding: 15px; 
+            border-radius: 4px; 
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug Firestore Permissions</h1>
+        
+        <button onclick="checkAuth()">1. Check Authentication</button>
+        <button onclick="testUserDoc()">2. Test User Document</button>
+        <button onclick="testBudgetCreate()">3. Test Budget Create</button>
+        <button onclick="testBudgetList()">4. Test Budget List</button>
+        <button onclick="runAllTests()">Run All Tests</button>
+        <button onclick="clearResults()">Clear</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script type="module">
+        import { authHelpers, firestoreHelpers } from '../auth/firebase.js';
+        
+        const results = document.getElementById('results');
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = `<pre>${new Date().toISOString()}: ${message}</pre>`;
+            results.appendChild(div);
+        }
+        
+        window.clearResults = () => {
+            results.innerHTML = '';
+        };
+        
+        window.checkAuth = async () => {
+            try {
+                log('Checking authentication state...');
+                
+                const user = await authHelpers.waitForAuth();
+                if (!user) {
+                    log('❌ Not authenticated', 'error');
+                    return null;
+                }
+                
+                log(`✅ Authenticated as: ${user.uid}`, 'success');
+                log(`Email: ${user.email}`, 'info');
+                
+                // Check token
+                try {
+                    const token = await user.getIdToken();
+                    log('✅ Valid ID token obtained', 'success');
+                    
+                    // Decode token to check claims
+                    const decoded = JSON.parse(atob(token.split('.')[1]));
+                    log(`Token claims: ${JSON.stringify(decoded, null, 2)}`, 'info');
+                } catch (e) {
+                    log(`❌ Token error: ${e.message}`, 'error');
+                }
+                
+                return user;
+            } catch (error) {
+                log(`❌ Auth check failed: ${error.message}`, 'error');
+                return null;
+            }
+        };
+        
+        window.testUserDoc = async () => {
+            try {
+                const user = await checkAuth();
+                if (!user) return;
+                
+                log('Testing user document access...');
+                
+                const userRef = firestoreHelpers.doc('users', user.uid);
+                
+                // Test read
+                try {
+                    const doc = await firestoreHelpers.getDoc(userRef);
+                    if (doc.exists()) {
+                        log('✅ User doc exists and is readable', 'success');
+                    } else {
+                        log('⚠️ User doc does not exist (will create)', 'info');
+                    }
+                } catch (e) {
+                    log(`❌ Read failed: ${e.message}`, 'error');
+                }
+                
+                // Test write
+                try {
+                    await firestoreHelpers.setDoc(userRef, {
+                        email: user.email,
+                        testField: 'debug test',
+                        timestamp: firestoreHelpers.serverTimestamp()
+                    }, { merge: true });
+                    log('✅ User doc write successful', 'success');
+                } catch (e) {
+                    log(`❌ Write failed: ${e.message}`, 'error');
+                    log(`Error code: ${e.code}`, 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ User doc test failed: ${error.message}`, 'error');
+            }
+        };
+        
+        window.testBudgetCreate = async () => {
+            try {
+                const user = await checkAuth();
+                if (!user) return;
+                
+                log('Testing budget creation...');
+                
+                const budgetData = {
+                    name: 'Debug Test Budget',
+                    settings: {
+                        incomeAmount: 1000,
+                        incomeFrequency: 'Monthly',
+                        currency: 'USD'
+                    },
+                    expenses: [],
+                    savings: [],
+                    createdAt: firestoreHelpers.serverTimestamp(),
+                    updatedAt: firestoreHelpers.serverTimestamp()
+                };
+                
+                // Try different paths
+                const paths = [
+                    `users/${user.uid}/budgets`,
+                    `budgets`
+                ];
+                
+                for (const path of paths) {
+                    log(`Trying path: ${path}`);
+                    try {
+                        const collRef = firestoreHelpers.collection(path);
+                        const docRef = await firestoreHelpers.addDoc(collRef, budgetData);
+                        log(`✅ Success at path: ${path}, ID: ${docRef.id}`, 'success');
+                        
+                        // Try to read it back
+                        const doc = await firestoreHelpers.getDoc(docRef);
+                        if (doc.exists()) {
+                            log('✅ Can read back the created document', 'success');
+                        }
+                        
+                        // Clean up test doc
+                        await firestoreHelpers.deleteDoc(docRef);
+                        log('✅ Cleaned up test document', 'success');
+                        
+                    } catch (e) {
+                        log(`❌ Failed at path ${path}: ${e.message}`, 'error');
+                    }
+                }
+                
+            } catch (error) {
+                log(`❌ Budget create test failed: ${error.message}`, 'error');
+            }
+        };
+        
+        window.testBudgetList = async () => {
+            try {
+                const user = await checkAuth();
+                if (!user) return;
+                
+                log('Testing budget list access...');
+                
+                const paths = [
+                    `users/${user.uid}/budgets`,
+                    `users/${user.uid}`,
+                    `budgets`
+                ];
+                
+                for (const path of paths) {
+                    log(`Trying to list from: ${path}`);
+                    try {
+                        const collRef = firestoreHelpers.collection(path);
+                        const snapshot = await firestoreHelpers.getDocs(collRef);
+                        log(`✅ Can read from ${path}: ${snapshot.size} docs`, 'success');
+                    } catch (e) {
+                        log(`❌ Cannot read from ${path}: ${e.message}`, 'error');
+                    }
+                }
+                
+            } catch (error) {
+                log(`❌ Budget list test failed: ${error.message}`, 'error');
+            }
+        };
+        
+        window.runAllTests = async () => {
+            clearResults();
+            log('🚀 Running all tests...', 'info');
+            await checkAuth();
+            await testUserDoc();
+            await testBudgetCreate();
+            await testBudgetList();
+            log('✅ All tests complete', 'success');
+        };
+    </script>
+</body>
+</html>

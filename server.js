@@ -123,6 +123,10 @@ app.get('/test/network-diagnostic.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'test', 'network-diagnostic.html'));
 });
 
+app.get('/test/debug-firestore.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'test', 'debug-firestore.html'));
+});
+
 // SPA fallback routes - only if no static file was found
 app.get('/app/*', (req, res, next) => {
   // Only serve the HTML if this isn't a request for a static file
