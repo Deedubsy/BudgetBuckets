@@ -78,15 +78,38 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                 needsSave = true;
             }
 
-            // Add type-specific fields
-            if (bucket.type === 'saving' && !bucket.target) {
-                bucket.target = {
-                    amountCents: 0,
-                    targetDate: null,
-                    autoContributionEnabled: false
-                };
-                needsSave = true;
+            // Migrate old savings buckets to new goal structure
+            if (bucket.type === 'saving') {
+                if (!bucket.goal && bucket.items && bucket.items.length > 0) {
+                    // Convert old savings bucket with items to new goal structure
+                    const totalAmount = sumIncludedItems(bucket);
+                    bucket.goal = {
+                        amountCents: Math.round(totalAmount * 100 * 50), // Assume 50 periods to goal
+                        targetDate: null,
+                        savedSoFarCents: 0,
+                        contributionPerPeriodCents: Math.round(totalAmount * 100)
+                    };
+                    // Clear out old items structure for savings buckets
+                    bucket.items = [];
+                    needsSave = true;
+                } else if (!bucket.goal) {
+                    bucket.goal = {
+                        amountCents: 0,
+                        targetDate: null,
+                        savedSoFarCents: 0,
+                        contributionPerPeriodCents: 0
+                    };
+                    needsSave = true;
+                }
+                
+                // Remove old target structure if it exists
+                if (bucket.target) {
+                    delete bucket.target;
+                    needsSave = true;
+                }
             }
+
+            // Add type-specific fields for debt
             if (bucket.type === 'debt' && !bucket.debt) {
                 bucket.debt = {
                     aprPct: 0,
@@ -155,7 +178,13 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
     function getTotalSavings() {
         return state.savings
             .filter(bucket => bucket.include && bucket.type !== 'debt')
-            .reduce((sum, bucket) => sum + sumIncludedItems(bucket), 0);
+            .reduce((sum, bucket) => {
+                // For savings buckets, use contribution amount instead of items
+                if (bucket.type === 'saving' && bucket.goal) {
+                    return sum + (bucket.goal.contributionPerPeriodCents / 100);
+                }
+                return sum + sumIncludedItems(bucket);
+            }, 0);
     }
 
     function getTotalDebt() {
@@ -373,21 +402,68 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
     }
 
     function updateSavingsSection(bucket, bucketEl) {
-        const target = bucket.target || {};
-        const targetAmountEl = bucketEl.querySelector('.target-amount');
-        const targetDateEl = bucketEl.querySelector('.target-date');
-        const autoCalcEl = bucketEl.querySelector('.auto-calc');
-        const neededAmountEl = bucketEl.querySelector('.needed-amount');
+        const goal = bucket.goal || {};
+        const goalAmountEl = bucketEl.querySelector('.goal-amount');
+        const goalDateEl = bucketEl.querySelector('.goal-date');
+        const savedSoFarEl = bucketEl.querySelector('.saved-so-far');
+        const contributionEl = bucketEl.querySelector('.contribution-amount');
+        const contribFreqEl = bucketEl.querySelector('.contrib-freq');
         
-        targetAmountEl.value = target.amountCents ? (target.amountCents / 100).toFixed(2) : '';
-        targetDateEl.value = target.targetDate || '';
-        autoCalcEl.checked = target.autoContributionEnabled || false;
+        // Update field values
+        goalAmountEl.value = goal.amountCents ? (goal.amountCents / 100).toFixed(2) : '';
+        goalDateEl.value = goal.targetDate || '';
+        savedSoFarEl.value = goal.savedSoFarCents ? (goal.savedSoFarCents / 100).toFixed(2) : '';
+        contributionEl.value = goal.contributionPerPeriodCents ? (goal.contributionPerPeriodCents / 100).toFixed(2) : '';
         
-        // Calculate needed amount
-        const currentBalance = sumIncludedItems(bucket) * 100; // in cents
-        const needMonthly = monthlyNeeded(target.amountCents || 0, currentBalance, target.targetDate);
-        const needPerPeriod = monthlyToBase(needMonthly, state.settings.incomeFrequency);
-        neededAmountEl.textContent = formatCurrency(needPerPeriod / 100);
+        // Update frequency label
+        const freq = state.settings.incomeFrequency.toLowerCase();
+        contribFreqEl.textContent = freq;
+        
+        // Update progress bar
+        const goalAmount = goal.amountCents / 100;
+        const savedAmount = goal.savedSoFarCents / 100;
+        const percentage = goalAmount > 0 ? Math.min((savedAmount / goalAmount) * 100, 100) : 0;
+        
+        const progressCurrent = bucketEl.querySelector('.progress-current');
+        const progressPercentage = bucketEl.querySelector('.progress-percentage');
+        const progressTarget = bucketEl.querySelector('.progress-target');
+        const progressBarFill = bucketEl.querySelector('.progress-bar-fill');
+        
+        progressCurrent.textContent = formatCurrency(savedAmount);
+        progressPercentage.textContent = `${Math.round(percentage)}%`;
+        progressTarget.textContent = `of ${formatCurrency(goalAmount)}`;
+        progressBarFill.style.width = `${percentage}%`;
+        
+        // Calculate time to goal
+        const contribution = goal.contributionPerPeriodCents / 100;
+        const remaining = Math.max(0, goalAmount - savedAmount);
+        const timeEstimateEl = bucketEl.querySelector('.time-estimate');
+        
+        if (contribution > 0 && remaining > 0) {
+            const periodsNeeded = Math.ceil(remaining / contribution);
+            const freqName = state.settings.incomeFrequency.toLowerCase();
+            let timeText = `${periodsNeeded} ${freqName}`;
+            if (periodsNeeded === 1) {
+                timeText = timeText.slice(0, -1); // Remove 's' for singular
+            }
+            
+            // Add estimated completion date if goal date is set
+            if (goal.targetDate) {
+                const targetDate = new Date(goal.targetDate);
+                const estimatedDate = new Date();
+                const daysPerPeriod = freqName === 'weekly' ? 7 : freqName === 'fortnightly' ? 14 : freqName === 'monthly' ? 30 : 365;
+                estimatedDate.setDate(estimatedDate.getDate() + (periodsNeeded * daysPerPeriod));
+                
+                const onTrack = estimatedDate <= targetDate;
+                timeEstimateEl.innerHTML = `Time to goal: ${timeText} <span style="color: ${onTrack ? '#5eead4' : '#ff6b6b'}">(${onTrack ? 'on track' : 'behind'})</span>`;
+            } else {
+                timeEstimateEl.textContent = `Time to goal: ${timeText}`;
+            }
+        } else if (remaining <= 0) {
+            timeEstimateEl.innerHTML = `<span style="color: #5eead4">Goal achieved! 🎉</span>`;
+        } else {
+            timeEstimateEl.textContent = 'Time to goal: Set contribution amount';
+        }
     }
 
     function updateDebtSection(bucket, bucketEl) {
@@ -488,11 +564,33 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         // Set up event listeners
         setupBucketEventListeners(bucket, card, section);
         
-        // Create initial items
-        bucket.items = bucket.items || [];
-        bucket.items.forEach(item => {
-            addItemToUI(item, card, bucket, section);
-        });
+        // Handle different bucket types
+        if (bucket.type === 'saving') {
+            // Hide items table and add button for savings buckets
+            const itemsTable = card.querySelector('.items-table');
+            const addItemBtn = card.querySelector('.add-item-btn');
+            const bucketTotal = card.querySelector('.bucket-total');
+            
+            itemsTable.style.display = 'none';
+            addItemBtn.style.display = 'none';
+            bucketTotal.style.display = 'none';
+            
+            // Initialize goal data if missing
+            if (!bucket.goal) {
+                bucket.goal = {
+                    amountCents: 0,
+                    targetDate: null,
+                    savedSoFarCents: 0,
+                    contributionPerPeriodCents: 0
+                };
+            }
+        } else {
+            // Create initial items for non-savings buckets
+            bucket.items = bucket.items || [];
+            bucket.items.forEach(item => {
+                addItemToUI(item, card, bucket, section);
+            });
+        }
         
         updateBucketUI(bucket, card);
         updateBucketTotal(bucket, card);
@@ -613,61 +711,29 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
     }
 
     function setupTypeSpecificEventListeners(bucket, card) {
-        // Savings-specific listeners
-        const targetAmountEl = card.querySelector('.target-amount');
-        const targetDateEl = card.querySelector('.target-date');
-        const autoCalcEl = card.querySelector('.auto-calc');
-        const setAmountBtn = card.querySelector('.set-amount-btn');
+        // Savings-specific listeners (new structure)
+        const goalAmountEl = card.querySelector('.goal-amount');
+        const goalDateEl = card.querySelector('.goal-date');
+        const savedSoFarEl = card.querySelector('.saved-so-far');
+        const contributionEl = card.querySelector('.contribution-amount');
         
         const debouncedSavingsUpdate = debounce(() => {
-            if (!bucket.target) bucket.target = {};
-            bucket.target.amountCents = Math.round((parseFloat(targetAmountEl.value) || 0) * 100);
-            bucket.target.targetDate = targetDateEl.value || null;
-            bucket.target.autoContributionEnabled = autoCalcEl.checked;
+            if (!bucket.goal) bucket.goal = {};
+            bucket.goal.amountCents = Math.round((parseFloat(goalAmountEl.value) || 0) * 100);
+            bucket.goal.targetDate = goalDateEl.value || null;
+            bucket.goal.savedSoFarCents = Math.round((parseFloat(savedSoFarEl.value) || 0) * 100);
+            bucket.goal.contributionPerPeriodCents = Math.round((parseFloat(contributionEl.value) || 0) * 100);
             
             updateSavingsSection(bucket, card);
-            
-            if (bucket.target.autoContributionEnabled) {
-                // Auto-set the amount if enabled
-                const currentBalance = sumIncludedItems(bucket) * 100;
-                const needMonthly = monthlyNeeded(bucket.target.amountCents, currentBalance, bucket.target.targetDate);
-                const needPerPeriod = monthlyToBase(needMonthly, state.settings.incomeFrequency);
-                
-                // Update bucket amount
-                if (bucket.items.length > 0) {
-                    bucket.items[0].amount = needPerPeriod / 100;
-                    const firstItemAmountEl = card.querySelector('.item-amount');
-                    if (firstItemAmountEl) {
-                        firstItemAmountEl.value = (needPerPeriod / 100).toFixed(2);
-                    }
-                }
-                updateBucketTotal(bucket, card);
-                updateDerivedValues();
-            }
-            
+            updateBucketTotal(bucket, card);
+            updateDerivedValues();
             saveToCloud();
         }, 350);
         
-        targetAmountEl.addEventListener('input', debouncedSavingsUpdate);
-        targetDateEl.addEventListener('change', debouncedSavingsUpdate);
-        autoCalcEl.addEventListener('change', debouncedSavingsUpdate);
-        
-        setAmountBtn.addEventListener('click', () => {
-            if (bucket.items.length > 0) {
-                const currentBalance = sumIncludedItems(bucket) * 100;
-                const needMonthly = monthlyNeeded(bucket.target?.amountCents || 0, currentBalance, bucket.target?.targetDate);
-                const needPerPeriod = monthlyToBase(needMonthly, state.settings.incomeFrequency);
-                
-                bucket.items[0].amount = needPerPeriod / 100;
-                const firstItemAmountEl = card.querySelector('.item-amount');
-                if (firstItemAmountEl) {
-                    firstItemAmountEl.value = (needPerPeriod / 100).toFixed(2);
-                }
-                updateBucketTotal(bucket, card);
-                updateDerivedValues();
-                saveToCloud();
-            }
-        });
+        if (goalAmountEl) goalAmountEl.addEventListener('input', debouncedSavingsUpdate);
+        if (goalDateEl) goalDateEl.addEventListener('change', debouncedSavingsUpdate);
+        if (savedSoFarEl) savedSoFarEl.addEventListener('input', debouncedSavingsUpdate);
+        if (contributionEl) contributionEl.addEventListener('input', debouncedSavingsUpdate);
         
         // Debt-specific listeners
         const aprEl = card.querySelector('.apr-pct');
@@ -765,9 +831,19 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
     }
 
     function updateBucketTotal(bucket, bucketEl) {
-        const total = sumIncludedItems(bucket);
+        let total;
+        
+        // For savings buckets, use contribution amount instead of items
+        if (bucket.type === 'saving' && bucket.goal) {
+            total = bucket.goal.contributionPerPeriodCents / 100;
+        } else {
+            total = sumIncludedItems(bucket);
+        }
+        
         const totalEl = bucketEl.querySelector('.bucket-total-value');
-        totalEl.textContent = formatCurrency(total);
+        if (totalEl) {
+            totalEl.textContent = formatCurrency(total);
+        }
         
         // Update header total (shown when collapsed)
         const headerTotal = bucketEl.querySelector('.bucket-header-total');
@@ -799,12 +875,6 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         const newBucket = {
             id: generateId(),
             name: '',
-            items: [{
-                id: generateId(),
-                name: '',
-                amount: 0,
-                include: true
-            }],
             include: true,
             color: '#00cdd6',
             bankAccount: '',
@@ -817,16 +887,28 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         
         // Add type-specific defaults
         if (newBucket.type === 'saving') {
-            newBucket.target = {
+            newBucket.goal = {
                 amountCents: 0,
                 targetDate: null,
-                autoContributionEnabled: false
+                savedSoFarCents: 0,
+                contributionPerPeriodCents: 0
             };
-        } else if (newBucket.type === 'debt') {
-            newBucket.debt = {
-                aprPct: 0,
-                minPaymentCents: 0
-            };
+            // No items for savings buckets
+        } else {
+            // Add items for expense and debt buckets
+            newBucket.items = [{
+                id: generateId(),
+                name: '',
+                amount: 0,
+                include: true
+            }];
+            
+            if (newBucket.type === 'debt') {
+                newBucket.debt = {
+                    aprPct: 0,
+                    minPaymentCents: 0
+                };
+            }
         }
         
         if (section === 'expenses') {
@@ -1004,9 +1086,6 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             {
                 id: generateId(),
                 name: 'Emergency Fund',
-                items: [
-                    { id: generateId(), name: 'Monthly Contribution', amount: 0, include: true }
-                ],
                 include: true,
                 color: '#00cdd6',
                 bankAccount: '',
@@ -1015,10 +1094,11 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                 notes: 'Aim for 3-6 months of expenses',
                 overspendThresholdPct: 80,
                 spentThisPeriodCents: 0,
-                target: {
-                    amountCents: 0,
+                goal: {
+                    amountCents: 1000000, // $10,000
                     targetDate: null,
-                    autoContributionEnabled: false
+                    savedSoFarCents: 0,
+                    contributionPerPeriodCents: 20000 // $200
                 }
             }
         ];
@@ -1268,9 +1348,6 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             {
                 id: generateId(),
                 name: 'Emergency Fund',
-                items: [
-                    { id: generateId(), name: 'Emergency savings', amount: 300, include: true }
-                ],
                 include: true,
                 color: '#5eead4',
                 bankAccount: 'Savings Account',
@@ -1279,12 +1356,16 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                 notes: 'Building emergency fund',
                 overspendThresholdPct: 80,
                 spentThisPeriodCents: 0,
-                target: {
+                goal: {
                     amountCents: 2000000, // $20,000
                     targetDate: '2025-12-31',
-                    autoContributionEnabled: false
+                    savedSoFarCents: 500000, // $5,000 already saved
+                    contributionPerPeriodCents: 30000 // $300 per period
                 }
-            },
+            }
+        ];
+        
+        state.debt = [
             {
                 id: generateId(),
                 name: 'Credit Card Debt',
@@ -1295,7 +1376,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                 color: '#ff9f43',
                 bankAccount: 'Credit Card',
                 type: 'debt',
-                orderIndex: 1,
+                orderIndex: 0,
                 notes: 'Paying off credit card',
                 overspendThresholdPct: 80,
                 spentThisPeriodCents: 0,

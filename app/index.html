@@ -246,24 +246,38 @@
                 
                 <!-- Savings-specific section -->
                 <div class="savings-info" style="display:none;">
-                    <div style="display: flex; gap: 12px; margin-bottom: 8px;">
+                    <div class="savings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                         <div>
-                            <label>Goal total:</label>
-                            <input type="number" class="target-amount" min="0" step="0.01">
+                            <label>Goal amount:</label>
+                            <input type="number" class="goal-amount" min="0" step="0.01" placeholder="10000">
                         </div>
                         <div>
                             <label>Goal date:</label>
-                            <input type="date" class="target-date">
+                            <input type="date" class="goal-date">
+                        </div>
+                        <div>
+                            <label>Saved so far:</label>
+                            <input type="number" class="saved-so-far" min="0" step="0.01" placeholder="0">
+                        </div>
+                        <div>
+                            <label>Contribution per <span class="contrib-freq">period</span>:</label>
+                            <input type="number" class="contribution-amount" min="0" step="0.01" placeholder="200">
                         </div>
                     </div>
-                    <label>
-                        <input type="checkbox" class="auto-calc">
-                        Auto-calculate contribution
-                    </label>
-                    <div class="needed-info">
-                        <span>Needed this period: </span>
-                        <span class="needed-amount">$0.00</span>
-                        <button type="button" class="set-amount-btn">Set as amount</button>
+                    
+                    <div class="savings-progress" style="margin: 12px 0;">
+                        <div class="progress-info" style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px;">
+                            <span class="progress-current">$0</span>
+                            <span class="progress-percentage">0%</span>
+                            <span class="progress-target">of $0</span>
+                        </div>
+                        <div class="progress-bar-container" style="height: 8px; background: #0f1720; border-radius: 4px; overflow: hidden;">
+                            <div class="progress-bar-fill" style="height: 100%; background: linear-gradient(90deg, #00cdd6, #5eead4); width: 0%; transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="time-to-goal" style="padding: 8px; background: #0f1720; border-radius: 8px; font-size: 14px;">
+                        <span class="time-estimate">Time to goal: —</span>
                     </div>
                 </div>
                 
