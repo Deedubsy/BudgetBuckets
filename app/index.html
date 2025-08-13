@@ -127,8 +127,8 @@
                     <span class="total-value" id="totalRemaining">$0.00</span>
                 </div>
             </div>
-            <!-- Allocation donut chart -->
-            <div class="alloc-chart-container">
+            <!-- Allocation donut chart (hidden) -->
+            <div class="alloc-chart-container" style="display: none;">
                 <canvas id="allocRing" width="120" height="120" aria-label="Allocation ring"></canvas>
                 <div id="allocLegend" class="legend"></div>
             </div>
@@ -199,6 +199,7 @@
                 </button>
                 <span class="badge bank-badge" style="display:none;"></span>
                 <span class="pct">0% of income</span>
+                <span class="bucket-header-total" style="display: none; margin-left: 8px; color: var(--accent); font-weight: 600;">$0.00</span>
                 <span class="pill pill--ok">OK</span>
                 <div class="bucket-controls">
                     <input type="text" class="bank-account" placeholder="Bank account">
@@ -270,25 +271,6 @@
                     </div>
                     <div class="payoff-info">
                         Est. payoff: <span class="payoff-text">—</span>
-                    </div>
-                </div>
-                <div class="goal-section" style="display: none;">
-                    <div class="goal-controls">
-                        <label class="goal-checkbox-label">
-                            <input type="checkbox" class="goal-enabled">
-                            <span>Set goal</span>
-                        </label>
-                        <input type="number" class="goal-amount" min="0" step="0.01" placeholder="Goal amount" style="display: none;">
-                    </div>
-                    <div class="progress-container" style="display: none;">
-                        <div class="progress-bar">
-                            <div class="progress-fill"></div>
-                        </div>
-                        <div class="progress-text">
-                            <span class="progress-current">$0</span>
-                            <span class="progress-percent">0%</span>
-                            <span class="progress-goal">of $0</span>
-                        </div>
                     </div>
                 </div>
                 <table class="items-table">

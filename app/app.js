@@ -326,6 +326,9 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         if (bucket.type === 'saving') {
             spentLabel.textContent = `Contributed so far (this ${period}):`;
             remainingEl.textContent = `Still to save this ${period}: ${formatCurrency(remaining)}`;
+        } else if (bucket.type === 'debt') {
+            spentLabel.textContent = `Paid this ${period}:`;
+            remainingEl.textContent = `Still to pay this ${period}: ${formatCurrency(remaining)}`;
         } else {
             spentLabel.textContent = `Spent this ${period}:`;
             remainingEl.textContent = `Remaining: ${formatCurrency(remaining)}`;
@@ -531,7 +534,23 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         
         typeSelect.addEventListener('change', () => {
             bucket.type = typeSelect.value;
+            
+            // Initialize type-specific data structures
+            if (bucket.type === 'saving' && !bucket.target) {
+                bucket.target = {
+                    amountCents: 0,
+                    targetDate: null,
+                    autoContributionEnabled: false
+                };
+            } else if (bucket.type === 'debt' && !bucket.debt) {
+                bucket.debt = {
+                    aprPct: 0,
+                    minPaymentCents: 0
+                };
+            }
+            
             updateTypeSpecificSections(bucket, card);
+            setupTypeSpecificEventListeners(bucket, card);
             debouncedSave();
         });
         
@@ -559,11 +578,17 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         toggleIcon.addEventListener('click', (e) => {
             e.stopPropagation(); // Prevent event bubbling
             const content = card.querySelector('.bucket-content');
+            const headerTotal = card.querySelector('.bucket-header-total');
             const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
             
             content.style.display = isExpanded ? 'none' : 'block';
             toggleIcon.textContent = isExpanded ? '▶' : '▼';
             toggleBtn.setAttribute('aria-expanded', !isExpanded);
+            
+            // Show/hide header total
+            if (headerTotal) {
+                headerTotal.style.display = isExpanded ? 'inline' : 'none';
+            }
         });
         
         // Prevent name input from triggering toggle
@@ -731,6 +756,17 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         const total = sumIncludedItems(bucket);
         const totalEl = bucketEl.querySelector('.bucket-total-value');
         totalEl.textContent = formatCurrency(total);
+        
+        // Update header total (shown when collapsed)
+        const headerTotal = bucketEl.querySelector('.bucket-header-total');
+        if (headerTotal) {
+            const freq = state.settings.incomeFrequency.toLowerCase();
+            headerTotal.textContent = `${formatCurrency(total)} ${freq}`;
+            
+            // Show it if bucket is collapsed (default state)
+            const isExpanded = bucketEl.querySelector('.bucket-toggle').getAttribute('aria-expanded') === 'true';
+            headerTotal.style.display = isExpanded ? 'none' : 'inline';
+        }
     }
 
     function deleteBucket(bucketId, section) {
@@ -860,6 +896,101 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         }
     }
 
+    function loadTemplatesForNewUser() {
+        // Pre-made templates for common expenses
+        state.expenses = [
+            {
+                id: generateId(),
+                name: 'Housing',
+                items: [
+                    { id: generateId(), name: 'Rent/Mortgage', amount: 0, include: true },
+                    { id: generateId(), name: 'Utilities', amount: 0, include: true },
+                    { id: generateId(), name: 'Internet', amount: 0, include: true }
+                ],
+                include: true,
+                color: '#00cdd6',
+                bankAccount: '',
+                type: 'expense',
+                orderIndex: 0,
+                notes: '',
+                overspendThresholdPct: 80,
+                spentThisPeriodCents: 0
+            },
+            {
+                id: generateId(),
+                name: 'Transport',
+                items: [
+                    { id: generateId(), name: 'Fuel/Public Transport', amount: 0, include: true },
+                    { id: generateId(), name: 'Car Insurance', amount: 0, include: true },
+                    { id: generateId(), name: 'Registration', amount: 0, include: true }
+                ],
+                include: true,
+                color: '#00cdd6',
+                bankAccount: '',
+                type: 'expense',
+                orderIndex: 1,
+                notes: '',
+                overspendThresholdPct: 80,
+                spentThisPeriodCents: 0
+            },
+            {
+                id: generateId(),
+                name: 'Groceries',
+                items: [
+                    { id: generateId(), name: 'Weekly Shop', amount: 0, include: true }
+                ],
+                include: true,
+                color: '#00cdd6',
+                bankAccount: '',
+                type: 'expense',
+                orderIndex: 2,
+                notes: '',
+                overspendThresholdPct: 80,
+                spentThisPeriodCents: 0
+            },
+            {
+                id: generateId(),
+                name: 'Personal',
+                items: [
+                    { id: generateId(), name: 'Phone', amount: 0, include: true },
+                    { id: generateId(), name: 'Subscriptions', amount: 0, include: true },
+                    { id: generateId(), name: 'Entertainment', amount: 0, include: true }
+                ],
+                include: true,
+                color: '#00cdd6',
+                bankAccount: '',
+                type: 'expense',
+                orderIndex: 3,
+                notes: '',
+                overspendThresholdPct: 80,
+                spentThisPeriodCents: 0
+            }
+        ];
+        
+        state.savings = [
+            {
+                id: generateId(),
+                name: 'Emergency Fund',
+                items: [
+                    { id: generateId(), name: 'Monthly Contribution', amount: 0, include: true }
+                ],
+                include: true,
+                color: '#00cdd6',
+                bankAccount: '',
+                type: 'saving',
+                orderIndex: 0,
+                notes: 'Aim for 3-6 months of expenses',
+                overspendThresholdPct: 80,
+                spentThisPeriodCents: 0,
+                target: {
+                    amountCents: 0,
+                    targetDate: null,
+                    autoContributionEnabled: false
+                }
+            }
+        ];
+    }
+
     async function loadFromCloud() {
         if (!currentUser) {
             console.warn('No user available for cloud load');
@@ -888,6 +1019,9 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                 
                 updateUI();
             } else {
+                // New user - load templates
+                loadTemplatesForNewUser();
+                
                 // Create a new budget
                 const newBudget = await cloudStore.createBudget(currentUser.uid, {
                     name: 'My Budget',
@@ -896,6 +1030,8 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                     savings: state.savings
                 });
                 currentBudgetId = newBudget.id;
+                
+                updateUI();
             }
         } catch (error) {
             console.error('Failed to load from cloud:', error);
