@@ -74,10 +74,34 @@ function validateBucket(bucket) {
         bankAccount: validateString(bucket.bankAccount),
         include: Boolean(bucket.include),
         color: validateString(bucket.color),
+        type: validateString(bucket.type) || 'expense',
+        orderIndex: validateNumber(bucket.orderIndex) || 0,
+        notes: validateString(bucket.notes) || '',
+        overspendThresholdPct: validateNumber(bucket.overspendThresholdPct) || 80,
+        spentThisPeriodCents: validateNumber(bucket.spentThisPeriodCents) || 0,
         items: []
     };
 
-    // Add savings-specific fields if present
+    // Add savings-specific goal structure
+    if (bucket.goal && typeof bucket.goal === 'object') {
+        validated.goal = {
+            amountCents: validateNumber(bucket.goal.amountCents) || 0,
+            targetDate: validateString(bucket.goal.targetDate) || null,
+            savedSoFarCents: validateNumber(bucket.goal.savedSoFarCents) || 0,
+            contributionPerPeriodCents: validateNumber(bucket.goal.contributionPerPeriodCents) || 0,
+            autoCalc: Boolean(bucket.goal.autoCalc)
+        };
+    }
+
+    // Add debt-specific structure
+    if (bucket.debt && typeof bucket.debt === 'object') {
+        validated.debt = {
+            aprPct: validateNumber(bucket.debt.aprPct) || 0,
+            minPaymentCents: validateNumber(bucket.debt.minPaymentCents) || 0
+        };
+    }
+
+    // Legacy support for old savings fields
     if (bucket.goalEnabled !== undefined || bucket.goalAmount !== undefined) {
         validated.goalEnabled = Boolean(bucket.goalEnabled);
         validated.goalAmount = validateNumber(bucket.goalAmount);
@@ -104,7 +128,8 @@ function validateBudgetData(data) {
                 currency: 'AUD'
             },
             expenses: [],
-            savings: []
+            savings: [],
+            debt: []
         };
     }
     
@@ -121,28 +146,29 @@ function validateBudgetData(data) {
             currency: validateString(settings.currency, 'AUD')
         },
         expenses: [],
-        savings: []
+        savings: [],
+        debt: []
     };
 
-    // Validate expenses and savings arrays
+    // Validate expenses array
     if (Array.isArray(data.expenses)) {
         validated.expenses = data.expenses
             .slice(0, 50) // Limit buckets for performance
             .map(validateBucket);
     }
 
+    // Validate savings array
     if (Array.isArray(data.savings)) {
         validated.savings = data.savings
             .slice(0, 50) // Limit buckets for performance
-            .map(bucket => {
-                const validatedBucket = validateBucket(bucket);
-                // Ensure savings buckets have goal fields
-                if (validatedBucket.goalEnabled === undefined) {
-                    validatedBucket.goalEnabled = false;
-                    validatedBucket.goalAmount = 0;
-                }
-                return validatedBucket;
-            });
+            .map(validateBucket);
+    }
+
+    // Validate debt array
+    if (Array.isArray(data.debt)) {
+        validated.debt = data.debt
+            .slice(0, 50) // Limit buckets for performance
+            .map(validateBucket);
     }
 
     return scrubUndefined(validated);
