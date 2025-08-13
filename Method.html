@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Budget Buckets Method — What It Is, Why It Works, and How To Use It (AUD)</title>
+  <meta name="description" content="A practical guide to the Budget Buckets method: why buckets beat categories, how to set them up for weekly/fortnightly pay, and example bucket plans (AUD)." />
+  <link rel="canonical" href="https://your-domain.app/guide/budget-buckets-method" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="Budget Buckets Method — What It Is, Why It Works, and How To Use It (AUD)" />
+  <meta property="og:description" content="Step‑by‑step setup for buckets, with Aussie‑friendly weekly & fortnightly tips, example allocations, and common mistakes to avoid." />
+  <meta property="og:image" content="/assets/og-guide-buckets.png" />
+  <meta name="robots" content="index, follow" />
+  <style>
+    :root{ --bg:#0b0f14; --text:#e6edf3; --muted:#9fb0c3; --card:#10161d; --border:#1c2733; --accent:#00cdd6; --accent2:#5eead4; --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.35); --maxw:1100px; }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    img{max-width:100%;display:block}
+    .container{max-width:var(--maxw);margin:0 auto;padding:24px}
+    header.site{position:sticky;top:0;z-index:50;background:linear-gradient(180deg, rgba(11,15,20,.95), rgba(11,15,20,.9));backdrop-filter:saturate(140%) blur(8px);border-bottom:1px solid var(--border);padding:16px 0}
+    .nav{display:flex;align-items:center;gap:32px;justify-content:space-between;padding:0 24px}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:.2px;font-size:18px;transition:opacity 0.2s ease}
+    .brand:hover{opacity:.9}
+    .brand .dot{width:16px;height:16px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 0 4px rgba(0,205,214,.15)}
+    .nav nav{display:flex;align-items:center;gap:24px}
+    .nav a{color:var(--text);opacity:.85;padding:8px 12px;border-radius:8px;transition:all 0.2s ease;font-weight:500}
+    .nav a:hover{opacity:1;background:rgba(255,255,255,.05);text-decoration:none}
+    .nav .cta{padding:12px 20px;border-radius:999px;background:var(--accent);color:#032227;box-shadow:var(--shadow);font-weight:600;border:1px solid rgba(255,255,255,.06);text-decoration:none;transition:all 0.2s ease}
+    .nav .cta:hover{transform:translateY(-1px);box-shadow:0 12px 35px rgba(0,205,214,.25)}
+
+    .hero{padding:28px 0}
+    .eyebrow{display:inline-block;padding:6px 10px;border-radius:999px;background:#0e1821;border:1px solid var(--border);color:var(--muted);font-size:12px;letter-spacing:.3px;text-transform:uppercase}
+    h1{margin:.4rem 0 0;font-size:36px}
+    p.lead{color:var(--muted);font-size:18px}
+
+    .content{display:grid;grid-template-columns: 1fr 300px;gap:20px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .section{padding:24px}
+
+    .toc{position:sticky;top:84px;align-self:start}
+    .toc h3{margin:0 0 10px;font-size:16px;color:var(--muted)}
+    .toc ul{margin:0;padding-left:16px;list-style:none}
+    .toc li{margin:8px 0}
+    .toc a{color:var(--muted)}
+
+    .kicker{font-size:13px;color:var(--accent2);letter-spacing:.2px;text-transform:uppercase}
+    h2{margin:0 0 10px;font-size:26px}
+    h3{margin:10px 0 6px}
+    .grid-3{display:grid;gap:14px;grid-template-columns:repeat(3,1fr)}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#0e1821;border:1px solid var(--border);color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.2px}
+
+    .viz{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:10px}
+    .bucket{border:1px dashed var(--accent);border-radius:12px;padding:14px;min-height:90px;background:linear-gradient(180deg,#0f1520,#0c1117)}
+    .bucket h4{margin:0 0 6px;font-size:14px;color:var(--accent)}
+    .bucket .amt{color:var(--muted);font-size:13px}
+
+    table{width:100%;border-collapse:separate;border-spacing:0}
+    th,td{padding:10px;border-bottom:1px solid var(--border)}
+    th{text-align:left;color:var(--muted);font-weight:600}
+    tr:last-child td{border-bottom:none}
+
+    .tip{padding:12px;border-left:3px solid var(--accent);background:#0e1620;border:1px solid var(--border);border-radius:10px}
+
+    footer{padding:24px;border-top:1px solid var(--border);color:var(--muted)}
+    @media (max-width: 1000px){
+      .content{grid-template-columns:1fr} 
+      .toc{position:static}
+      .nav{padding:0 16px;gap:20px}
+      .nav nav{gap:16px}
+      .brand{font-size:16px}
+    }
+    @media (max-width: 768px){
+      .nav{flex-direction:column;gap:16px;padding:12px 16px}
+      .nav nav{flex-wrap:wrap;justify-content:center;gap:12px}
+      .nav a{padding:6px 10px;font-size:14px}
+      .nav .cta{padding:10px 16px}
+      header.site{padding:12px 0}
+    }
+  </style>
+</head>
+<body>
+  <header class="site">
+    <div class="container nav">
+      <a class="brand" href="/home.html">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Budget Buckets</span>
+      </a>
+      <nav aria-label="Primary">
+        <a href="/home.html">Home</a>
+        <a href="/calculators.html">Calculators</a>
+        <a href="/Method.html">Guide</a>
+        <a href="/blog/">Blog</a>
+        <a class="cta" href="/auth/login.html">Login</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <span class="eyebrow">Guide</span>
+      <h1>The Budget Buckets Method</h1>
+      <p class="lead">Buckets keep money organised by purpose, not by merchant category. You pick a single pay frequency (weekly/fortnightly/monthly), split that income into named buckets, and let totals tell you when to say yes or no. It’s zero‑faff budgeting that matches real pay cycles.</p>
+    </section>
+
+    <div class="content">
+      <article>
+        <!-- What are buckets -->
+        <section id="what" class="card section">
+          <div class="kicker">Concept</div>
+          <h2>What exactly is a “bucket”?</h2>
+          <p>A bucket is a simple <em>purpose</em> for your money: Rent, Groceries, Fuel, Gifts, Emergency, Holiday, etc. Each pay cycle, you add a fixed amount to each bucket. If a bucket runs dry, that’s the signal to pause or reallocate — no spreadsheets required.</p>
+          <div class="viz" aria-label="Example buckets">
+            <div class="bucket"><h4>Rent</h4><div class="amt">$900 / fn</div></div>
+            <div class="bucket"><h4>Groceries</h4><div class="amt">$240 / fn</div></div>
+            <div class="bucket"><h4>Holiday</h4><div class="amt">$80 / fn</div></div>
+          </div>
+          <h3>How is this different to “categories” or “envelopes”?</h3>
+          <ul>
+            <li><strong>Categories</strong> describe the <em>type</em> of spend after the fact. Buckets set the <em>limit</em> before you spend.</li>
+            <li><strong>Envelopes</strong> are close cousins; our twist is one global frequency and fast conversion so totals always align with your pay.</li>
+          </ul>
+        </section>
+
+        <!-- Why it works -->
+        <section id="why" class="card section">
+          <div class="kicker">Advantages</div>
+          <h2>Why buckets work</h2>
+          <div class="grid-3">
+            <div class="tip"><strong>Clarity.</strong><br> Named buckets reduce decision fatigue — you’re choosing between buckets, not endless line items.</div>
+            <div class="tip"><strong>Pay‑cycle aligned.</strong><br> Weekly or fortnightly inputs convert to monthly totals, so bills and savings stay synced.</div>
+            <div class="tip"><strong>Volatility control.</strong><br> Sinking buckets (e.g., Car Regos, Xmas, Repairs) smooth out lumpy costs.</div>
+          </div>
+          <p class="muted" style="margin-top:10px">Bonus: it’s easy to share with a partner — “We’ve got $120 left in Groceries this fortnight.”</p>
+        </section>
+
+        <!-- How to set up -->
+        <section id="how" class="card section">
+          <div class="kicker">Step‑by‑step</div>
+          <h2>Set up your buckets in 7 steps</h2>
+          <ol>
+            <li><strong>Pick your base frequency.</strong> Weekly or fortnightly for most Aussies. The app converts the rest.</li>
+            <li><strong>List fixed bills.</strong> Rent, utilities, internet, insurance. Put their amounts into buckets.</li>
+            <li><strong>Add essentials.</strong> Groceries, fuel, medical, school, phone.</li>
+            <li><strong>Add “sinking” funds.</strong> Car rego, services, gifts, clothing, home repairs.</li>
+            <li><strong>Plan savings.</strong> Emergency fund first, then goals (holiday, upgrade, deposit).</li>
+            <li><strong>Name a bank account for each bucket</strong> (optional). Helps when your bank has multiple accounts.</li>
+            <li><strong>Reality check.</strong> Income − (Expenses + Savings) ≥ 0. If negative, trim or re‑sequence goals.</li>
+          </ol>
+          <div class="tip">Use the <a href="/calculators.html#budget-calculator">Budget Calculator</a> to sanity‑check before you commit buckets in the app.</div>
+        </section>
+
+        <!-- Example plan -->
+        <section id="example" class="card section">
+          <div class="kicker">Example</div>
+          <h2>A sample fortnightly plan (AUD)</h2>
+          <p class="muted">This is illustrative only. Start conservative and adjust monthly.</p>
+          <table aria-label="Example bucket allocations">
+            <thead><tr><th>Bucket</th><th>Amount (fn)</th><th>Bank account</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td>Rent</td><td>$900</td><td>Everyday</td><td>Fixed</td></tr>
+              <tr><td>Groceries</td><td>$240</td><td>Groceries</td><td>Track with receipts</td></tr>
+              <tr><td>Fuel + Transport</td><td>$120</td><td>Everyday</td><td>Includes myki/Opal</td></tr>
+              <tr><td>Utilities</td><td>$110</td><td>Bills</td><td>Average of last 6 months</td></tr>
+              <tr><td>Insurance (Home/Car)</td><td>$70</td><td>Bills</td><td>Sinking fund</td></tr>
+              <tr><td>Emergency Fund</td><td>$100</td><td>Savings</td><td>Until 3–6 months expenses</td></tr>
+              <tr><td>Holiday</td><td>$80</td><td>Savings</td><td>Goal date in app</td></tr>
+              <tr><td>Gifts + Events</td><td>$40</td><td>Everyday</td><td>Sinking fund</td></tr>
+            </tbody>
+          </table>
+          <p class="tip" style="margin-top:10px">Rule of thumb: if “Leftover (Monthly)” is negative, cut 10–20% across non‑essentials and re‑run.</p>
+        </section>
+
+        <!-- Common mistakes -->
+        <section id="mistakes" class="card section">
+          <div class="kicker">Avoid</div>
+          <h2>Common mistakes & quick fixes</h2>
+          <ul>
+            <li><strong>Too many buckets.</strong> Keep 8–15. Merge micro‑buckets into “Misc” until you’ve got history.</li>
+            <li><strong>Changing frequencies per item.</strong> Don’t. One global frequency keeps maths sane.</li>
+            <li><strong>No buffer.</strong> Add a tiny “Oh‑no” bucket. $20–$50 per fortnight saves headaches.</li>
+            <li><strong>Forgetting annuals.</strong> List every yearly bill; divide to your base frequency and bucket it.</li>
+          </ul>
+        </section>
+
+        <!-- Advanced tips -->
+        <section id="advanced" class="card section">
+          <div class="kicker">Pro tips</div>
+          <h2>Make buckets work even better</h2>
+          <ul>
+            <li><strong>Automate transfers</strong> on pay‑day to separate accounts (if your bank supports multiple sub‑accounts).</li>
+            <li><strong>Overflow rules:</strong> If Groceries is under by month‑end, sweep the surplus to Savings.</li>
+            <li><strong>Review cadence:</strong> Quick weekly glance; deeper monthly review; reset goals quarterly.</li>
+          </ul>
+          <div class="tip">Already using the app? Keep totals visible with the sticky card, and label each bucket with a bank account for easier reconciliation.</div>
+        </section>
+
+        <!-- CTA -->
+        <section id="cta" class="card section">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+            <div>
+              <h3 style="margin:0 0 6px">Ready to build your buckets?</h3>
+              <p class="muted" style="margin:0">Start with the calculator, then create buckets in the app. Adjust monthly — progress beats perfection.</p>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <a class="cta" href="/calculators.html">Open Calculators</a>
+              <a class="cta" href="/auth/login.html">Login</a>
+            </div>
+          </div>
+        </section>
+      </article>
+
+      <!-- Sidebar TOC -->
+      <aside class="toc">
+        <div class="card section">
+          <h3>On this page</h3>
+          <ul>
+            <li><a href="#what">What are buckets</a></li>
+            <li><a href="#why">Why buckets work</a></li>
+            <li><a href="#how">Set up in 7 steps</a></li>
+            <li><a href="#example">Example plan</a></li>
+            <li><a href="#mistakes">Mistakes & fixes</a></li>
+            <li><a href="#advanced">Pro tips</a></li>
+            <li><a href="#cta">Get started</a></li>
+          </ul>
+          <div class="pill" style="margin-top:12px">Last updated: <span id="lastUpdated"></span></div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="container"><span class="muted">© <span id="year"></span> Budget Buckets — Guide</span></footer>
+
+  <!-- Structured Data: HowTo -->
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"HowTo",
+    "name":"Set up the Budget Buckets method",
+    "description":"A step‑by‑step process to create buckets that align with weekly or fortnightly pay in AUD.",
+    "step":[
+      {"@type":"HowToStep","name":"Pick your base frequency","text":"Choose weekly or fortnightly as your input. The app converts to monthly/yearly."},
+      {"@type":"HowToStep","name":"List fixed bills","text":"Rent, utilities, internet, insurance. Add each as buckets."},
+      {"@type":"HowToStep","name":"Add essentials","text":"Groceries, fuel, medical, school, phone."},
+      {"@type":"HowToStep","name":"Add sinking funds","text":"Car rego, services, gifts, clothing, home repairs."},
+      {"@type":"HowToStep","name":"Plan savings","text":"Emergency fund first, then goals like holiday or deposit."},
+      {"@type":"HowToStep","name":"Label bank accounts","text":"Optional labels per bucket to match your bank accounts."},
+      {"@type":"HowToStep","name":"Reality check","text":"Ensure income minus expenses and savings is not negative."}
+    ]
+  }
+  </script>
+
+  <!-- Structured Data: FAQPage (inline Q&A from content) -->
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"FAQPage",
+    "mainEntity":[
+      {"@type":"Question","name":"How many buckets should I have?","acceptedAnswer":{"@type":"Answer","text":"Start with 8–15. Merge micro‑buckets into Misc until you have spending history."}},
+      {"@type":"Question","name":"Do I need a bank account per bucket?","acceptedAnswer":{"@type":"Answer","text":"No. Labels help, but one primary account plus tracking in the app is fine."}},
+      {"@type":"Question","name":"Does this work for fortnightly pay?","acceptedAnswer":{"@type":"Answer","text":"Yes. Use fortnightly as the base frequency; the app converts to monthly totals for bills."}}
+    ]
+  }
+  </script>
+
+  <!-- Structured Data: Breadcrumbs -->
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"BreadcrumbList",
+    "itemListElement":[
+      {"@type":"ListItem","position":1,"name":"Home","item":"https://your-domain.app/"},
+      {"@type":"ListItem","position":2,"name":"Guide","item":"https://your-domain.app/guide/"},
+      {"@type":"ListItem","position":3,"name":"Budget Buckets Method","item":"https://your-domain.app/guide/budget-buckets-method"}
+    ]
+  }
+  </script>
+
+  <script>
+    // Last updated + year
+    document.getElementById('year').textContent = new Date().getFullYear();
+    // Manually set last updated for now (keep in sync when you edit)
+    document.getElementById('lastUpdated').textContent = '13 Aug 2025';
+  </script>
+</body>
+</html>

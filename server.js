@@ -118,6 +118,18 @@ app.get('/calculators.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'calculators.html'));
 });
 
+app.get('/method', (req, res) => {
+  res.sendFile(path.join(__dirname, 'Method.html'));
+});
+
+app.get('/Method.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'Method.html'));
+});
+
+app.get('/guide', (req, res) => {
+  res.sendFile(path.join(__dirname, 'Method.html'));
+});
+
 app.get('/environment', (req, res) => {
   res.sendFile(path.join(__dirname, 'environment-switcher.html'));
 });
