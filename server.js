@@ -23,7 +23,8 @@ app.use(helmet({
         "'unsafe-inline'",
         "https://www.gstatic.com",
         "https://www.googletagmanager.com",
-        "https://apis.google.com"
+        "https://apis.google.com",
+        "https://cdn.jsdelivr.net"
       ],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
