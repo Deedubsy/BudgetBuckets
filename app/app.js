@@ -817,11 +817,10 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         }
 
         try {
-            await cloudStore.saveBudget(currentUser.uid, currentBudgetId, {
+            await cloudStore.updateBudget(currentUser.uid, currentBudgetId, {
                 settings: state.settings,
                 expenses: state.expenses,
-                savings: state.savings,
-                lastModified: new Date().toISOString()
+                savings: state.savings
             });
         } catch (error) {
             console.error('Failed to save to cloud:', error);
@@ -835,7 +834,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         }
 
         try {
-            const budgets = await cloudStore.getBudgets(currentUser.uid);
+            const budgets = await cloudStore.listBudgets(currentUser.uid);
             
             if (budgets.length > 0) {
                 currentBudget = budgets[0];
@@ -857,14 +856,13 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                 updateUI();
             } else {
                 // Create a new budget
-                currentBudgetId = generateId();
-                await cloudStore.saveBudget(currentUser.uid, currentBudgetId, {
+                const newBudget = await cloudStore.createBudget(currentUser.uid, {
+                    name: 'My Budget',
                     settings: state.settings,
                     expenses: state.expenses,
-                    savings: state.savings,
-                    createdAt: new Date().toISOString(),
-                    lastModified: new Date().toISOString()
+                    savings: state.savings
                 });
+                currentBudgetId = newBudget.id;
             }
         } catch (error) {
             console.error('Failed to load from cloud:', error);
