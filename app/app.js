@@ -318,7 +318,6 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         progressBar.style.width = `${progressWidth}%`;
         
         // Update labels and remaining amount based on bucket type
-        const freq = state.settings.incomeFrequency;
         const period = freq.toLowerCase();
         const spentLabel = bucketEl.querySelector('.spent-label');
         const remainingEl = bucketEl.querySelector('.remaining-amount');
