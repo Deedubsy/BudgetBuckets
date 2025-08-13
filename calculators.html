@@ -21,11 +21,13 @@
     a{color:var(--accent);text-decoration:none}
     a:hover{text-decoration:underline}
     .container{max-width:var(--maxw);margin:0 auto;padding:24px}
-    header{position:sticky;top:0;z-index:5;background:linear-gradient(180deg, rgba(11,15,20,.9), rgba(11,15,20,.75));backdrop-filter:saturate(140%) blur(6px);border-bottom:1px solid var(--border)}
-    .nav{display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .brand{display:flex;align-items:center;gap:10px;font-weight:700}
-    .dot{width:12px;height:12px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 0 4px rgba(0,205,214,.15)}
-    .cta{padding:10px 14px;border-radius:999px;background:var(--accent);color:#032227;border:1px solid transparent;box-shadow:var(--shadow)}
+    header.site{position:sticky;top:0;z-index:50;background:linear-gradient(180deg, rgba(11,15,20,.9), rgba(11,15,20,.8));backdrop-filter:saturate(140%) blur(6px);border-bottom:1px solid var(--border)}
+    .nav{display:flex;align-items:center;gap:18px;justify-content:space-between}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.2px}
+    .brand .dot{width:14px;height:14px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 0 4px rgba(0,205,214,.15)}
+    .nav a{color:var(--text);opacity:.85}
+    .nav a:hover{opacity:1}
+    .nav .cta{padding:10px 16px;border-radius:999px;background:var(--accent);color:#032227;box-shadow:var(--shadow);font-weight:600;border:1px solid rgba(255,255,255,.06);text-decoration:none}
     .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
     .tab{padding:10px 14px;border-radius:999px;border:1px solid var(--border);background:#0f1720;color:var(--text);cursor:pointer}
     .tab[aria-selected="true"]{background:var(--accent);color:#032227;border-color:transparent}
@@ -42,30 +44,42 @@
     input,select,button{font:inherit}
     input[type="number"], input[type="text"], select{background:#0f1720;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px;min-width:0}
     input[type="number"]{width:140px}
-    button{background:#0f1720;color:var(--text);border:1px solid var(--border);border-radius:12px;padding:10px 14px;cursor:pointer}
+    button{background:#0f1720;color:var(--text);border:1px solid var(--border);border-radius:12px;padding:10px 14px;cursor:pointer;transition:all 0.2s ease}
+    button:hover{background:#141d28;border-color:var(--accent)}
     button.primary{background:var(--accent);color:#032227;border-color:transparent}
+    button.primary:hover{background:#00b8c2;transform:translateY(-1px)}
     table{width:100%;border-collapse:separate;border-spacing:0}
     th,td{padding:10px;border-bottom:1px solid var(--border)}
     th{text-align:left;color:var(--muted);font-weight:600}
     tr:last-child td{border-bottom:none}
     .right{text-align:right}
     .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#0e1821;border:1px solid var(--border);color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.2px}
-    .kpi{padding:16px;border-radius:14px;background:linear-gradient(180deg,#0f1520,#0c1117);border:1px solid var(--border)}
-    .kpi .big{font-size:22px;font-weight:800}
+    .kpi{padding:16px;border-radius:14px;background:linear-gradient(180deg,#0f1520,#0c1117);border:1px solid var(--border);transition:border-color 0.3s ease}
+    .kpi:hover{border-color:var(--accent)}
+    .kpi .big{font-size:22px;font-weight:800;transition:color 0.3s ease}
     .help{font-size:13px;color:var(--muted)}
     .warn{color:#ffd166}
     .good{color:#5eead4}
     footer{padding:24px;border-top:1px solid var(--border);color:var(--muted)}
 
+    .summary-card{background:linear-gradient(135deg,#0f1520,#0c1117);border:2px solid var(--accent);border-radius:16px;padding:20px;margin-top:16px}
+    .deficit{border-color:#ff6b6b !important}
+    .surplus{border-color:#5eead4 !important}
     @media (max-width: 980px){.grid-2,.grid-3{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
-  <header>
+  <header class="site">
     <div class="container nav">
-      <div class="brand"><span class="dot" aria-hidden="true"></span>Budget Buckets</div>
-      <nav>
-        <a href="/home.html">Home</a> · <a href="#budget-calculator">Budget Calculator</a> · <a href="#savings-calculator">Savings Calculator</a> · <a class="cta" href="/auth/login.html">Open the App</a>
+      <a class="brand" href="/home.html">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Budget Buckets</span>
+      </a>
+      <nav aria-label="Primary">
+        <a href="/home.html">Home</a>
+        <a href="#budget-calculator">Budget Calculator</a>
+        <a href="#savings-calculator">Savings Calculator</a>
+        <a class="cta" href="/auth/login.html">Open the App</a>
       </nav>
     </div>
   </header>
@@ -76,7 +90,7 @@
       <h1>Budget & Savings Calculators</h1>
       <p class="muted">Fast, no-fuss calculators that speak weekly & fortnightly. Values format in AUD. Your inputs stay in your browser (no signup).</p>
       <div class="tabs" role="tablist" aria-label="Calculator selector">
-        <button id="tab-budget" class="tab" role="tab" aria-selected="true" aria-controls="panel-budget">Fortnightly Budget Calculator</button>
+        <button id="tab-budget" class="tab" role="tab" aria-selected="true" aria-controls="panel-budget">Budget Calculator</button>
         <button id="tab-savings" class="tab" role="tab" aria-selected="false" aria-controls="panel-savings">Savings Rate & Time‑to‑Goal</button>
       </div>
     </section>
@@ -84,8 +98,8 @@
     <!-- Fortnightly Budget Calculator -->
     <section id="panel-budget" class="card section" role="tabpanel" aria-labelledby="tab-budget">
       <a id="budget-calculator"></a>
-      <h2>Fortnightly Budget Calculator (AUD)</h2>
-      <p class="muted">Enter your income and expenses once using a single frequency. We convert across weekly, fortnightly, monthly, and yearly.
+      <h2>Budget Calculator (AUD)</h2>
+      <p class="muted">Enter your income and expenses using your preferred frequency. All values automatically convert across weekly, fortnightly, monthly, and yearly.
       </p>
 
       <div class="grid-2" style="margin-top:8px">
@@ -107,21 +121,22 @@
               <option value="USD">USD</option>
               <option value="GBP">GBP</option>
             </select>
-            <button id="bc-clear" title="Clear all">Clear</button>
+            <button id="bc-clear" title="Clear all">Clear All</button>
           </div>
 
           <h3 style="margin:16px 0 8px">Expenses</h3>
-          <div class="help">Amounts are interpreted as <strong id="bc-freq-label">fortnightly</strong>.</div>
+          <div class="help">Enter amounts in <strong id="bc-freq-label">fortnightly</strong> values</div>
           <table id="bc-table" aria-label="Expense items">
             <thead>
-              <tr><th>Item</th><th class="right">Amount</th><th class="right"> </th></tr>
+              <tr><th>Item</th><th class="right">Amount (<span id="bc-freq-label-2">Fortnightly</span>)</th><th class="right"> </th></tr>
             </thead>
             <tbody>
               <!-- rows injected here -->
             </tbody>
           </table>
-          <div class="row" style="margin-top:10px">
-            <button id="bc-add" class="primary">Add expense</button>
+          <div class="row" style="margin-top:10px;gap:8px">
+            <button id="bc-add" class="primary">+ Add Expense</button>
+            <button id="bc-preset" title="Load preset expenses">Load Preset</button>
           </div>
         </div>
 
@@ -137,9 +152,10 @@
             <div class="kpi"><div class="muted">Expenses / Yearly</div><div id="bc-exp-y" class="big">—</div></div>
           </div>
           <div class="kpi" style="margin-top:12px">
-            <div class="muted">Leftover (Monthly)</div>
+            <div class="muted">Leftover / Deficit</div>
             <div id="bc-leftover" class="big">—</div>
             <div id="bc-leftover-note" class="help"></div>
+            <div id="bc-leftover-pct" class="help" style="margin-top:4px"></div>
           </div>
         </div>
       </div>
@@ -257,7 +273,8 @@
     // ---------- Budget Calculator ----------
     const bc = {
       income: $('#bc-income'), freq: $('#bc-freq'), curr: $('#bc-curr'),
-      table: $('#bc-table tbody'), add: $('#bc-add'), clear: $('#bc-clear'), freqLabel: $('#bc-freq-label'),
+      table: $('#bc-table tbody'), add: $('#bc-add'), clear: $('#bc-clear'), 
+      freqLabel: $('#bc-freq-label'), freqLabel2: $('#bc-freq-label-2'),
       out: {
         incW: $('#bc-inc-w'), incF: $('#bc-inc-f'), incM: $('#bc-inc-m'), incY: $('#bc-inc-y'),
         expW: $('#bc-exp-w'), expF: $('#bc-exp-f'), expM: $('#bc-exp-m'), expY: $('#bc-exp-y'),
@@ -285,13 +302,14 @@
     bc.freq.value = state.freq || 'fortnightly';
     bc.curr.value = state.curr || 'AUD';
     bc.freqLabel.textContent = bc.freq.value;
+    bc.freqLabel2.textContent = bc.freq.value.charAt(0).toUpperCase() + bc.freq.value.slice(1);
 
     function addRow(item={name:'', amount:0}){
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><input type="text" placeholder="e.g. Rent" value="${item.name?.replaceAll('"','&quot;')||''}" /></td>
         <td class="right"><input type="number" min="0" step="0.01" value="${Number(item.amount||0)}" /></td>
-        <td class="right"><button title="Delete" aria-label="Delete row">🗑️</button></td>`;
+        <td class="right"><button title="Delete" aria-label="Delete row" style="padding:6px 10px;font-size:14px">×</button></td>`;
       bc.table.appendChild(tr);
       tr.querySelector('button').addEventListener('click', ()=>{ tr.remove(); syncFromUI(); render(); });
       for (const input of tr.querySelectorAll('input')) input.addEventListener('input', ()=>{ syncFromUI(); render(); });
@@ -326,6 +344,7 @@
 
     function render(){
       bc.freqLabel.textContent = bc.freq.value;
+      bc.freqLabel2.textContent = bc.freq.value.charAt(0).toUpperCase() + bc.freq.value.slice(1);
       const { income, expenses } = calcTotals();
       const curr = bc.curr.value;
       bc.out.incW.textContent = fmt(income.weekly, curr);
@@ -337,9 +356,63 @@
       bc.out.expM.textContent = fmt(expenses.monthly, curr);
       bc.out.expY.textContent = fmt(expenses.yearly, curr);
       const leftover = income.monthly - expenses.monthly;
-      bc.out.leftover.textContent = fmt(leftover, curr);
-      bc.out.note.textContent = leftover < 0 ? 'You are over by '+fmt(-leftover,curr)+' per month.' : 'You have '+fmt(leftover,curr)+' left per month.';
+      bc.out.leftover.textContent = fmt(leftover, curr) + ' /month';
+      bc.out.leftover.style.color = leftover < 0 ? '#ff6b6b' : '#5eead4';
+      bc.out.note.textContent = leftover < 0 ? 'Budget deficit' : 'Budget surplus';
+      const savingsRate = income.monthly > 0 ? (leftover / income.monthly * 100) : 0;
+      if (!$('#bc-leftover-pct')) {
+        const pctDiv = document.createElement('div');
+        pctDiv.id = 'bc-leftover-pct';
+        pctDiv.className = 'help';
+        pctDiv.style.marginTop = '4px';
+        bc.out.note.parentNode.appendChild(pctDiv);
+      }
+      $('#bc-leftover-pct').textContent = income.monthly > 0 ? `Savings rate: ${savingsRate.toFixed(1)}%` : '';
     }
+
+    // Preset templates
+    const presets = {
+      student: [
+        {name: 'Rent/Accommodation', amount: 800},
+        {name: 'Groceries', amount: 150},
+        {name: 'Transport', amount: 50},
+        {name: 'Phone/Internet', amount: 40},
+        {name: 'Entertainment', amount: 50}
+      ],
+      family: [
+        {name: 'Mortgage/Rent', amount: 1800},
+        {name: 'Groceries', amount: 400},
+        {name: 'Utilities', amount: 150},
+        {name: 'Insurance', amount: 200},
+        {name: 'Transport', amount: 150},
+        {name: 'Childcare', amount: 500}
+      ],
+      single: [
+        {name: 'Rent', amount: 1200},
+        {name: 'Groceries', amount: 200},
+        {name: 'Utilities', amount: 80},
+        {name: 'Transport', amount: 100},
+        {name: 'Phone/Internet', amount: 60},
+        {name: 'Entertainment', amount: 150}
+      ]
+    };
+
+    // Load preset button
+    const presetBtn = document.createElement('button');
+    presetBtn.id = 'bc-preset';
+    presetBtn.title = 'Load preset expenses';
+    presetBtn.textContent = 'Load Preset';
+    presetBtn.addEventListener('click', () => {
+      const choice = prompt('Choose a preset:\n1. Student\n2. Family\n3. Single Professional\n\nEnter 1, 2, or 3:');
+      const presetMap = {'1': 'student', '2': 'family', '3': 'single'};
+      const preset = presets[presetMap[choice]];
+      if (preset) {
+        bc.table.innerHTML = '';
+        preset.forEach(item => addRow(item));
+        syncFromUI();
+        render();
+      }
+    });
 
     // init rows
     if (!state.items?.length){ addRow({name:'Rent', amount:0}); addRow({name:'Groceries', amount:0}); }
