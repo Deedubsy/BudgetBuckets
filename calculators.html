@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Free Budget & Savings Calculators (AUD) — Budget Buckets</title>
-  <meta name="description" content="Two free tools: a Fortnightly Budget Calculator (AUD) and a Savings Rate & Time‑to‑Goal Calculator with compounding. Built for Australian weekly/fortnightly pay cycles." />
+  <title>Free Budget & Savings Calculators — Budget Buckets</title>
+  <meta name="description" content="Two free tools: a Budget Calculator and a Savings Rate & Time‑to‑Goal Calculator with compounding. Built for Australian weekly/fortnightly pay cycles." />
   <link rel="canonical" href="https://your-domain.app/calculator/" />
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Free Budget & Savings Calculators (AUD) — Budget Buckets" />
-  <meta property="og:description" content="Fortnightly Budget Calculator + Savings Rate & Time‑to‑Goal with compounding. Fast, free, and built for AUD." />
+  <meta property="og:title" content="Free Budget & Savings Calculators — Budget Buckets" />
+  <meta property="og:description" content="Budget Calculator + Savings Rate & Time‑to‑Goal with compounding. Fast, free, multi-currency support." />
   <meta property="og:image" content="/assets/og-calculators.png" />
   <meta name="robots" content="index, follow" />
   <style>
@@ -21,13 +21,16 @@
     a{color:var(--accent);text-decoration:none}
     a:hover{text-decoration:underline}
     .container{max-width:var(--maxw);margin:0 auto;padding:24px}
-    header.site{position:sticky;top:0;z-index:50;background:linear-gradient(180deg, rgba(11,15,20,.9), rgba(11,15,20,.8));backdrop-filter:saturate(140%) blur(6px);border-bottom:1px solid var(--border)}
-    .nav{display:flex;align-items:center;gap:18px;justify-content:space-between}
-    .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.2px}
-    .brand .dot{width:14px;height:14px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 0 4px rgba(0,205,214,.15)}
-    .nav a{color:var(--text);opacity:.85}
-    .nav a:hover{opacity:1}
-    .nav .cta{padding:10px 16px;border-radius:999px;background:var(--accent);color:#032227;box-shadow:var(--shadow);font-weight:600;border:1px solid rgba(255,255,255,.06);text-decoration:none}
+    header.site{position:sticky;top:0;z-index:50;background:linear-gradient(180deg, rgba(11,15,20,.95), rgba(11,15,20,.9));backdrop-filter:saturate(140%) blur(8px);border-bottom:1px solid var(--border);padding:16px 0}
+    .nav{display:flex;align-items:center;gap:32px;justify-content:space-between;padding:0 24px}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:.2px;font-size:18px;transition:opacity 0.2s ease}
+    .brand:hover{opacity:.9}
+    .brand .dot{width:16px;height:16px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 0 4px rgba(0,205,214,.15)}
+    .nav nav{display:flex;align-items:center;gap:24px}
+    .nav a{color:var(--text);opacity:.85;padding:8px 12px;border-radius:8px;transition:all 0.2s ease;font-weight:500}
+    .nav a:hover{opacity:1;background:rgba(255,255,255,.05);text-decoration:none}
+    .nav .cta{padding:12px 20px;border-radius:999px;background:var(--accent);color:#032227;box-shadow:var(--shadow);font-weight:600;border:1px solid rgba(255,255,255,.06);text-decoration:none;transition:all 0.2s ease}
+    .nav .cta:hover{transform:translateY(-1px);box-shadow:0 12px 35px rgba(0,205,214,.25)}
     .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
     .tab{padding:10px 14px;border-radius:999px;border:1px solid var(--border);background:#0f1720;color:var(--text);cursor:pointer}
     .tab[aria-selected="true"]{background:var(--accent);color:#032227;border-color:transparent}
@@ -65,7 +68,19 @@
     .summary-card{background:linear-gradient(135deg,#0f1520,#0c1117);border:2px solid var(--accent);border-radius:16px;padding:20px;margin-top:16px}
     .deficit{border-color:#ff6b6b !important}
     .surplus{border-color:#5eead4 !important}
-    @media (max-width: 980px){.grid-2,.grid-3{grid-template-columns:1fr}}
+    @media (max-width: 980px){
+      .grid-2,.grid-3{grid-template-columns:1fr}
+      .nav{padding:0 16px;gap:20px}
+      .nav nav{gap:16px}
+      .brand{font-size:16px}
+    }
+    @media (max-width: 768px){
+      .nav{flex-direction:column;gap:16px;padding:12px 16px}
+      .nav nav{flex-wrap:wrap;justify-content:center;gap:12px}
+      .nav a{padding:6px 10px;font-size:14px}
+      .nav .cta{padding:10px 16px}
+      header.site{padding:12px 0}
+    }
   </style>
 </head>
 <body>
@@ -77,8 +92,8 @@
       </a>
       <nav aria-label="Primary">
         <a href="/home.html">Home</a>
-        <a href="#budget-calculator">Budget Calculator</a>
-        <a href="#savings-calculator">Savings Calculator</a>
+        <a href="#budget-calculator">Budget</a>
+        <a href="#savings-calculator">Savings</a>
         <a class="cta" href="/auth/login.html">Open the App</a>
       </nav>
     </div>
@@ -86,19 +101,19 @@
 
   <main class="container">
     <section class="card section" style="margin-top:16px">
-      <span class="pill">Free tools for Australia (AUD)</span>
+      <span class="pill">Free financial tools</span>
       <h1>Budget & Savings Calculators</h1>
-      <p class="muted">Fast, no-fuss calculators that speak weekly & fortnightly. Values format in AUD. Your inputs stay in your browser (no signup).</p>
+      <p class="muted">Fast, no-fuss calculators that speak weekly & fortnightly. Multi-currency support. Your inputs stay in your browser (no signup).</p>
       <div class="tabs" role="tablist" aria-label="Calculator selector">
         <button id="tab-budget" class="tab" role="tab" aria-selected="true" aria-controls="panel-budget">Budget Calculator</button>
-        <button id="tab-savings" class="tab" role="tab" aria-selected="false" aria-controls="panel-savings">Savings Rate & Time‑to‑Goal</button>
+        <button id="tab-savings" class="tab" role="tab" aria-selected="false" aria-controls="panel-savings">Savings Calculator</button>
       </div>
     </section>
 
     <!-- Fortnightly Budget Calculator -->
     <section id="panel-budget" class="card section" role="tabpanel" aria-labelledby="tab-budget">
       <a id="budget-calculator"></a>
-      <h2>Budget Calculator (AUD)</h2>
+      <h2>Budget Calculator</h2>
       <p class="muted">Enter your income and expenses using your preferred frequency. All values automatically convert across weekly, fortnightly, monthly, and yearly.
       </p>
 
@@ -152,7 +167,7 @@
             <div class="kpi"><div class="muted">Expenses / Yearly</div><div id="bc-exp-y" class="big">—</div></div>
           </div>
           <div class="kpi" style="margin-top:12px">
-            <div class="muted">Leftover / Deficit</div>
+            <div class="muted">Leftover / Deficit (<span id="bc-leftover-freq">Monthly</span>)</div>
             <div id="bc-leftover" class="big">—</div>
             <div id="bc-leftover-note" class="help"></div>
             <div id="bc-leftover-pct" class="help" style="margin-top:4px"></div>
@@ -165,27 +180,20 @@
     <section id="panel-savings" class="card section" role="tabpanel" aria-labelledby="tab-savings" hidden>
       <a id="savings-calculator"></a>
       <h2>Savings Rate & Time‑to‑Goal</h2>
-      <p class="muted">How long to reach a target with optional compounding? We compute months and the target date. Income is optional — if provided, we show your savings rate.</p>
+      <p class="muted">Calculate how long it takes to reach your savings target with compounding returns. Enter your income to see your savings rate percentage.</p>
 
       <div class="grid-2" style="margin-top:8px">
         <div>
-          <div class="row" style="gap:14px;flex-wrap:wrap">
-            <label for="sc-balance">Starting balance</label>
-            <input id="sc-balance" type="number" min="0" step="0.01" placeholder="0.00" />
-            <label for="sc-contrib">Contribution</label>
-            <input id="sc-contrib" type="number" min="0" step="0.01" placeholder="0.00" />
-            <select id="sc-freq" aria-label="Contribution frequency">
+          <h3 style="margin:0 0 12px;font-size:18px">Income & Settings</h3>
+          <div class="row" style="gap:14px;flex-wrap:wrap;margin-bottom:16px">
+            <label for="sc-income">Income</label>
+            <input id="sc-income" type="number" min="0" step="0.01" placeholder="0.00" />
+            <select id="sc-incfreq">
               <option value="weekly">Weekly</option>
               <option value="fortnightly" selected>Fortnightly</option>
               <option value="monthly">Monthly</option>
+              <option value="yearly">Yearly</option>
             </select>
-          </div>
-          <div class="row" style="gap:14px;margin-top:10px">
-            <label for="sc-rate">Annual return</label>
-            <input id="sc-rate" type="number" min="0" max="50" step="0.1" value="0" />
-            <span class="muted">% p.a.</span>
-            <label for="sc-target">Target</label>
-            <input id="sc-target" type="number" min="0" step="0.01" placeholder="e.g. 10000" />
             <label for="sc-curr">Currency</label>
             <select id="sc-curr">
               <option value="AUD" selected>AUD</option>
@@ -194,19 +202,26 @@
               <option value="GBP">GBP</option>
             </select>
           </div>
-          <details style="margin-top:12px">
-            <summary>Optional: income for savings rate</summary>
-            <div class="row" style="gap:14px;margin-top:10px">
-              <label for="sc-income">Income</label>
-              <input id="sc-income" type="number" min="0" step="0.01" placeholder="0.00" />
-              <select id="sc-incfreq">
-                <option value="weekly">Weekly</option>
-                <option value="fortnightly" selected>Fortnightly</option>
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
-              </select>
-            </div>
-          </details>
+          
+          <h3 style="margin:0 0 12px;font-size:18px">Savings Plan</h3>
+          <div class="row" style="gap:14px;flex-wrap:wrap;margin-bottom:12px">
+            <label for="sc-balance">Starting balance</label>
+            <input id="sc-balance" type="number" min="0" step="0.01" placeholder="0.00" />
+            <label for="sc-target">Target amount</label>
+            <input id="sc-target" type="number" min="0" step="0.01" placeholder="e.g. 10000" />
+          </div>
+          <div class="row" style="gap:14px;flex-wrap:wrap;margin-bottom:12px">
+            <label for="sc-contrib">Contribution</label>
+            <input id="sc-contrib" type="number" min="0" step="0.01" placeholder="0.00" />
+            <select id="sc-freq" aria-label="Contribution frequency">
+              <option value="weekly">Weekly</option>
+              <option value="fortnightly" selected>Fortnightly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+            <label for="sc-rate">Annual return</label>
+            <input id="sc-rate" type="number" min="0" max="50" step="0.1" value="0" />
+            <span class="muted">% p.a.</span>
+          </div>
           <div class="row" style="margin-top:12px;gap:10px">
             <button id="sc-calc" class="primary">Calculate</button>
             <button id="sc-clear">Clear</button>
@@ -220,9 +235,9 @@
             <div class="kpi"><div class="muted">Target date</div><div id="sc-date" class="big">—</div></div>
           </div>
           <div class="kpi" style="margin-top:12px">
-            <div class="muted">Savings rate (optional)</div>
+            <div class="muted">Savings rate</div>
             <div id="sc-ratepct" class="big">—</div>
-            <div class="help">If income is provided, we compute contribution ÷ income (monthly).</div>
+            <div class="help">Contribution ÷ income (monthly)</div>
           </div>
           <div class="kpi" style="margin-top:12px">
             <div class="muted">Notes</div>
@@ -274,7 +289,7 @@
     const bc = {
       income: $('#bc-income'), freq: $('#bc-freq'), curr: $('#bc-curr'),
       table: $('#bc-table tbody'), add: $('#bc-add'), clear: $('#bc-clear'), 
-      freqLabel: $('#bc-freq-label'), freqLabel2: $('#bc-freq-label-2'),
+      freqLabel: $('#bc-freq-label'), freqLabel2: $('#bc-freq-label-2'), leftoverFreq: $('#bc-leftover-freq'),
       out: {
         incW: $('#bc-inc-w'), incF: $('#bc-inc-f'), incM: $('#bc-inc-m'), incY: $('#bc-inc-y'),
         expW: $('#bc-exp-w'), expF: $('#bc-exp-f'), expM: $('#bc-exp-m'), expY: $('#bc-exp-y'),
@@ -288,7 +303,10 @@
       monthly:   { perMonth: 1,      perFortnight: 12/26,perWeek: 12/52,  perYear: 12 },
       yearly:    { perMonth: 1/12,   perFortnight: 26/12,perWeek: 52/12,  perYear: 1 }
     };
-    const fmt = (v,curr) => new Intl.NumberFormat('en-AU',{style:'currency',currency:curr}).format(isFinite(v)?v:0);
+    const fmt = (v,curr) => {
+      const locale = curr === 'AUD' ? 'en-AU' : curr === 'USD' ? 'en-US' : curr === 'GBP' ? 'en-GB' : curr === 'NZD' ? 'en-NZ' : 'en-AU';
+      return new Intl.NumberFormat(locale,{style:'currency',currency:curr}).format(isFinite(v)?v:0);
+    };
 
     const LS_KEY = 'calc.fortnightly.v1';
     function loadState(){
@@ -356,9 +374,13 @@
       bc.out.expM.textContent = fmt(expenses.monthly, curr);
       bc.out.expY.textContent = fmt(expenses.yearly, curr);
       const leftover = income.monthly - expenses.monthly;
-      bc.out.leftover.textContent = fmt(leftover, curr) + ' /month';
-      bc.out.leftover.style.color = leftover < 0 ? '#ff6b6b' : '#5eead4';
-      bc.out.note.textContent = leftover < 0 ? 'Budget deficit' : 'Budget surplus';
+      // Use the selected frequency for leftover display
+      const freqKey = state.freq;
+      const leftoverByFreq = income[freqKey] - expenses[freqKey];
+      bc.leftoverFreq.textContent = freqKey.charAt(0).toUpperCase() + freqKey.slice(1);
+      bc.out.leftover.textContent = fmt(leftoverByFreq, curr);
+      bc.out.leftover.style.color = leftoverByFreq < 0 ? '#ff6b6b' : '#5eead4';
+      bc.out.note.textContent = leftoverByFreq < 0 ? 'Budget deficit' : 'Budget surplus';
       const savingsRate = income.monthly > 0 ? (leftover / income.monthly * 100) : 0;
       if (!$('#bc-leftover-pct')) {
         const pctDiv = document.createElement('div');
@@ -460,7 +482,10 @@
       return Math.ceil(Math.max(0, n));
     }
 
-    const fmtMoney = (v,c) => new Intl.NumberFormat('en-AU',{style:'currency',currency:c}).format(isFinite(v)?v:0);
+    const fmtMoney = (v,c) => {
+      const locale = c === 'AUD' ? 'en-AU' : c === 'USD' ? 'en-US' : c === 'GBP' ? 'en-GB' : c === 'NZD' ? 'en-NZ' : 'en-AU';
+      return new Intl.NumberFormat(locale,{style:'currency',currency:c}).format(isFinite(v)?v:0);
+    };
     const fmtPct = v => isFinite(v)? (v.toFixed(1)+'%') : '—';
 
     function runSavings(){
@@ -486,10 +511,23 @@
       sc.out.ratepct.textContent = isFinite(ratePct) ? fmtPct(ratePct) : '—';
     }
 
+    // Auto-calculate on input changes
+    [sc.balance, sc.contrib, sc.target, sc.rate, sc.income].forEach(input => {
+      input.addEventListener('input', runSavings);
+    });
+    [sc.freq, sc.curr, sc.incfreq].forEach(select => {
+      select.addEventListener('change', runSavings);
+    });
+    
     sc.calc.addEventListener('click', runSavings);
     sc.clear.addEventListener('click', ()=>{
-      sc.balance.value=''; sc.contrib.value=''; sc.rate.value='0'; sc.target.value=''; sc.income.value=''; runSavings();
+      sc.balance.value=''; sc.contrib.value=''; sc.rate.value='0'; sc.target.value=''; sc.income.value=''; 
+      sc.freq.value='fortnightly'; sc.incfreq.value='fortnightly'; sc.curr.value='AUD';
+      runSavings();
     });
+    
+    // Initial calculation
+    runSavings();
   </script>
 </body>
 </html>
