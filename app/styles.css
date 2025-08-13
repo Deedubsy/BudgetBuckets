@@ -603,6 +603,22 @@ input[type="checkbox"] {
     max-width: 200px;
 }
 
+.saved-so-far {
+    flex: 1;
+    max-width: 200px;
+}
+
+.goal-date{
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
 .progress-container {
     display: flex;
     flex-direction: column;
