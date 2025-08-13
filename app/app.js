@@ -136,8 +136,20 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
 
     function getTotalSavings() {
         return state.savings
-            .filter(bucket => bucket.include)
+            .filter(bucket => bucket.include && bucket.type !== 'debt')
             .reduce((sum, bucket) => sum + sumIncludedItems(bucket), 0);
+    }
+
+    function getTotalDebt() {
+        const expenseDebt = state.expenses
+            .filter(bucket => bucket.include && bucket.type === 'debt')
+            .reduce((sum, bucket) => sum + sumIncludedItems(bucket), 0);
+        
+        const savingDebt = state.savings
+            .filter(bucket => bucket.include && bucket.type === 'debt')
+            .reduce((sum, bucket) => sum + sumIncludedItems(bucket), 0);
+        
+        return expenseDebt + savingDebt;
     }
 
     // New helper functions for sinking funds
@@ -170,14 +182,14 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
     }
 
     // Allocation donut chart
-    function drawAllocRing({ incM, expM, savM }) {
-        const remaining = Math.max(0, incM - expM - savM);
+    function drawAllocRing({ incM, expM, savM, debtM }) {
+        const remaining = Math.max(0, incM - expM - savM - debtM);
         const ctx = document.getElementById('allocRing')?.getContext('2d');
         if (!ctx) return;
         
-        const data = [expM, savM, remaining];
-        const labels = ["Expenses", "Savings", "Remaining"];
-        const colors = ["#5ea8ff", "#5eead4", "#a7b1c2"];
+        const data = [expM, savM, debtM, remaining];
+        const labels = ["Expenses", "Savings", "Debt", "Remaining"];
+        const colors = ["#5ea8ff", "#5eead4", "#ff6b6b", "#a7b1c2"];
         
         if (allocChart) {
             allocChart.data.datasets[0].data = data;
@@ -207,7 +219,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         const pct = (v, t) => (t > 0 ? Math.round(v / t * 100) : 0) + "%";
         const legendEl = document.getElementById('allocLegend');
         if (legendEl) {
-            legendEl.textContent = `Expenses ${pct(expM, incM)} • Savings ${pct(savM, incM)} • Remaining ${pct(remaining, incM)}`;
+            legendEl.textContent = `Expenses ${pct(expM, incM)} • Savings ${pct(savM, incM)} • Debt ${pct(debtM, incM)} • Remaining ${pct(remaining, incM)}`;
         }
     }
 
@@ -232,9 +244,11 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         updateTotals();
         
         // Update allocation ring
+        const totalDebt = getTotalDebt();
         const expM = convertFrequency(totalExpenses, freq, 'Monthly');
         const savM = convertFrequency(totalSavings, freq, 'Monthly');
-        drawAllocRing({ incM: monthlyIncome, expM, savM });
+        const debtM = convertFrequency(totalDebt, freq, 'Monthly');
+        drawAllocRing({ incM: monthlyIncome, expM, savM, debtM });
     }
 
     function updateTotals() {
@@ -242,12 +256,14 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         const income = parseFloat(state.settings.incomeAmount) || 0;
         const expenses = getTotalExpenses();
         const savings = getTotalSavings();
-        const remaining = income - expenses - savings;
+        const debt = getTotalDebt();
+        const remaining = income - expenses - savings - debt;
         
         document.getElementById('totalsFrequency').textContent = freq;
         document.getElementById('totalIncome').textContent = formatCurrency(income);
         document.getElementById('totalExpenses').textContent = formatCurrency(expenses);
         document.getElementById('totalSavings').textContent = formatCurrency(savings);
+        document.getElementById('totalDebt').textContent = formatCurrency(debt);
         document.getElementById('totalRemaining').textContent = formatCurrency(remaining);
         
         // Update remaining color
@@ -301,10 +317,20 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         const progressWidth = Math.min(100, ratio * 100);
         progressBar.style.width = `${progressWidth}%`;
         
-        // Update remaining amount
-        const remaining = (plannedCents - spentCents) / 100;
+        // Update labels and remaining amount based on bucket type
+        const freq = state.settings.incomeFrequency;
+        const period = freq.toLowerCase();
+        const spentLabel = bucketEl.querySelector('.spent-label');
         const remainingEl = bucketEl.querySelector('.remaining-amount');
-        remainingEl.textContent = `Remaining: ${formatCurrency(remaining)}`;
+        const remaining = (plannedCents - spentCents) / 100;
+        
+        if (bucket.type === 'saving') {
+            spentLabel.textContent = `Contributed so far (this ${period}):`;
+            remainingEl.textContent = `Still to save this ${period}: ${formatCurrency(remaining)}`;
+        } else {
+            spentLabel.textContent = `Spent this ${period}:`;
+            remainingEl.textContent = `Remaining: ${formatCurrency(remaining)}`;
+        }
         
         // Update data attributes for search
         bucketEl.dataset.bucketName = bucket.name || '';
@@ -528,14 +554,22 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             addNewItem(bucket, card, section);
         });
         
-        toggleBtn.addEventListener('click', () => {
+        // Only toggle on icon click, not the whole button
+        const toggleIcon = card.querySelector('.toggle-icon');
+        toggleIcon.style.cursor = 'pointer';
+        toggleIcon.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent event bubbling
             const content = card.querySelector('.bucket-content');
-            const icon = card.querySelector('.toggle-icon');
             const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
             
             content.style.display = isExpanded ? 'none' : 'block';
-            icon.textContent = isExpanded ? '▶' : '▼';
+            toggleIcon.textContent = isExpanded ? '▶' : '▼';
             toggleBtn.setAttribute('aria-expanded', !isExpanded);
+        });
+        
+        // Prevent name input from triggering toggle
+        nameInput.addEventListener('click', (e) => {
+            e.stopPropagation();
         });
         
         // Type-specific event listeners
