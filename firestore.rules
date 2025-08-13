@@ -11,27 +11,31 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == uid;
     }
     
-    // TEMPORARY: Very permissive rules for debugging
-    // This allows all authenticated users to read/write their own data
+    // User profiles and data
     match /users/{uid} {
-      // Allow authenticated users to read/write their own user document
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      // Users can read/write their own profile
+      allow read, write: if isOwner(uid);
       
-      // Allow all subcollections and documents under the user
+      // Budget documents under user
+      match /budgets/{budgetId} {
+        // Users can read/write their own budgets
+        allow read, write: if isOwner(uid);
+      }
+      
+      // Health check documents (temporary test documents)
+      match /health-check/{testId} {
+        allow read, write: if isOwner(uid);
+      }
+      
+      // Allow any subcollection under user
       match /{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+        allow read, write: if isOwner(uid);
       }
     }
     
-    // Alternative path for budgets if they're stored separately
-    match /budgets/{budgetId} {
-      allow read, write: if request.auth != null;
-    }
-    
-    // Temporary catch-all for debugging - REMOVE IN PRODUCTION
+    // Deny all other access patterns
     match /{document=**} {
-      allow read: if request.auth != null;
-      allow write: if false; // Still block writes to unknown paths
+      allow read, write: if false;
     }
   }
 }

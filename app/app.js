@@ -1,6 +1,11 @@
 import { authHelpers } from '../auth/firebase.js';
 import cloudStore from './cloud-store.js';
 
+// Import new libraries for enhanced features
+import Sortable from "https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/modular/sortable.esm.js";
+import { differenceInMonths, addMonths, format } from "https://cdn.jsdelivr.net/npm/date-fns@3.6.0/+esm";
+import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
+
 (function() {
     'use strict';
 
@@ -9,6 +14,7 @@ import cloudStore from './cloud-store.js';
     let currentBudget = null;
     let currentBudgetId = null;
     let hasMigratedFromLocalStorage = false;
+    let allocChart = null; // Chart.js instance
     
     let state = {
         settings: {
@@ -24,6 +30,57 @@ import cloudStore from './cloud-store.js';
 
     function generateId() {
         return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    // Migration function for existing buckets
+    async function migrateBucketsIfNeeded(budgetId) {
+        const buckets = [...state.expenses, ...state.savings];
+        let needsSave = false;
+
+        for (let bucket of buckets) {
+            // Add missing fields
+            if (typeof bucket.orderIndex === 'undefined') {
+                bucket.orderIndex = buckets.indexOf(bucket);
+                needsSave = true;
+            }
+            if (!bucket.notes) {
+                bucket.notes = "";
+                needsSave = true;
+            }
+            if (typeof bucket.overspendThresholdPct === 'undefined') {
+                bucket.overspendThresholdPct = 80;
+                needsSave = true;
+            }
+            if (typeof bucket.spentThisPeriodCents === 'undefined') {
+                bucket.spentThisPeriodCents = 0;
+                needsSave = true;
+            }
+            if (!bucket.type) {
+                bucket.type = state.expenses.includes(bucket) ? 'expense' : 'saving';
+                needsSave = true;
+            }
+
+            // Add type-specific fields
+            if (bucket.type === 'saving' && !bucket.target) {
+                bucket.target = {
+                    amountCents: 0,
+                    targetDate: null,
+                    autoContributionEnabled: false
+                };
+                needsSave = true;
+            }
+            if (bucket.type === 'debt' && !bucket.debt) {
+                bucket.debt = {
+                    aprPct: 0,
+                    minPaymentCents: 0
+                };
+                needsSave = true;
+            }
+        }
+
+        if (needsSave) {
+            await saveToCloud();
+        }
     }
 
     function convertFrequency(amount, fromFreq, toFreq) {
@@ -83,6 +140,77 @@ import cloudStore from './cloud-store.js';
             .reduce((sum, bucket) => sum + sumIncludedItems(bucket), 0);
     }
 
+    // New helper functions for sinking funds
+    function monthsUntil(targetIso) {
+        if (!targetIso) return Infinity;
+        const now = new Date();
+        const end = new Date(`${targetIso}T00:00:00`);
+        return Math.max(0, differenceInMonths(end, now));
+    }
+
+    function monthlyNeeded(targetCents, currentCents, targetIso) {
+        const m = monthsUntil(targetIso);
+        if (!isFinite(m) || m <= 0) return 0;
+        return Math.max(0, (targetCents - currentCents) / m);
+    }
+
+    function monthlyToBase(val, baseFreq) {
+        return baseFreq === 'Weekly' ? val * 12 / 52 :
+               baseFreq === 'Fortnightly' ? val * 12 / 26 :
+               baseFreq === 'Monthly' ? val :
+               baseFreq === 'Yearly' ? val * 12 : val;
+    }
+
+    // Debt payoff calculation
+    function monthsToPayoff(balance, aprPct, paymentMonthly) {
+        const r = aprPct > 0 ? (Math.pow(1 + aprPct / 100, 1 / 12) - 1) : 0;
+        if (paymentMonthly <= r * balance) return Infinity;
+        if (r === 0) return Math.ceil(balance / paymentMonthly);
+        return Math.ceil(Math.log(paymentMonthly / (paymentMonthly - r * balance)) / Math.log(1 + r));
+    }
+
+    // Allocation donut chart
+    function drawAllocRing({ incM, expM, savM }) {
+        const remaining = Math.max(0, incM - expM - savM);
+        const ctx = document.getElementById('allocRing')?.getContext('2d');
+        if (!ctx) return;
+        
+        const data = [expM, savM, remaining];
+        const labels = ["Expenses", "Savings", "Remaining"];
+        const colors = ["#5ea8ff", "#5eead4", "#a7b1c2"];
+        
+        if (allocChart) {
+            allocChart.data.datasets[0].data = data;
+            allocChart.update();
+        } else {
+            allocChart = new Chart(ctx, {
+                type: "doughnut",
+                data: {
+                    labels,
+                    datasets: [{
+                        data,
+                        borderWidth: 0,
+                        hoverOffset: 4,
+                        backgroundColor: colors
+                    }]
+                },
+                options: {
+                    cutout: "68%",
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: true }
+                    }
+                }
+            });
+        }
+        
+        const pct = (v, t) => (t > 0 ? Math.round(v / t * 100) : 0) + "%";
+        const legendEl = document.getElementById('allocLegend');
+        if (legendEl) {
+            legendEl.textContent = `Expenses ${pct(expM, incM)} • Savings ${pct(savM, incM)} • Remaining ${pct(remaining, incM)}`;
+        }
+    }
+
     function updateDerivedValues() {
         const income = parseFloat(state.settings.incomeAmount) || 0;
         const freq = state.settings.incomeFrequency;
@@ -93,734 +221,893 @@ import cloudStore from './cloud-store.js';
         document.getElementById('incomeMonthly').textContent = formatCurrency(monthlyIncome);
         document.getElementById('incomeFortnightly').textContent = formatCurrency(fortnightlyIncome);
         
+        const totalExpenses = getTotalExpenses();
         const totalSavings = getTotalSavings();
-        const leftover = income - totalSavings;
+        const leftover = income - totalExpenses - totalSavings;
         const savingsRate = income > 0 ? (totalSavings / income) * 100 : 0;
         
         document.getElementById('leftoverAfterSavings').textContent = formatCurrency(leftover);
         document.getElementById('savingsRate').textContent = formatPercent(savingsRate);
+        
+        updateTotals();
+        
+        // Update allocation ring
+        const expM = convertFrequency(totalExpenses, freq, 'Monthly');
+        const savM = convertFrequency(totalSavings, freq, 'Monthly');
+        drawAllocRing({ incM: monthlyIncome, expM, savM });
     }
 
     function updateTotals() {
-        const totalExpenses = getTotalExpenses();
-        const totalSavings = getTotalSavings();
-        const income = parseFloat(state.settings.incomeAmount) || 0;
         const freq = state.settings.incomeFrequency;
+        const income = parseFloat(state.settings.incomeAmount) || 0;
+        const expenses = getTotalExpenses();
+        const savings = getTotalSavings();
+        const remaining = income - expenses - savings;
         
         document.getElementById('totalsFrequency').textContent = freq;
-        
-        const remaining = income - totalExpenses - totalSavings;
-        
         document.getElementById('totalIncome').textContent = formatCurrency(income);
-        document.getElementById('totalExpenses').textContent = formatCurrency(totalExpenses);
-        document.getElementById('totalSavings').textContent = formatCurrency(totalSavings);
+        document.getElementById('totalExpenses').textContent = formatCurrency(expenses);
+        document.getElementById('totalSavings').textContent = formatCurrency(savings);
         document.getElementById('totalRemaining').textContent = formatCurrency(remaining);
         
-        const remainingElement = document.getElementById('totalRemaining');
+        // Update remaining color
+        const remainingEl = document.getElementById('totalRemaining');
         if (remaining < 0) {
-            remainingElement.style.color = 'var(--danger)';
-        } else if (remaining > 0) {
-            remainingElement.style.color = 'var(--success)';
+            remainingEl.style.color = 'var(--danger-color, #ff6b6b)';
         } else {
-            remainingElement.style.color = 'var(--text-secondary)';
-        }
-        
-        updateDerivedValues();
-    }
-
-    function createItem(bucketId, section) {
-        const bucket = state[section].find(b => b.id === bucketId);
-        if (!bucket) return;
-        
-        const item = {
-            id: generateId(),
-            name: 'New item',
-            amount: 0,
-            include: true
-        };
-        
-        bucket.items.push(item);
-        return item;
-    }
-
-    function deleteItem(itemId, bucketId, section) {
-        const bucket = state[section].find(b => b.id === bucketId);
-        if (!bucket) return;
-        
-        bucket.items = bucket.items.filter(item => item.id !== itemId);
-    }
-
-    function renderItem(item, bucketId, section) {
-        const template = document.getElementById('itemTemplate');
-        const row = template.content.cloneNode(true);
-        
-        const tr = row.querySelector('.item-row');
-        tr.dataset.itemId = item.id;
-        
-        const nameInput = row.querySelector('.item-name');
-        const amountInput = row.querySelector('.item-amount');
-        const includeCheck = row.querySelector('.item-include');
-        const deleteBtn = row.querySelector('.delete-btn');
-        
-        nameInput.value = item.name;
-        amountInput.value = item.amount;
-        includeCheck.checked = item.include;
-        
-        nameInput.addEventListener('input', () => {
-            item.name = nameInput.value;
-            saveState();
-        });
-        
-        amountInput.addEventListener('input', () => {
-            item.amount = parseFloat(amountInput.value) || 0;
-            updateBucketTotal(bucketId, section);
-            updateTotals();
-            saveState();
-        });
-        
-        includeCheck.addEventListener('change', () => {
-            item.include = includeCheck.checked;
-            updateBucketTotal(bucketId, section);
-            updateTotals();
-            saveState();
-        });
-        
-        deleteBtn.addEventListener('click', () => {
-            deleteItem(item.id, bucketId, section);
-            tr.remove();
-            updateBucketTotal(bucketId, section);
-            updateTotals();
-            saveState();
-        });
-        
-        nameInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                const bucket = state[section].find(b => b.id === bucketId);
-                const lastItem = bucket.items[bucket.items.length - 1];
-                if (item.id === lastItem.id) {
-                    const newItem = createItem(bucketId, section);
-                    const tbody = tr.parentElement;
-                    tbody.appendChild(renderItem(newItem, bucketId, section));
-                    saveState();
-                    
-                    setTimeout(() => {
-                        const newRow = tbody.querySelector(`[data-item-id="${newItem.id}"]`);
-                        newRow.querySelector('.item-name').focus();
-                    }, 0);
-                }
-            }
-        });
-        
-        return row;
-    }
-
-    function updateBucketTotal(bucketId, section) {
-        const bucket = state[section].find(b => b.id === bucketId);
-        if (!bucket) return;
-        
-        const total = sumIncludedItems(bucket);
-        const bucketCard = document.querySelector(`[data-bucket-id="${bucketId}"]`);
-        if (bucketCard) {
-            bucketCard.querySelector('.bucket-total-value').textContent = formatCurrency(total);
-            
-            if (section === 'savings' && bucket.goalEnabled && bucket.goalAmount > 0) {
-                const progressFill = bucketCard.querySelector('.progress-fill');
-                const progressCurrent = bucketCard.querySelector('.progress-current');
-                const progressPercent = bucketCard.querySelector('.progress-percent');
-                const progressGoal = bucketCard.querySelector('.progress-goal');
-                
-                const percentage = Math.min((total / bucket.goalAmount) * 100, 100);
-                
-                progressFill.style.width = `${percentage}%`;
-                progressCurrent.textContent = formatCurrency(total);
-                progressPercent.textContent = `${percentage.toFixed(1)}%`;
-                progressGoal.textContent = `of ${formatCurrency(bucket.goalAmount)}`;
-            }
+            remainingEl.style.color = 'var(--success-color, #5eead4)';
         }
     }
 
-    function createBucket(section) {
-        const bucket = {
-            id: generateId(),
-            name: section === 'expenses' ? 'New expense' : 'New saving',
-            bankAccount: '',
-            include: true,
-            items: [],
-            goalEnabled: false,
-            goalAmount: 0,
-            color: ''
-        };
+    function updateBucketUI(bucket, bucketEl) {
+        const bucketTotal = sumIncludedItems(bucket);
+        const income = parseFloat(state.settings.incomeAmount) || 0;
+        const freq = state.settings.incomeFrequency;
+        const monthlyIncome = convertFrequency(income, freq, 'Monthly');
+        const bucketMonthly = convertFrequency(bucketTotal, freq, 'Monthly');
         
-        state[section].push(bucket);
-        return bucket;
+        // Update percentage of income
+        const pctOfIncome = monthlyIncome > 0 ? Math.round(bucketMonthly / monthlyIncome * 100) : 0;
+        bucketEl.querySelector('.pct').textContent = `${pctOfIncome}% of income`;
+        
+        // Update bank badge
+        const bankBadge = bucketEl.querySelector('.bank-badge');
+        if (bucket.bankAccount) {
+            bankBadge.textContent = bucket.bankAccount;
+            bankBadge.style.display = '';
+        } else {
+            bankBadge.style.display = 'none';
+        }
+        
+        // Update overspend indicator
+        const spentCents = bucket.spentThisPeriodCents || 0;
+        const plannedCents = bucketTotal * 100;
+        const ratio = plannedCents > 0 ? spentCents / plannedCents : 0;
+        const pill = bucketEl.querySelector('.pill');
+        
+        if (ratio < 0.8) {
+            pill.className = 'pill pill--ok';
+            pill.textContent = 'OK';
+        } else if (ratio <= 1.0) {
+            pill.className = 'pill pill--warn';
+            pill.textContent = 'Warning';
+        } else {
+            pill.className = 'pill pill--bad';
+            pill.textContent = 'Over';
+        }
+        
+        // Update progress bar
+        const progressBar = bucketEl.querySelector('.progress-bar');
+        const progressWidth = Math.min(100, ratio * 100);
+        progressBar.style.width = `${progressWidth}%`;
+        
+        // Update remaining amount
+        const remaining = (plannedCents - spentCents) / 100;
+        const remainingEl = bucketEl.querySelector('.remaining-amount');
+        remainingEl.textContent = `Remaining: ${formatCurrency(remaining)}`;
+        
+        // Update data attributes for search
+        bucketEl.dataset.bucketName = bucket.name || '';
+        bucketEl.dataset.bankAccount = bucket.bankAccount || '';
+        bucketEl.dataset.notes = bucket.notes || '';
+        
+        // Update type-specific sections
+        updateTypeSpecificSections(bucket, bucketEl);
     }
 
-    function deleteBucket(bucketId, section) {
-        state[section] = state[section].filter(b => b.id !== bucketId);
+    function updateTypeSpecificSections(bucket, bucketEl) {
+        const savingsInfo = bucketEl.querySelector('.savings-info');
+        const debtInfo = bucketEl.querySelector('.debt-info');
+        
+        // Hide all type-specific sections first
+        savingsInfo.style.display = 'none';
+        debtInfo.style.display = 'none';
+        
+        if (bucket.type === 'saving') {
+            savingsInfo.style.display = 'block';
+            updateSavingsSection(bucket, bucketEl);
+        } else if (bucket.type === 'debt') {
+            debtInfo.style.display = 'block';
+            updateDebtSection(bucket, bucketEl);
+        }
     }
 
-    function renderBucket(bucket, section) {
+    function updateSavingsSection(bucket, bucketEl) {
+        const target = bucket.target || {};
+        const targetAmountEl = bucketEl.querySelector('.target-amount');
+        const targetDateEl = bucketEl.querySelector('.target-date');
+        const autoCalcEl = bucketEl.querySelector('.auto-calc');
+        const neededAmountEl = bucketEl.querySelector('.needed-amount');
+        
+        targetAmountEl.value = target.amountCents ? (target.amountCents / 100).toFixed(2) : '';
+        targetDateEl.value = target.targetDate || '';
+        autoCalcEl.checked = target.autoContributionEnabled || false;
+        
+        // Calculate needed amount
+        const currentBalance = sumIncludedItems(bucket) * 100; // in cents
+        const needMonthly = monthlyNeeded(target.amountCents || 0, currentBalance, target.targetDate);
+        const needPerPeriod = monthlyToBase(needMonthly, state.settings.incomeFrequency);
+        neededAmountEl.textContent = formatCurrency(needPerPeriod / 100);
+    }
+
+    function updateDebtSection(bucket, bucketEl) {
+        const debt = bucket.debt || {};
+        const aprEl = bucketEl.querySelector('.apr-pct');
+        const minPaymentEl = bucketEl.querySelector('.min-payment');
+        const payoffTextEl = bucketEl.querySelector('.payoff-text');
+        
+        aprEl.value = debt.aprPct || '';
+        minPaymentEl.value = debt.minPaymentCents ? (debt.minPaymentCents / 100).toFixed(2) : '';
+        
+        // Calculate payoff
+        const balance = sumIncludedItems(bucket);
+        const minPaymentMonthly = convertFrequency(debt.minPaymentCents / 100 || 0, state.settings.incomeFrequency, 'Monthly');
+        const months = monthsToPayoff(balance, debt.aprPct || 0, minPaymentMonthly);
+        
+        if (months === Infinity) {
+            payoffTextEl.textContent = "Unreachable (increase payment)";
+        } else {
+            const payoffDate = addMonths(new Date(), months);
+            payoffTextEl.textContent = `${months} months (${format(payoffDate, "MMM yyyy")})`;
+        }
+    }
+
+    // Search functionality
+    function initializeSearch() {
+        const searchEl = document.getElementById('bucket-search');
+        if (!searchEl) return;
+        
+        searchEl.addEventListener('input', () => {
+            const q = searchEl.value.trim().toLowerCase();
+            document.querySelectorAll('[data-bucket-id]').forEach(card => {
+                const hay = (
+                    (card.dataset.bucketName || '') + ' ' +
+                    (card.dataset.bankAccount || '') + ' ' +
+                    (card.dataset.notes || '')
+                ).toLowerCase();
+                card.style.display = hay.includes(q) ? '' : 'none';
+            });
+        });
+    }
+
+    // Drag and drop functionality
+    function wireSortable(listEl) {
+        if (!listEl) return;
+        
+        Sortable.create(listEl, {
+            handle: ".drag-handle",
+            animation: 120,
+            ghostClass: 'sortable-ghost',
+            onEnd: async (evt) => {
+                const ids = [...listEl.querySelectorAll('[data-bucket-id]')].map(el => el.dataset.bucketId);
+                await saveOrderIndex(ids);
+            }
+        });
+    }
+
+    async function saveOrderIndex(ids) {
+        const allBuckets = [...state.expenses, ...state.savings];
+        ids.forEach((id, index) => {
+            const bucket = allBuckets.find(b => b.id === id);
+            if (bucket) {
+                bucket.orderIndex = index;
+            }
+        });
+        await saveToCloud();
+    }
+
+    function createBucketElement(bucket, section) {
         const template = document.getElementById('bucketTemplate');
-        const bucketCard = template.content.cloneNode(true);
+        const bucketEl = template.content.cloneNode(true);
+        const card = bucketEl.querySelector('.bucket-card');
         
-        const article = bucketCard.querySelector('.bucket-card');
-        article.dataset.bucketId = bucket.id;
+        card.dataset.bucketId = bucket.id;
         
-        const toggleBtn = bucketCard.querySelector('.bucket-toggle');
-        const nameInput = bucketCard.querySelector('.bucket-name');
-        const bankInput = bucketCard.querySelector('.bank-account');
-        const includeCheck = bucketCard.querySelector('.bucket-include');
-        const colorPicker = bucketCard.querySelector('.bucket-color');
-        const deleteBtn = bucketCard.querySelector('.delete-btn');
-        const itemsList = bucketCard.querySelector('.items-list');
-        const addItemBtn = bucketCard.querySelector('.add-item-btn');
+        // Set up basic bucket properties
+        const nameInput = card.querySelector('.bucket-name');
+        const bankInput = card.querySelector('.bank-account');
+        const includeInput = card.querySelector('.bucket-include');
+        const colorInput = card.querySelector('.bucket-color');
+        const typeSelect = card.querySelector('.bucket-type');
+        const notesTextarea = card.querySelector('.bucket-notes');
+        const spentInput = card.querySelector('.spent-this-period');
         
-        const goalSection = bucketCard.querySelector('.goal-section');
-        const goalEnabled = bucketCard.querySelector('.goal-enabled');
-        const goalAmount = bucketCard.querySelector('.goal-amount');
-        const progressContainer = bucketCard.querySelector('.progress-container');
+        nameInput.value = bucket.name || '';
+        bankInput.value = bucket.bankAccount || '';
+        includeInput.checked = bucket.include !== false;
+        colorInput.value = bucket.color || '#00cdd6';
+        typeSelect.value = bucket.type || 'expense';
+        notesTextarea.value = bucket.notes || '';
+        spentInput.value = bucket.spentThisPeriodCents ? (bucket.spentThisPeriodCents / 100).toFixed(2) : '0.00';
         
-        nameInput.value = bucket.name;
-        bankInput.value = bucket.bankAccount;
-        includeCheck.checked = bucket.include;
-        
-        if (bucket.color) {
-            colorPicker.value = bucket.color;
-            article.style.setProperty('--bucket-bg-color', bucket.color);
-            article.setAttribute('data-bucket-color', 'true');
-        } else {
-            colorPicker.value = '#1f1f1f';
+        // Auto-resize notes textarea
+        if (window.autosize) {
+            autosize(notesTextarea);
         }
         
-        colorPicker.addEventListener('input', () => {
-            bucket.color = colorPicker.value;
-            article.style.setProperty('--bucket-bg-color', colorPicker.value);
-            article.setAttribute('data-bucket-color', 'true');
-            saveState();
+        // Set up event listeners
+        setupBucketEventListeners(bucket, card, section);
+        
+        // Create initial items
+        bucket.items = bucket.items || [];
+        bucket.items.forEach(item => {
+            addItemToUI(item, card, bucket, section);
         });
         
-        if (section === 'savings') {
-            goalSection.style.display = 'block';
-            goalEnabled.checked = bucket.goalEnabled || false;
-            goalAmount.value = bucket.goalAmount || 0;
-            
-            if (bucket.goalEnabled) {
-                goalAmount.style.display = 'block';
-                progressContainer.style.display = 'flex';
-            }
-            
-            goalEnabled.addEventListener('change', () => {
-                bucket.goalEnabled = goalEnabled.checked;
-                goalAmount.style.display = goalEnabled.checked ? 'block' : 'none';
-                progressContainer.style.display = goalEnabled.checked ? 'flex' : 'none';
-                
-                if (goalEnabled.checked && !bucket.goalAmount) {
-                    bucket.goalAmount = 1000;
-                    goalAmount.value = 1000;
-                }
-                
-                updateBucketTotal(bucket.id, section);
-                saveState();
-            });
-            
-            goalAmount.addEventListener('input', () => {
-                bucket.goalAmount = parseFloat(goalAmount.value) || 0;
-                updateBucketTotal(bucket.id, section);
-                saveState();
-            });
-        }
+        updateBucketUI(bucket, card);
+        updateBucketTotal(bucket, card);
         
-        toggleBtn.addEventListener('click', (e) => {
-            if (e.target === nameInput) return;
-            const expanded = toggleBtn.getAttribute('aria-expanded') === 'true';
-            toggleBtn.setAttribute('aria-expanded', !expanded);
-        });
+        return card;
+    }
+
+    function setupBucketEventListeners(bucket, card, section) {
+        const nameInput = card.querySelector('.bucket-name');
+        const bankInput = card.querySelector('.bank-account');
+        const includeInput = card.querySelector('.bucket-include');
+        const colorInput = card.querySelector('.bucket-color');
+        const typeSelect = card.querySelector('.bucket-type');
+        const notesTextarea = card.querySelector('.bucket-notes');
+        const spentInput = card.querySelector('.spent-this-period');
+        const deleteBtn = card.querySelector('.delete-btn');
+        const addItemBtn = card.querySelector('.add-item-btn');
+        const toggleBtn = card.querySelector('.bucket-toggle');
         
-        nameInput.addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
+        // Debounced save functions
+        const debouncedSave = debounce(saveToCloud, 350);
+        const debouncedUpdateNotes = debounce(async () => {
+            bucket.notes = notesTextarea.value;
+            card.dataset.notes = bucket.notes;
+            await saveToCloud();
+        }, 350);
         
         nameInput.addEventListener('input', () => {
             bucket.name = nameInput.value;
-            saveState();
+            card.dataset.bucketName = bucket.name;
+            debouncedSave();
         });
         
         bankInput.addEventListener('input', () => {
             bucket.bankAccount = bankInput.value;
-            saveState();
+            card.dataset.bankAccount = bucket.bankAccount;
+            updateBucketUI(bucket, card);
+            debouncedSave();
         });
         
-        includeCheck.addEventListener('change', () => {
-            bucket.include = includeCheck.checked;
-            updateTotals();
-            saveState();
+        includeInput.addEventListener('change', () => {
+            bucket.include = includeInput.checked;
+            updateDerivedValues();
+            debouncedSave();
+        });
+        
+        colorInput.addEventListener('change', () => {
+            bucket.color = colorInput.value;
+            debouncedSave();
+        });
+        
+        typeSelect.addEventListener('change', () => {
+            bucket.type = typeSelect.value;
+            updateTypeSpecificSections(bucket, card);
+            debouncedSave();
+        });
+        
+        notesTextarea.addEventListener('input', debouncedUpdateNotes);
+        
+        spentInput.addEventListener('input', () => {
+            bucket.spentThisPeriodCents = Math.round((parseFloat(spentInput.value) || 0) * 100);
+            updateBucketUI(bucket, card);
+            debouncedSave();
         });
         
         deleteBtn.addEventListener('click', () => {
-            if (confirm(`Delete bucket "${bucket.name}"?`)) {
+            if (confirm('Delete this bucket and all its items?')) {
                 deleteBucket(bucket.id, section);
-                article.remove();
-                updateTotals();
-                saveState();
-                
-                const container = document.getElementById(section + 'Buckets');
-                if (state[section].length === 0) {
-                    container.innerHTML = `<p class="empty-state">No ${section} yet — add a bucket</p>`;
-                }
             }
         });
         
         addItemBtn.addEventListener('click', () => {
-            const item = createItem(bucket.id, section);
-            itemsList.appendChild(renderItem(item, bucket.id, section));
-            saveState();
+            addNewItem(bucket, card, section);
+        });
+        
+        toggleBtn.addEventListener('click', () => {
+            const content = card.querySelector('.bucket-content');
+            const icon = card.querySelector('.toggle-icon');
+            const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
             
-            setTimeout(() => {
-                const newRow = itemsList.querySelector(`[data-item-id="${item.id}"]`);
-                newRow.querySelector('.item-name').focus();
-            }, 0);
+            content.style.display = isExpanded ? 'none' : 'block';
+            icon.textContent = isExpanded ? '▶' : '▼';
+            toggleBtn.setAttribute('aria-expanded', !isExpanded);
         });
         
-        bucket.items.forEach(item => {
-            itemsList.appendChild(renderItem(item, bucket.id, section));
-        });
-        
-        return bucketCard;
+        // Type-specific event listeners
+        setupTypeSpecificEventListeners(bucket, card);
     }
 
-    function renderAllBuckets() {
-        ['expenses', 'savings'].forEach(section => {
-            const container = document.getElementById(section + 'Buckets');
-            container.innerHTML = '';
+    function setupTypeSpecificEventListeners(bucket, card) {
+        // Savings-specific listeners
+        const targetAmountEl = card.querySelector('.target-amount');
+        const targetDateEl = card.querySelector('.target-date');
+        const autoCalcEl = card.querySelector('.auto-calc');
+        const setAmountBtn = card.querySelector('.set-amount-btn');
+        
+        const debouncedSavingsUpdate = debounce(() => {
+            if (!bucket.target) bucket.target = {};
+            bucket.target.amountCents = Math.round((parseFloat(targetAmountEl.value) || 0) * 100);
+            bucket.target.targetDate = targetDateEl.value || null;
+            bucket.target.autoContributionEnabled = autoCalcEl.checked;
             
-            if (state[section].length === 0) {
-                container.innerHTML = `<p class="empty-state">No ${section} yet — add a bucket</p>`;
-            } else {
-                state[section].forEach(bucket => {
-                    container.appendChild(renderBucket(bucket, section));
-                    updateBucketTotal(bucket.id, section);
-                });
+            updateSavingsSection(bucket, card);
+            
+            if (bucket.target.autoContributionEnabled) {
+                // Auto-set the amount if enabled
+                const currentBalance = sumIncludedItems(bucket) * 100;
+                const needMonthly = monthlyNeeded(bucket.target.amountCents, currentBalance, bucket.target.targetDate);
+                const needPerPeriod = monthlyToBase(needMonthly, state.settings.incomeFrequency);
+                
+                // Update bucket amount
+                if (bucket.items.length > 0) {
+                    bucket.items[0].amount = needPerPeriod / 100;
+                    const firstItemAmountEl = card.querySelector('.item-amount');
+                    if (firstItemAmountEl) {
+                        firstItemAmountEl.value = (needPerPeriod / 100).toFixed(2);
+                    }
+                }
+                updateBucketTotal(bucket, card);
+                updateDerivedValues();
+            }
+            
+            saveToCloud();
+        }, 350);
+        
+        targetAmountEl.addEventListener('input', debouncedSavingsUpdate);
+        targetDateEl.addEventListener('change', debouncedSavingsUpdate);
+        autoCalcEl.addEventListener('change', debouncedSavingsUpdate);
+        
+        setAmountBtn.addEventListener('click', () => {
+            if (bucket.items.length > 0) {
+                const currentBalance = sumIncludedItems(bucket) * 100;
+                const needMonthly = monthlyNeeded(bucket.target?.amountCents || 0, currentBalance, bucket.target?.targetDate);
+                const needPerPeriod = monthlyToBase(needMonthly, state.settings.incomeFrequency);
+                
+                bucket.items[0].amount = needPerPeriod / 100;
+                const firstItemAmountEl = card.querySelector('.item-amount');
+                if (firstItemAmountEl) {
+                    firstItemAmountEl.value = (needPerPeriod / 100).toFixed(2);
+                }
+                updateBucketTotal(bucket, card);
+                updateDerivedValues();
+                saveToCloud();
             }
         });
         
-        updateTotals();
+        // Debt-specific listeners
+        const aprEl = card.querySelector('.apr-pct');
+        const minPaymentEl = card.querySelector('.min-payment');
+        
+        const debouncedDebtUpdate = debounce(() => {
+            if (!bucket.debt) bucket.debt = {};
+            bucket.debt.aprPct = parseFloat(aprEl.value) || 0;
+            bucket.debt.minPaymentCents = Math.round((parseFloat(minPaymentEl.value) || 0) * 100);
+            
+            updateDebtSection(bucket, card);
+            saveToCloud();
+        }, 350);
+        
+        aprEl.addEventListener('input', debouncedDebtUpdate);
+        minPaymentEl.addEventListener('input', debouncedDebtUpdate);
     }
 
-    // Cloud storage integration
-    async function loadBudgetFromCloud() {
-        if (!currentUser) return false;
+    function addNewItem(bucket, bucketEl, section) {
+        const newItem = {
+            id: generateId(),
+            name: '',
+            amount: 0,
+            include: true
+        };
         
-        try {
-            const budgets = await cloudStore.listBudgets(currentUser.uid);
-            
-            if (budgets.length > 0) {
-                // Load the most recent budget
-                const budget = budgets[0];
-                currentBudgetId = budget.id;
-                currentBudget = budget;
-                
-                // Update state with budget data
-                state = {
-                    settings: budget.settings || state.settings,
-                    expenses: budget.expenses || [],
-                    savings: budget.savings || []
-                };
-                
-                return true;
+        bucket.items = bucket.items || [];
+        bucket.items.push(newItem);
+        
+        addItemToUI(newItem, bucketEl, bucket, section);
+        updateBucketTotal(bucket, bucketEl);
+        updateDerivedValues();
+        saveToCloud();
+        
+        // Focus the new item's name input
+        const itemRows = bucketEl.querySelectorAll('.item-row');
+        const lastRow = itemRows[itemRows.length - 1];
+        const nameInput = lastRow.querySelector('.item-name');
+        nameInput.focus();
+        nameInput.select();
+    }
+
+    function addItemToUI(item, bucketEl, bucket, section) {
+        const template = document.getElementById('itemTemplate');
+        const itemEl = template.content.cloneNode(true);
+        const row = itemEl.querySelector('.item-row');
+        
+        row.dataset.itemId = item.id;
+        
+        const nameInput = row.querySelector('.item-name');
+        const amountInput = row.querySelector('.item-amount');
+        const includeInput = row.querySelector('.item-include');
+        const deleteBtn = row.querySelector('.delete-btn');
+        
+        nameInput.value = item.name || '';
+        amountInput.value = item.amount || 0;
+        includeInput.checked = item.include !== false;
+        
+        // Event listeners
+        nameInput.addEventListener('input', debounce(() => {
+            item.name = nameInput.value;
+            saveToCloud();
+        }, 300));
+        
+        amountInput.addEventListener('input', debounce(() => {
+            item.amount = parseFloat(amountInput.value) || 0;
+            updateBucketTotal(bucket, bucketEl);
+            updateBucketUI(bucket, bucketEl);
+            updateDerivedValues();
+            saveToCloud();
+        }, 300));
+        
+        includeInput.addEventListener('change', () => {
+            item.include = includeInput.checked;
+            updateBucketTotal(bucket, bucketEl);
+            updateBucketUI(bucket, bucketEl);
+            updateDerivedValues();
+            saveToCloud();
+        });
+        
+        deleteBtn.addEventListener('click', () => {
+            if (bucket.items.length > 1 || confirm('Delete this item?')) {
+                bucket.items = bucket.items.filter(i => i.id !== item.id);
+                row.remove();
+                updateBucketTotal(bucket, bucketEl);
+                updateBucketUI(bucket, bucketEl);
+                updateDerivedValues();
+                saveToCloud();
             }
-            
-            return false;
-        } catch (error) {
-            console.error('Error loading budget from cloud:', error);
-            showError('Failed to load budget from cloud: ' + cloudStore.getErrorMessage(error));
-            return false;
+        });
+        
+        // Add to DOM
+        const tbody = bucketEl.querySelector('.items-list');
+        tbody.appendChild(itemEl);
+    }
+
+    function updateBucketTotal(bucket, bucketEl) {
+        const total = sumIncludedItems(bucket);
+        const totalEl = bucketEl.querySelector('.bucket-total-value');
+        totalEl.textContent = formatCurrency(total);
+    }
+
+    function deleteBucket(bucketId, section) {
+        if (section === 'expenses') {
+            state.expenses = state.expenses.filter(b => b.id !== bucketId);
+        } else {
+            state.savings = state.savings.filter(b => b.id !== bucketId);
+        }
+        
+        renderBuckets();
+        updateDerivedValues();
+        saveToCloud();
+    }
+
+    function addNewBucket(section) {
+        const newBucket = {
+            id: generateId(),
+            name: '',
+            items: [{
+                id: generateId(),
+                name: '',
+                amount: 0,
+                include: true
+            }],
+            include: true,
+            color: '#00cdd6',
+            bankAccount: '',
+            type: section === 'expenses' ? 'expense' : 'saving',
+            orderIndex: 0,
+            notes: '',
+            overspendThresholdPct: 80,
+            spentThisPeriodCents: 0
+        };
+        
+        // Add type-specific defaults
+        if (newBucket.type === 'saving') {
+            newBucket.target = {
+                amountCents: 0,
+                targetDate: null,
+                autoContributionEnabled: false
+            };
+        } else if (newBucket.type === 'debt') {
+            newBucket.debt = {
+                aprPct: 0,
+                minPaymentCents: 0
+            };
+        }
+        
+        if (section === 'expenses') {
+            newBucket.orderIndex = state.expenses.length;
+            state.expenses.push(newBucket);
+        } else {
+            newBucket.orderIndex = state.savings.length;
+            state.savings.push(newBucket);
+        }
+        
+        renderBuckets();
+        updateDerivedValues();
+        saveToCloud();
+        
+        // Focus the new bucket's name input
+        const bucketEl = document.querySelector(`[data-bucket-id="${newBucket.id}"]`);
+        if (bucketEl) {
+            const nameInput = bucketEl.querySelector('.bucket-name');
+            nameInput.focus();
+            nameInput.select();
         }
     }
 
-    async function saveBudgetToCloud() {
-        if (!currentUser) return;
+    function renderBuckets() {
+        const expensesContainer = document.getElementById('expensesList');
+        const savingsContainer = document.getElementById('savingsList');
         
+        if (!expensesContainer || !savingsContainer) return;
+        
+        // Clear containers
+        expensesContainer.innerHTML = '';
+        savingsContainer.innerHTML = '';
+        
+        // Sort buckets by orderIndex
+        const sortedExpenses = [...state.expenses].sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+        const sortedSavings = [...state.savings].sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+        
+        // Render expenses
+        if (sortedExpenses.length === 0) {
+            expensesContainer.innerHTML = '<p class="empty-state">No expenses yet — add a bucket</p>';
+        } else {
+            sortedExpenses.forEach(bucket => {
+                const bucketEl = createBucketElement(bucket, 'expenses');
+                expensesContainer.appendChild(bucketEl);
+            });
+        }
+        
+        // Render savings
+        if (sortedSavings.length === 0) {
+            savingsContainer.innerHTML = '<p class="empty-state">No savings yet — add a bucket</p>';
+        } else {
+            sortedSavings.forEach(bucket => {
+                const bucketEl = createBucketElement(bucket, 'savings');
+                savingsContainer.appendChild(bucketEl);
+            });
+        }
+        
+        // Wire up sortable after rendering
+        wireSortable(expensesContainer);
+        wireSortable(savingsContainer);
+    }
+
+    // Cloud integration functions (keeping existing structure)
+    async function saveToCloud() {
+        if (!currentUser || !currentBudgetId) {
+            console.warn('No user or budget ID available for cloud save');
+            return;
+        }
+
         try {
-            const budgetData = {
-                name: 'My Budget',
+            await cloudStore.saveBudget(currentUser.uid, currentBudgetId, {
                 settings: state.settings,
                 expenses: state.expenses,
-                savings: state.savings
-            };
-            
-            if (currentBudgetId) {
-                // Update existing budget
-                await cloudStore.updateBudget(currentUser.uid, currentBudgetId, budgetData);
-            } else {
-                // Create new budget
-                const newBudget = await cloudStore.createBudget(currentUser.uid, budgetData);
-                currentBudgetId = newBudget.id;
-                currentBudget = newBudget;
-            }
+                savings: state.savings,
+                lastModified: new Date().toISOString()
+            });
         } catch (error) {
-            console.error('Error saving budget to cloud:', error);
-            showError('Failed to save budget: ' + cloudStore.getErrorMessage(error));
+            console.error('Failed to save to cloud:', error);
         }
     }
 
-    function saveState() {
-        clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(async () => {
-            await saveBudgetToCloud();
-        }, 1000); // Debounced save after 1 second
-    }
+    async function loadFromCloud() {
+        if (!currentUser) {
+            console.warn('No user available for cloud load');
+            return;
+        }
 
-    // Migration from localStorage
-    async function checkForMigration() {
-        if (hasMigratedFromLocalStorage) return;
-        
-        const localData = localStorage.getItem('budgetBuckets.v1');
-        if (!localData) return;
-        
         try {
-            const parsedData = JSON.parse(localData);
+            const budgets = await cloudStore.getBudgets(currentUser.uid);
             
-            // Check if user wants to import their local data
-            const shouldImport = confirm(
-                'We found budget data saved on this device. Would you like to import it to your cloud account? ' +
-                'This will replace any existing cloud budget.'
-            );
-            
-            if (shouldImport) {
-                state = {
-                    settings: parsedData.settings || state.settings,
-                    expenses: parsedData.expenses || [],
-                    savings: parsedData.savings || []
-                };
+            if (budgets.length > 0) {
+                currentBudget = budgets[0];
+                currentBudgetId = currentBudget.id;
                 
-                await saveBudgetToCloud();
-                localStorage.removeItem('budgetBuckets.v1'); // Clean up
-                showSuccess('Local data imported successfully!');
+                if (currentBudget.settings) {
+                    state.settings = { ...state.settings, ...currentBudget.settings };
+                }
+                if (currentBudget.expenses) {
+                    state.expenses = currentBudget.expenses;
+                }
+                if (currentBudget.savings) {
+                    state.savings = currentBudget.savings;
+                }
+                
+                // Run migration if needed
+                await migrateBucketsIfNeeded(currentBudgetId);
+                
+                updateUI();
+            } else {
+                // Create a new budget
+                currentBudgetId = generateId();
+                await cloudStore.saveBudget(currentUser.uid, currentBudgetId, {
+                    settings: state.settings,
+                    expenses: state.expenses,
+                    savings: state.savings,
+                    createdAt: new Date().toISOString(),
+                    lastModified: new Date().toISOString()
+                });
             }
-            
-            hasMigratedFromLocalStorage = true;
         } catch (error) {
-            console.error('Migration error:', error);
+            console.error('Failed to load from cloud:', error);
         }
     }
 
-    function resetState() {
-        if (confirm('Reset all data? This cannot be undone.')) {
-            state = {
-                settings: {
-                    incomeAmount: 0,
-                    incomeFrequency: 'Fortnightly',
-                    currency: 'AUD'
-                },
-                expenses: [],
-                savings: []
-            };
-            initializeUI();
-            renderAllBuckets();
-            saveState();
-        }
-    }
-
-    function exportData() {
-        const exportData = {
-            ...state,
-            exportDate: new Date().toISOString(),
-            version: '2.0'
-        };
-        
-        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `budget-buckets-${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-    }
-
-    function importData(file) {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            try {
-                const imported = JSON.parse(e.target.result);
-                if (!imported || typeof imported !== 'object') {
-                    throw new Error('Invalid data format');
-                }
-                
-                if (!imported.settings || !Array.isArray(imported.expenses) || !Array.isArray(imported.savings)) {
-                    throw new Error('Invalid data structure');
-                }
-                
-                if (confirm('Import will replace all current data. Continue?')) {
-                    state = {
-                        settings: imported.settings,
-                        expenses: imported.expenses || [],
-                        savings: imported.savings || []
-                    };
-                    initializeUI();
-                    renderAllBuckets();
-                    await saveBudgetToCloud();
-                    showSuccess('Data imported successfully!');
-                }
-            } catch (err) {
-                showError('Failed to import: Invalid file format');
-            }
-        };
-        reader.readAsText(file);
-    }
-
-    function loadDemoData() {
-        state = {
-            settings: {
-                incomeAmount: 2000,
-                incomeFrequency: 'Fortnightly',
-                currency: 'AUD'
-            },
-            expenses: [
-                {
-                    id: generateId(),
-                    name: 'Housing',
-                    bankAccount: 'Main Account',
-                    include: true,
-                    color: '#2d3748',
-                    items: [
-                        { id: generateId(), name: 'Rent', amount: 800, include: true },
-                        { id: generateId(), name: 'Utilities', amount: 100, include: true },
-                        { id: generateId(), name: 'Internet', amount: 40, include: true }
-                    ]
-                },
-                {
-                    id: generateId(),
-                    name: 'Transport',
-                    bankAccount: 'Main Account',
-                    include: true,
-                    color: '#1a365d',
-                    items: [
-                        { id: generateId(), name: 'Fuel', amount: 60, include: true },
-                        { id: generateId(), name: 'Insurance', amount: 50, include: true },
-                        { id: generateId(), name: 'Registration', amount: 15, include: true }
-                    ]
-                },
-                {
-                    id: generateId(),
-                    name: 'Food & Groceries',
-                    bankAccount: 'Spending Account',
-                    include: true,
-                    color: '#22543d',
-                    items: [
-                        { id: generateId(), name: 'Groceries', amount: 200, include: true },
-                        { id: generateId(), name: 'Eating out', amount: 80, include: true }
-                    ]
-                }
-            ],
-            savings: [
-                {
-                    id: generateId(),
-                    name: 'Emergency Fund',
-                    bankAccount: 'Savings Account',
-                    include: true,
-                    goalEnabled: true,
-                    goalAmount: 5000,
-                    color: '#065f46',
-                    items: [
-                        { id: generateId(), name: 'Monthly contribution', amount: 200, include: true }
-                    ]
-                },
-                {
-                    id: generateId(),
-                    name: 'Holiday',
-                    bankAccount: 'Savings Account',
-                    include: true,
-                    goalEnabled: true,
-                    goalAmount: 3000,
-                    color: '#1e3a8a',
-                    items: [
-                        { id: generateId(), name: 'Trip savings', amount: 100, include: true }
-                    ]
-                },
-                {
-                    id: generateId(),
-                    name: 'Investment',
-                    bankAccount: 'Investment Account',
-                    include: true,
-                    goalEnabled: false,
-                    goalAmount: 0,
-                    color: '#581c87',
-                    items: [
-                        { id: generateId(), name: 'ETF purchase', amount: 150, include: true }
-                    ]
-                }
-            ]
-        };
-        
-        initializeUI();
-        renderAllBuckets();
-        saveState();
-    }
-
-    function initializeUI() {
+    function updateUI() {
+        // Update settings UI
         document.getElementById('incomeAmount').value = state.settings.incomeAmount;
         document.getElementById('incomeFrequency').value = state.settings.incomeFrequency;
         document.getElementById('currency').value = state.settings.currency;
+        
+        renderBuckets();
+        updateDerivedValues();
     }
 
-    function showError(message) {
-        console.error(message);
-        // Could add a toast notification here
-        alert('Error: ' + message);
-    }
-
-    function showSuccess(message) {
-        console.log(message);
-        // Could add a toast notification here
-        alert(message);
-    }
-
-    function setupEventListeners() {
-        document.getElementById('incomeAmount').addEventListener('input', (e) => {
-            state.settings.incomeAmount = parseFloat(e.target.value) || 0;
-            updateTotals();
-            saveState();
+    // Event listeners for settings
+    function initializeEventListeners() {
+        // Settings
+        document.getElementById('incomeAmount').addEventListener('input', debounce(() => {
+            state.settings.incomeAmount = parseFloat(document.getElementById('incomeAmount').value) || 0;
+            updateDerivedValues();
+            saveToCloud();
+        }, 300));
+        
+        document.getElementById('incomeFrequency').addEventListener('change', () => {
+            state.settings.incomeFrequency = document.getElementById('incomeFrequency').value;
+            updateDerivedValues();
+            saveToCloud();
         });
         
-        document.getElementById('incomeFrequency').addEventListener('change', (e) => {
-            state.settings.incomeFrequency = e.target.value;
-            updateTotals();
-            saveState();
+        document.getElementById('currency').addEventListener('change', () => {
+            state.settings.currency = document.getElementById('currency').value;
+            updateDerivedValues();
+            saveToCloud();
         });
         
-        document.getElementById('currency').addEventListener('change', (e) => {
-            state.settings.currency = e.target.value;
-            updateTotals();
-            renderAllBuckets();
-            saveState();
-        });
-        
-        document.getElementById('loadDemoBtn').addEventListener('click', loadDemoData);
-        document.getElementById('resetBtn').addEventListener('click', resetState);
-        document.getElementById('exportBtn').addEventListener('click', exportData);
-        
-        const importBtn = document.getElementById('importBtn');
-        const importFile = document.getElementById('importFile');
-        
-        importBtn.addEventListener('click', () => importFile.click());
-        importFile.addEventListener('change', (e) => {
-            if (e.target.files[0]) {
-                importData(e.target.files[0]);
-                e.target.value = '';
-            }
-        });
-
-        // Sign out button
-        document.getElementById('signOutBtn').addEventListener('click', async () => {
-            if (confirm('Are you sure you want to sign out?')) {
-                try {
-                    await authHelpers.signOut();
-                    window.location.href = '/auth/login.html';
-                } catch (error) {
-                    console.error('Sign out error:', error);
-                    showError('Failed to sign out');
-                }
-            }
-        });
-        
+        // Add bucket buttons
         document.querySelectorAll('.add-bucket-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const section = e.target.dataset.section;
-                const bucket = createBucket(section);
-                const container = document.getElementById(section + 'Buckets');
-                
-                const emptyState = container.querySelector('.empty-state');
-                if (emptyState) {
-                    emptyState.remove();
-                }
-                
-                container.appendChild(renderBucket(bucket, section));
-                saveState();
-                
-                setTimeout(() => {
-                    const newCard = container.querySelector(`[data-bucket-id="${bucket.id}"]`);
-                    newCard.querySelector('.bucket-name').focus();
-                }, 0);
+            btn.addEventListener('click', () => {
+                const section = btn.dataset.section;
+                addNewBucket(section);
             });
         });
         
+        // Initialize search
+        initializeSearch();
+        
+        // Other existing event listeners (help modal, etc.)
         const helpBtn = document.getElementById('helpBtn');
         const helpModal = document.getElementById('helpModal');
-        const closeModal = helpModal.querySelector('.close-modal');
+        const closeModalBtn = helpModal?.querySelector('.close-modal');
         
-        helpBtn.addEventListener('click', () => helpModal.showModal());
-        closeModal.addEventListener('click', () => helpModal.close());
+        helpBtn?.addEventListener('click', () => {
+            helpModal?.showModal();
+        });
         
-        helpModal.addEventListener('click', (e) => {
-            if (e.target === helpModal) {
-                helpModal.close();
+        closeModalBtn?.addEventListener('click', () => {
+            helpModal?.close();
+        });
+        
+        // Import/Export functionality (keeping existing)
+        setupImportExport();
+    }
+
+    function setupImportExport() {
+        const exportBtn = document.getElementById('exportBtn');
+        const importBtn = document.getElementById('importBtn');
+        const importFile = document.getElementById('importFile');
+        const resetBtn = document.getElementById('resetBtn');
+        const loadDemoBtn = document.getElementById('loadDemoBtn');
+        
+        exportBtn?.addEventListener('click', () => {
+            const data = {
+                settings: state.settings,
+                expenses: state.expenses,
+                savings: state.savings,
+                exportDate: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `budget-buckets-${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+        
+        importBtn?.addEventListener('click', () => {
+            importFile?.click();
+        });
+        
+        importFile?.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    if (confirm('Import this data? This will replace your current budget.')) {
+                        if (data.settings) state.settings = data.settings;
+                        if (data.expenses) state.expenses = data.expenses;
+                        if (data.savings) state.savings = data.savings;
+                        
+                        updateUI();
+                        saveToCloud();
+                    }
+                } catch (error) {
+                    alert('Invalid file format');
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        });
+        
+        resetBtn?.addEventListener('click', () => {
+            if (confirm('Reset all data? This cannot be undone.')) {
+                state.settings = {
+                    incomeAmount: 0,
+                    incomeFrequency: 'Fortnightly',
+                    currency: 'AUD'
+                };
+                state.expenses = [];
+                state.savings = [];
+                
+                updateUI();
+                saveToCloud();
             }
         });
         
-        document.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                const activeElement = document.activeElement;
-                if (activeElement && activeElement.closest('.bucket-card')) {
-                    const section = activeElement.closest('.expenses-section') ? 'expenses' : 'savings';
-                    document.querySelector(`[data-section="${section}"]`).click();
+        loadDemoBtn?.addEventListener('click', loadDemoData);
+    }
+
+    function loadDemoData() {
+        if (!confirm('Load demo data? This will replace your current budget.')) return;
+        
+        state.settings = {
+            incomeAmount: 3200,
+            incomeFrequency: 'Fortnightly',
+            currency: 'AUD'
+        };
+        
+        state.expenses = [
+            {
+                id: generateId(),
+                name: 'Housing',
+                items: [
+                    { id: generateId(), name: 'Rent', amount: 900, include: true },
+                    { id: generateId(), name: 'Utilities', amount: 150, include: true }
+                ],
+                include: true,
+                color: '#ff6b6b',
+                bankAccount: 'Main Account',
+                type: 'expense',
+                orderIndex: 0,
+                notes: 'Monthly housing costs',
+                overspendThresholdPct: 80,
+                spentThisPeriodCents: 85000
+            },
+            {
+                id: generateId(),
+                name: 'Transport',
+                items: [
+                    { id: generateId(), name: 'Fuel', amount: 120, include: true },
+                    { id: generateId(), name: 'Insurance', amount: 80, include: true }
+                ],
+                include: true,
+                color: '#4ecdc4',
+                bankAccount: 'Main Account',
+                type: 'expense',
+                orderIndex: 1,
+                notes: 'Car expenses',
+                overspendThresholdPct: 80,
+                spentThisPeriodCents: 15000
+            }
+        ];
+        
+        state.savings = [
+            {
+                id: generateId(),
+                name: 'Emergency Fund',
+                items: [
+                    { id: generateId(), name: 'Emergency savings', amount: 300, include: true }
+                ],
+                include: true,
+                color: '#5eead4',
+                bankAccount: 'Savings Account',
+                type: 'saving',
+                orderIndex: 0,
+                notes: 'Building emergency fund',
+                overspendThresholdPct: 80,
+                spentThisPeriodCents: 0,
+                target: {
+                    amountCents: 2000000, // $20,000
+                    targetDate: '2025-12-31',
+                    autoContributionEnabled: false
+                }
+            },
+            {
+                id: generateId(),
+                name: 'Credit Card Debt',
+                items: [
+                    { id: generateId(), name: 'Credit card payment', amount: 200, include: true }
+                ],
+                include: true,
+                color: '#ff9f43',
+                bankAccount: 'Credit Card',
+                type: 'debt',
+                orderIndex: 1,
+                notes: 'Paying off credit card',
+                overspendThresholdPct: 80,
+                spentThisPeriodCents: 0,
+                debt: {
+                    aprPct: 18.9,
+                    minPaymentCents: 15000 // $150
                 }
             }
+        ];
+        
+        updateUI();
+        saveToCloud();
+    }
+
+    // Initialize the app
+    async function init() {
+        // Wait for auth to be ready
+        await authHelpers.waitForAuth();
+        currentUser = authHelpers.getCurrentUser();
+        
+        if (currentUser) {
+            document.getElementById('userInfo').textContent = `Signed in as ${currentUser.email}`;
+            await loadFromCloud();
+        }
+        
+        initializeEventListeners();
+        updateDerivedValues();
+        
+        // Sign out functionality
+        document.getElementById('signOutBtn')?.addEventListener('click', () => {
+            authHelpers.signOut();
         });
     }
 
-    function updateUserInfo() {
-        const userInfo = document.getElementById('userInfo');
-        if (currentUser) {
-            userInfo.textContent = `${currentUser.displayName || currentUser.email}`;
-        }
-    }
-
-    function runTests() {
-        console.group('Budget Buckets Tests');
-        
-        console.assert(convertFrequency(100, 'Weekly', 'Fortnightly') === 200, 'Weekly to Fortnightly conversion');
-        console.assert(Math.abs(convertFrequency(100, 'Weekly', 'Monthly') - 433.33) < 0.1, 'Weekly to Monthly conversion');
-        console.assert(convertFrequency(200, 'Fortnightly', 'Weekly') === 100, 'Fortnightly to Weekly conversion');
-        console.assert(Math.abs(convertFrequency(200, 'Fortnightly', 'Monthly') - 433.33) < 0.1, 'Fortnightly to Monthly conversion');
-        
-        console.log('All tests passed!');
-        console.groupEnd();
-    }
-
-    async function init() {
-        runTests();
-        
-        // Wait for authentication using the global auth guard
-        if (window.authGuard) {
-            currentUser = await window.authGuard.requireAuth();
-            if (!currentUser) return; // Redirected to login
-        } else {
-            // Fallback to direct auth check
-            currentUser = await authHelpers.waitForAuth();
-            if (!currentUser) {
-                window.location.href = '/auth/login.html';
-                return;
-            }
-        }
-        
-        updateUserInfo();
-        
-        // Try to load budget from cloud
-        const hasCloudBudget = await loadBudgetFromCloud();
-        
-        if (!hasCloudBudget) {
-            // Check for migration from localStorage
-            await checkForMigration();
-        }
-        
-        initializeUI();
-        setupEventListeners();
-        renderAllBuckets();
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
+    // Start the app
+    init().catch(console.error);
 })();

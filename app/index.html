@@ -7,6 +7,30 @@
     <link rel="stylesheet" href="./styles.css">
     <meta name="robots" content="noindex, nofollow, noarchive, noimageindex">
     <link rel="canonical" href="https://budgetbucket.app/app/index">
+    <!-- External libraries for new features -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/autosize@6.0.1/dist/autosize.min.js"></script>
+    
+    <!-- Additional CSS for new features -->
+    <style>
+        .drag-handle { cursor: grab; user-select: none; margin-right: 8px; opacity: .8; }
+        .badge { padding: 2px 8px; border: 1px solid var(--border); background: #0e1821; border-radius: 999px; color: var(--muted); font-size: 12px; }
+        .pct { margin-left: 8px; color: var(--muted); font-size: 12px; }
+        .pill { padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+        .pill--ok { background: #0f2b22; color: #5eead4; }
+        .pill--warn { background: #2b2410; color: #ffd166; }
+        .pill--bad { background: #2b1616; color: #ff6b6b; }
+        .progress { height: 6px; background: #0f1720; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+        .progress > span { display: block; height: 100%; background: linear-gradient(90deg, #00cdd6, #5eead4); }
+        .search { width: 100%; padding: 10px; border-radius: 10px; background: #0f1720; color: var(--text); border: 1px solid var(--border); margin-bottom: 8px; }
+        .legend { color: var(--muted); font-size: 12px; margin-top: 8px; }
+        .bucket-notes { width: 100%; min-height: 40px; max-height: 200px; padding: 8px; background: #0f1720; color: var(--text); border: 1px solid var(--border); border-radius: 8px; resize: vertical; margin: 8px 0; }
+        .alloc-chart-container { display: flex; align-items: center; gap: 20px; margin-top: 12px; }
+        .debt-info, .savings-info { background: #0f1720; padding: 12px; border-radius: 8px; margin: 8px 0; }
+        .quick-entry { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+        .quick-entry input { width: 120px; }
+        .sortable-ghost { opacity: 0.4; }
+    </style>
 </head>
 <body>
     <header class="header">
@@ -74,6 +98,11 @@
             </div>
         </section>
 
+        <!-- Search bar for buckets -->
+        <div class="card" style="margin-bottom: 16px;">
+            <input id="bucket-search" class="search" placeholder="Search buckets… name, bank, notes" />
+        </div>
+
         <section class="card sticky-totals">
             <h2>Totals (<span id="totalsFrequency">Fortnightly</span>)</h2>
             <div class="totals-grid">
@@ -94,6 +123,11 @@
                     <span class="total-value" id="totalRemaining">$0.00</span>
                 </div>
             </div>
+            <!-- Allocation donut chart -->
+            <div class="alloc-chart-container">
+                <canvas id="allocRing" width="180" height="180" aria-label="Allocation ring"></canvas>
+                <div id="allocLegend" class="legend"></div>
+            </div>
         </section>
 
         <section class="section expenses-section">
@@ -101,7 +135,7 @@
                 <h2>Expenses</h2>
                 <button type="button" class="add-bucket-btn" data-section="expenses">Add bucket</button>
             </div>
-            <div id="expensesBuckets" class="buckets-container">
+            <div id="expensesList" class="buckets-container">
                 <p class="empty-state">No expenses yet — add a bucket</p>
             </div>
         </section>
@@ -111,7 +145,7 @@
                 <h2>Savings</h2>
                 <button type="button" class="add-bucket-btn" data-section="savings">Add bucket</button>
             </div>
-            <div id="savingsBuckets" class="buckets-container">
+            <div id="savingsList" class="buckets-container">
                 <p class="empty-state">No savings yet — add a bucket</p>
             </div>
         </section>
@@ -152,18 +186,27 @@
     </dialog>
 
     <template id="bucketTemplate">
-        <article class="bucket-card" data-bucket-id="">
+        <article class="bucket-card" data-bucket-id="" data-bucket-name="" data-bank-account="" data-notes="">
             <header class="bucket-header">
+                <span class="drag-handle">☰</span>
                 <button type="button" class="bucket-toggle" aria-expanded="true">
                     <span class="toggle-icon">▼</span>
                     <input type="text" class="bucket-name" placeholder="Bucket name" value="New bucket">
                 </button>
+                <span class="badge bank-badge" style="display:none;"></span>
+                <span class="pct">0% of income</span>
+                <span class="pill pill--ok">OK</span>
                 <div class="bucket-controls">
                     <input type="text" class="bank-account" placeholder="Bank account">
                     <label class="include-label">
                         <input type="checkbox" class="bucket-include" checked>
                         <span>Include</span>
                     </label>
+                    <select class="bucket-type">
+                        <option value="expense">Expense</option>
+                        <option value="saving">Saving</option>
+                        <option value="debt">Debt</option>
+                    </select>
                     <input type="color" class="bucket-color" aria-label="Bucket color" title="Choose bucket color">
                     <button type="button" class="delete-btn" aria-label="Delete bucket">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -173,6 +216,58 @@
                 </div>
             </header>
             <div class="bucket-content">
+                <!-- Notes section -->
+                <textarea class="bucket-notes" placeholder="Notes..." maxlength="800"></textarea>
+                
+                <!-- Quick entry for spent this period -->
+                <div class="quick-entry">
+                    <label>Spent this period:</label>
+                    <input type="number" class="spent-this-period" min="0" step="0.01" value="0">
+                    <span class="remaining-amount">Remaining: $0.00</span>
+                </div>
+                <div class="progress">
+                    <span class="progress-bar" style="width: 0%;"></span>
+                </div>
+                
+                <!-- Savings-specific section -->
+                <div class="savings-info" style="display:none;">
+                    <div style="display: flex; gap: 12px; margin-bottom: 8px;">
+                        <div>
+                            <label>Target amount:</label>
+                            <input type="number" class="target-amount" min="0" step="0.01">
+                        </div>
+                        <div>
+                            <label>Target date:</label>
+                            <input type="date" class="target-date">
+                        </div>
+                    </div>
+                    <label>
+                        <input type="checkbox" class="auto-calc">
+                        Auto-calculate contribution
+                    </label>
+                    <div class="needed-info">
+                        <span>Needed this period: </span>
+                        <span class="needed-amount">$0.00</span>
+                        <button type="button" class="set-amount-btn">Set as amount</button>
+                    </div>
+                </div>
+                
+                <!-- Debt-specific section -->
+                <div class="debt-info" style="display:none;">
+                    <div style="display: flex; gap: 12px; margin-bottom: 8px;">
+                        <div>
+                            <label>APR %:</label>
+                            <input type="number" class="apr-pct" min="0" max="100" step="0.1">
+                        </div>
+                        <div>
+                            <label>Min payment:</label>
+                            <input type="number" class="min-payment" min="0" step="0.01">
+                        </div>
+                    </div>
+                    <div class="payoff-info">
+                        Est. payoff: <span class="payoff-text">—</span>
+                    </div>
+                </div>
                 <div class="goal-section" style="display: none;">
                     <div class="goal-controls">
                         <label class="goal-checkbox-label">

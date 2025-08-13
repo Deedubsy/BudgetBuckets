@@ -312,6 +312,57 @@ firebase deploy --only firestore:rules
 - Check Firestore rules match user UID: `request.auth.uid == uid`
 - Run smoke test to validate auth+write flow
 
+### Critical Production Issue: Firestore Permission Errors
+
+**Problem**: `FirebaseError: Missing or insufficient permissions` errors in production, preventing all budget read/write operations.
+
+**Root Cause**: Firestore rules in the Firebase Console contained a deny-all block at the end:
+```javascript
+match /{document=**} {
+  allow read, write: if false;
+}
+```
+This overrode all intended user-scoped rules, blocking legitimate operations.
+
+**Symptoms**:
+- All Firestore operations failed in production with permission errors
+- Local emulators worked correctly (different rule set)
+- Budget creation, saving, and loading all returned permission denied
+- User authentication was successful but data access was blocked
+
+**Solution**: 
+1. **Identified mismatch** between local `firestore.rules` file and deployed console rules
+2. **Replaced deny-all rules** with proper user-scoped permissions:
+   ```javascript
+   match /users/{uid} {
+     allow read, write: if request.auth != null && request.auth.uid == uid;
+     match /{document=**} {
+       allow read, write: if request.auth != null && request.auth.uid == uid;
+     }
+   }
+   ```
+3. **Deployed correct rules** via Firebase Console Rules editor
+4. **Verified deployment** matched local firestore.rules file
+
+**Verification Steps**:
+- ✅ Confirmed correct rules were active in Firebase Console
+- ✅ Tested with Firestore Rules Playground using actual user UIDs
+- ✅ Verified production app could create and read `users/{uid}/budgets` documents
+- ✅ Used debug tool (`/test/debug-firestore.html`) to validate all operations
+
+**Lessons Learned**:
+- **Always verify console rules** match local `firestore.rules` before production deploy
+- **Check Firebase project ID** in app config matches the project in Firebase Console  
+- **Test rules with Playground** using real user UIDs, not test data
+- **Use debug tools** to isolate permission vs authentication issues
+- **Deploy rules via CLI** (`firebase deploy --only firestore:rules`) for consistency
+
+**Preventative Steps**:
+- Keep local `firestore.rules` as single source of truth
+- Use `firebase deploy` instead of manual console editing
+- Add rule deployment to CI/CD pipeline
+- Test rule changes in emulator before production deploy
+
 **Network/Connection Issues**
 ```javascript
 // Enable offline persistence and retry logic
