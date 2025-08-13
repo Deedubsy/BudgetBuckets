@@ -883,35 +883,49 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
 
     // Event listeners for settings
     function initializeEventListeners() {
+        console.log('Initializing event listeners...');
+        
         // Settings
-        document.getElementById('incomeAmount').addEventListener('input', debounce(() => {
-            state.settings.incomeAmount = parseFloat(document.getElementById('incomeAmount').value) || 0;
-            updateDerivedValues();
-            saveToCloud();
-        }, 300));
+        const incomeAmount = document.getElementById('incomeAmount');
+        const incomeFrequency = document.getElementById('incomeFrequency');
+        const currency = document.getElementById('currency');
         
-        document.getElementById('incomeFrequency').addEventListener('change', () => {
-            state.settings.incomeFrequency = document.getElementById('incomeFrequency').value;
-            updateDerivedValues();
-            saveToCloud();
-        });
+        if (incomeAmount) {
+            incomeAmount.addEventListener('input', debounce(() => {
+                state.settings.incomeAmount = parseFloat(incomeAmount.value) || 0;
+                updateDerivedValues();
+                saveToCloud();
+            }, 300));
+        }
         
-        document.getElementById('currency').addEventListener('change', () => {
-            state.settings.currency = document.getElementById('currency').value;
-            updateDerivedValues();
-            saveToCloud();
-        });
+        if (incomeFrequency) {
+            incomeFrequency.addEventListener('change', () => {
+                state.settings.incomeFrequency = incomeFrequency.value;
+                updateDerivedValues();
+                saveToCloud();
+            });
+        }
+        
+        if (currency) {
+            currency.addEventListener('change', () => {
+                state.settings.currency = currency.value;
+                updateDerivedValues();
+                saveToCloud();
+            });
+        }
         
         // Add bucket buttons
-        document.querySelectorAll('.add-bucket-btn').forEach(btn => {
+        const addBucketBtns = document.querySelectorAll('.add-bucket-btn');
+        console.log(`Found ${addBucketBtns.length} add bucket buttons`);
+        addBucketBtns.forEach(btn => {
             btn.addEventListener('click', () => {
+                console.log('Add bucket button clicked for section:', btn.dataset.section);
                 const section = btn.dataset.section;
                 addNewBucket(section);
             });
         });
         
-        // Initialize search
-        initializeSearch();
+        // Search will be initialized separately in init()
         
         // Other existing event listeners (help modal, etc.)
         const helpBtn = document.getElementById('helpBtn');
@@ -1093,6 +1107,13 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
 
     // Initialize the app
     async function init() {
+        console.log('Starting app initialization...');
+        
+        // Check if libraries are loaded
+        console.log('Sortable available:', typeof Sortable !== 'undefined');
+        console.log('debounce available:', typeof debounce !== 'undefined');
+        console.log('Chart available:', typeof Chart !== 'undefined');
+        
         // Wait for auth to be ready
         await authHelpers.waitForAuth();
         currentUser = authHelpers.getCurrentUser();
