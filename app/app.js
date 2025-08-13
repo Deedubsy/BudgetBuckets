@@ -389,6 +389,16 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         updateTypeSpecificSections(bucket, bucketEl);
     }
 
+    function updateBucketColor(bucket, bucketEl) {
+        if (bucket.color) {
+            bucketEl.dataset.bucketColor = bucket.color;
+            bucketEl.style.setProperty('--bucket-bg-color', bucket.color);
+        } else {
+            bucketEl.removeAttribute('data-bucket-color');
+            bucketEl.style.removeProperty('--bucket-bg-color');
+        }
+    }
+
     function updateTypeSpecificSections(bucket, bucketEl) {
         const savingsInfo = bucketEl.querySelector('.savings-info');
         const debtInfo = bucketEl.querySelector('.debt-info');
@@ -603,7 +613,6 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         const bankInput = card.querySelector('.bank-account');
         const includeInput = card.querySelector('.bucket-include');
         const colorInput = card.querySelector('.bucket-color');
-        const typeSelect = card.querySelector('.bucket-type');
         const notesTextarea = card.querySelector('.bucket-notes');
         const spentInput = card.querySelector('.spent-this-period');
         
@@ -611,7 +620,6 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         bankInput.value = bucket.bankAccount || '';
         includeInput.checked = bucket.include !== false;
         colorInput.value = bucket.color || '#00cdd6';
-        typeSelect.value = bucket.type || 'expense';
         notesTextarea.value = bucket.notes || '';
         spentInput.value = bucket.spentThisPeriodCents ? (bucket.spentThisPeriodCents / 100).toFixed(2) : '0.00';
         
@@ -653,6 +661,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         
         updateBucketUI(bucket, card);
         updateBucketTotal(bucket, card);
+        updateBucketColor(bucket, card);
         
         return card;
     }
@@ -662,7 +671,6 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         const bankInput = card.querySelector('.bank-account');
         const includeInput = card.querySelector('.bucket-include');
         const colorInput = card.querySelector('.bucket-color');
-        const typeSelect = card.querySelector('.bucket-type');
         const notesTextarea = card.querySelector('.bucket-notes');
         const spentInput = card.querySelector('.spent-this-period');
         const deleteBtn = card.querySelector('.delete-btn');
@@ -698,28 +706,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         
         colorInput.addEventListener('change', () => {
             bucket.color = colorInput.value;
-            debouncedSave();
-        });
-        
-        typeSelect.addEventListener('change', () => {
-            bucket.type = typeSelect.value;
-            
-            // Initialize type-specific data structures
-            if (bucket.type === 'saving' && !bucket.target) {
-                bucket.target = {
-                    amountCents: 0,
-                    targetDate: null,
-                    autoContributionEnabled: false
-                };
-            } else if (bucket.type === 'debt' && !bucket.debt) {
-                bucket.debt = {
-                    aprPct: 0,
-                    minPaymentCents: 0
-                };
-            }
-            
-            updateTypeSpecificSections(bucket, card);
-            setupTypeSpecificEventListeners(bucket, card);
+            updateBucketColor(bucket, card);
             debouncedSave();
         });
         
