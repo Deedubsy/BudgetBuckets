@@ -23,7 +23,8 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             currency: 'AUD'
         },
         expenses: [],
-        savings: []
+        savings: [],
+        debt: []
     };
 
     let saveTimeout;
@@ -34,8 +35,25 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
 
     // Migration function for existing buckets
     async function migrateBucketsIfNeeded(budgetId) {
-        const buckets = [...state.expenses, ...state.savings];
+        const buckets = [...state.expenses, ...state.savings, ...(state.debt || [])];
         let needsSave = false;
+        
+        // Move debt buckets from expenses/savings to debt section
+        const debtBuckets = buckets.filter(b => b.type === 'debt');
+        if (debtBuckets.length > 0) {
+            state.debt = state.debt || [];
+            debtBuckets.forEach(debtBucket => {
+                // Remove from expenses/savings
+                state.expenses = state.expenses.filter(b => b.id !== debtBucket.id);
+                state.savings = state.savings.filter(b => b.id !== debtBucket.id);
+                
+                // Add to debt if not already there
+                if (!state.debt.find(b => b.id === debtBucket.id)) {
+                    state.debt.push(debtBucket);
+                    needsSave = true;
+                }
+            });
+        }
 
         for (let bucket of buckets) {
             // Add missing fields
@@ -141,15 +159,9 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
     }
 
     function getTotalDebt() {
-        const expenseDebt = state.expenses
-            .filter(bucket => bucket.include && bucket.type === 'debt')
+        return (state.debt || [])
+            .filter(bucket => bucket.include)
             .reduce((sum, bucket) => sum + sumIncludedItems(bucket), 0);
-        
-        const savingDebt = state.savings
-            .filter(bucket => bucket.include && bucket.type === 'debt')
-            .reduce((sum, bucket) => sum + sumIncludedItems(bucket), 0);
-        
-        return expenseDebt + savingDebt;
     }
 
     // New helper functions for sinking funds
@@ -772,8 +784,10 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
     function deleteBucket(bucketId, section) {
         if (section === 'expenses') {
             state.expenses = state.expenses.filter(b => b.id !== bucketId);
-        } else {
+        } else if (section === 'savings') {
             state.savings = state.savings.filter(b => b.id !== bucketId);
+        } else if (section === 'debt') {
+            state.debt = state.debt.filter(b => b.id !== bucketId);
         }
         
         renderBuckets();
@@ -794,7 +808,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             include: true,
             color: '#00cdd6',
             bankAccount: '',
-            type: section === 'expenses' ? 'expense' : 'saving',
+            type: section === 'expenses' ? 'expense' : section === 'savings' ? 'saving' : 'debt',
             orderIndex: 0,
             notes: '',
             overspendThresholdPct: 80,
@@ -818,9 +832,13 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         if (section === 'expenses') {
             newBucket.orderIndex = state.expenses.length;
             state.expenses.push(newBucket);
-        } else {
+        } else if (section === 'savings') {
             newBucket.orderIndex = state.savings.length;
             state.savings.push(newBucket);
+        } else if (section === 'debt') {
+            newBucket.orderIndex = (state.debt || []).length;
+            state.debt = state.debt || [];
+            state.debt.push(newBucket);
         }
         
         renderBuckets();
@@ -839,8 +857,9 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
     function renderBuckets() {
         const expensesContainer = document.getElementById('expensesList');
         const savingsContainer = document.getElementById('savingsList');
+        const debtContainer = document.getElementById('debtList');
         
-        if (!expensesContainer || !savingsContainer) {
+        if (!expensesContainer || !savingsContainer || !debtContainer) {
             console.warn('Cannot render buckets: containers not found in DOM');
             return;
         }
@@ -848,10 +867,12 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         // Clear containers
         expensesContainer.innerHTML = '';
         savingsContainer.innerHTML = '';
+        debtContainer.innerHTML = '';
         
         // Sort buckets by orderIndex
         const sortedExpenses = [...state.expenses].sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
         const sortedSavings = [...state.savings].sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+        const sortedDebt = [...(state.debt || [])].sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
         
         // Render expenses
         if (sortedExpenses.length === 0) {
@@ -873,9 +894,20 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             });
         }
         
+        // Render debt
+        if (sortedDebt.length === 0) {
+            debtContainer.innerHTML = '<p class="empty-state">No debt — that\'s great!</p>';
+        } else {
+            sortedDebt.forEach(bucket => {
+                const bucketEl = createBucketElement(bucket, 'debt');
+                debtContainer.appendChild(bucketEl);
+            });
+        }
+        
         // Wire up sortable after rendering
         wireSortable(expensesContainer);
         wireSortable(savingsContainer);
+        wireSortable(debtContainer);
     }
 
     // Cloud integration functions (keeping existing structure)
@@ -889,7 +921,8 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             await cloudStore.updateBudget(currentUser.uid, currentBudgetId, {
                 settings: state.settings,
                 expenses: state.expenses,
-                savings: state.savings
+                savings: state.savings,
+                debt: state.debt
             });
         } catch (error) {
             console.error('Failed to save to cloud:', error);
@@ -1013,6 +1046,9 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                 if (currentBudget.savings) {
                     state.savings = currentBudget.savings;
                 }
+                if (currentBudget.debt) {
+                    state.debt = currentBudget.debt;
+                }
                 
                 // Run migration if needed
                 await migrateBucketsIfNeeded(currentBudgetId);
@@ -1027,7 +1063,8 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                     name: 'My Budget',
                     settings: state.settings,
                     expenses: state.expenses,
-                    savings: state.savings
+                    savings: state.savings,
+                    debt: state.debt
                 });
                 currentBudgetId = newBudget.id;
                 
@@ -1173,6 +1210,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                 };
                 state.expenses = [];
                 state.savings = [];
+                state.debt = [];
                 
                 updateUI();
                 saveToCloud();
