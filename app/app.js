@@ -771,7 +771,10 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         const expensesContainer = document.getElementById('expensesList');
         const savingsContainer = document.getElementById('savingsList');
         
-        if (!expensesContainer || !savingsContainer) return;
+        if (!expensesContainer || !savingsContainer) {
+            console.warn('Cannot render buckets: containers not found in DOM');
+            return;
+        }
         
         // Clear containers
         expensesContainer.innerHTML = '';
@@ -1100,6 +1103,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         }
         
         initializeEventListeners();
+        initializeSearch();
         updateDerivedValues();
         
         // Sign out functionality
@@ -1108,6 +1112,12 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         });
     }
 
-    // Start the app
-    init().catch(console.error);
+    // Wait for DOM to be ready before starting the app
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            init().catch(console.error);
+        });
+    } else {
+        init().catch(console.error);
+    }
 })();
