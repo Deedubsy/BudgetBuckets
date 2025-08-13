@@ -616,7 +616,8 @@ input[type="checkbox"] {
     border-radius: var(--radius);
     font-size: 0.875rem;
     font-family: inherit;
-    transition: border-color 0.2s;
+    transition: border-color 0.3s;
+
 }
 
 .progress-container {
