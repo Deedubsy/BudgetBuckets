@@ -246,38 +246,71 @@
                 
                 <!-- Savings-specific section -->
                 <div class="savings-info" style="display:none;">
-                    <div class="savings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-                        <div>
-                            <label>Goal amount:</label>
-                            <input type="number" class="goal-amount" min="0" step="0.01" placeholder="10000">
+                    <div class="sinking-fund-panel" style="border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin: 8px 0;">
+                        <h4 style="margin: 0 0 12px 0; color: var(--accent); font-size: 14px; font-weight: 600;">Sinking Fund</h4>
+                        
+                        <!-- 1. Goal amount -->
+                        <div style="margin-bottom: 12px;">
+                            <label style="display: block; margin-bottom: 4px; font-size: 13px; color: var(--muted);">Goal amount:</label>
+                            <input type="number" class="goal-amount" min="0" step="0.01" placeholder="10000" style="width: 100%;">
                         </div>
-                        <div>
-                            <label>Goal date:</label>
-                            <input type="date" class="goal-date">
+                        
+                        <!-- 2. Saved so far -->
+                        <div style="margin-bottom: 12px;">
+                            <label style="display: block; margin-bottom: 4px; font-size: 13px; color: var(--muted);">Saved so far:</label>
+                            <input type="number" class="saved-so-far" min="0" step="0.01" placeholder="0" style="width: 100%;">
                         </div>
-                        <div>
-                            <label>Saved so far:</label>
-                            <input type="number" class="saved-so-far" min="0" step="0.01" placeholder="0">
+                        
+                        <!-- 3. Goal date with quick chips -->
+                        <div style="margin-bottom: 12px;">
+                            <label style="display: block; margin-bottom: 4px; font-size: 13px; color: var(--muted);">Goal date:</label>
+                            <input type="date" class="goal-date" style="width: 100%; margin-bottom: 8px;">
+                            <div class="date-chips" style="display: flex; gap: 8px;">
+                                <button type="button" class="date-chip" data-months="3" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: #0f1720; color: var(--text); font-size: 12px; cursor: pointer;">+3m</button>
+                                <button type="button" class="date-chip" data-months="6" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: #0f1720; color: var(--text); font-size: 12px; cursor: pointer;">+6m</button>
+                                <button type="button" class="date-chip" data-months="12" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: #0f1720; color: var(--text); font-size: 12px; cursor: pointer;">+12m</button>
+                            </div>
                         </div>
-                        <div>
-                            <label>Contribution per <span class="contrib-freq">period</span>:</label>
-                            <input type="number" class="contribution-amount" min="0" step="0.01" placeholder="200">
+                        
+                        <!-- 4. Auto-calc per period -->
+                        <div style="margin-bottom: 12px;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                                <input type="checkbox" class="auto-calc-checkbox">
+                                <span>Auto-calc per <span class="contrib-freq">fortnight</span></span>
+                            </label>
                         </div>
-                    </div>
-                    
-                    <div class="savings-progress" style="margin: 12px 0;">
-                        <div class="progress-info" style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px;">
-                            <span class="progress-current">$0</span>
-                            <span class="progress-percentage">0%</span>
-                            <span class="progress-target">of $0</span>
+                        
+                        <!-- 5. To stay on track -->
+                        <div class="stay-on-track" style="margin-bottom: 12px; padding: 8px; background: #0f1720; border-radius: 6px;">
+                            <div style="font-size: 13px; color: var(--muted); margin-bottom: 4px;">To stay on track:</div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="track-amount" style="font-weight: 600; color: var(--accent);">A$0 / <span class="track-freq">fortnight</span></span>
+                                <button type="button" class="use-amount-btn" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--accent); color: #032227; font-size: 12px; cursor: pointer;">Use this amount</button>
+                            </div>
                         </div>
-                        <div class="progress-bar-container" style="height: 8px; background: #0f1720; border-radius: 4px; overflow: hidden;">
-                            <div class="progress-bar-fill" style="height: 100%; background: linear-gradient(90deg, #00cdd6, #5eead4); width: 0%; transition: width 0.3s ease;"></div>
+                        
+                        <!-- Manual contribution input (shown when auto-calc is off) -->
+                        <div class="manual-contribution" style="margin-bottom: 12px;">
+                            <label style="display: block; margin-bottom: 4px; font-size: 13px; color: var(--muted);">Contribution per <span class="contrib-freq">fortnight</span>:</label>
+                            <input type="number" class="contribution-amount" min="0" step="0.01" placeholder="200" style="width: 100%;">
                         </div>
-                    </div>
-                    
-                    <div class="time-to-goal" style="padding: 8px; background: #0f1720; border-radius: 8px; font-size: 14px;">
-                        <span class="time-estimate">Time to goal: —</span>
+                        
+                        <!-- Progress bar (more prominent) -->
+                        <div class="savings-progress" style="margin: 16px 0;">
+                            <div class="progress-info" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; font-weight: 500;">
+                                <span class="progress-current">$0</span>
+                                <span class="progress-percentage">0%</span>
+                                <span class="progress-target">of $0</span>
+                            </div>
+                            <div class="progress-bar-container" style="height: 12px; background: #0f1720; border: 1px solid var(--border); border-radius: 6px; overflow: hidden;">
+                                <div class="progress-bar-fill" style="height: 100%; background: linear-gradient(90deg, #00cdd6, #5eead4); width: 0%; transition: width 0.3s ease; box-shadow: inset 0 1px 2px rgba(0,205,214,0.3);"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- 6. Time to goal with estimated date -->
+                        <div class="time-to-goal" style="padding: 12px; background: #0f1720; border-radius: 8px; font-size: 14px;">
+                            <span class="time-estimate">Time to goal: —</span>
+                        </div>
                     </div>
                 </div>
                 
