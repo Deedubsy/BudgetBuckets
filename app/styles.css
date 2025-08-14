@@ -307,7 +307,29 @@ input[type="checkbox"] {
 .bucket-card[data-bucket-color] .bucket-header-total,
 .bucket-card[data-bucket-color] .spent-label,
 .bucket-card[data-bucket-color] .remaining-amount,
-.bucket-card[data-bucket-color] .bank-badge {
+.bucket-card[data-bucket-color] .bank-badge,
+.bucket-card[data-bucket-color] .items-table th,
+.bucket-card[data-bucket-color] .items-table td,
+.bucket-card[data-bucket-color] .bucket-total,
+.bucket-card[data-bucket-color] .add-item-btn,
+.bucket-card[data-bucket-color] .include-label span,
+.bucket-card[data-bucket-color] .sinking-fund-panel h4,
+.bucket-card[data-bucket-color] .sinking-fund-panel label,
+.bucket-card[data-bucket-color] .savings-info label,
+.bucket-card[data-bucket-color] .debt-info label,
+.bucket-card[data-bucket-color] .progress-current,
+.bucket-card[data-bucket-color] .progress-percentage,
+.bucket-card[data-bucket-color] .progress-target,
+.bucket-card[data-bucket-color] .time-estimate,
+.bucket-card[data-bucket-color] .track-amount,
+.bucket-card[data-bucket-color] .payoff-text,
+.bucket-card[data-bucket-color] .contrib-freq,
+.bucket-card[data-bucket-color] .track-freq,
+.bucket-card[data-bucket-color] .drag-handle,
+.bucket-card[data-bucket-color] .toggle-icon,
+.bucket-card[data-bucket-color] .delete-btn,
+.bucket-card[data-bucket-color] .use-amount-btn,
+.bucket-card[data-bucket-color] .date-chip {
     color: var(--bucket-text-color, var(--text));
 }
 
