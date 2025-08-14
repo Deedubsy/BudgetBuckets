@@ -287,15 +287,28 @@ input[type="checkbox"] {
 
 .bucket-card[data-bucket-color] {
     background: var(--bucket-bg-color, var(--bg-card));
+    color: var(--bucket-text-color, var(--text));
 }
 
 .bucket-card[data-bucket-color] .bucket-header {
     background: rgba(0, 0, 0, 0.3);
     backdrop-filter: brightness(0.8);
+    color: var(--bucket-text-color, var(--text));
 }
 
 .bucket-card[data-bucket-color] .bucket-content {
     background: rgba(0, 0, 0, 0.2);
+    color: var(--bucket-text-color, var(--text));
+}
+
+.bucket-card[data-bucket-color] .bucket-name,
+.bucket-card[data-bucket-color] .pct,
+.bucket-card[data-bucket-color] .pill,
+.bucket-card[data-bucket-color] .bucket-header-total,
+.bucket-card[data-bucket-color] .spent-label,
+.bucket-card[data-bucket-color] .remaining-amount,
+.bucket-card[data-bucket-color] .bank-badge {
+    color: var(--bucket-text-color, var(--text));
 }
 
 .bucket-card[data-bucket-color] .goal-section,

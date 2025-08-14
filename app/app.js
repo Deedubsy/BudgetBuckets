@@ -393,10 +393,64 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         if (bucket.color) {
             bucketEl.dataset.bucketColor = bucket.color;
             bucketEl.style.setProperty('--bucket-bg-color', bucket.color);
+            
+            // Calculate and apply auto-contrast text color
+            const contrastColor = getContrastColor(bucket.color);
+            bucketEl.style.setProperty('--bucket-text-color', contrastColor);
+            
+            // Update contrast badge if present
+            updateContrastBadge(bucketEl, bucket.color);
         } else {
             bucketEl.removeAttribute('data-bucket-color');
             bucketEl.style.removeProperty('--bucket-bg-color');
+            bucketEl.style.removeProperty('--bucket-text-color');
         }
+    }
+
+    function getContrastColor(backgroundColor) {
+        if (!window.tinycolor) {
+            console.warn('tinycolor2 not loaded, using default colors');
+            return '#ffffff';
+        }
+        
+        const color = tinycolor(backgroundColor);
+        const luminance = color.getLuminance();
+        
+        // Use white text for dark backgrounds, dark text for light backgrounds
+        // Threshold of 0.5 works well for most cases
+        return luminance > 0.5 ? '#1a1a1a' : '#ffffff';
+    }
+
+    function getContrastRatio(color1, color2) {
+        if (!window.tinycolor) {
+            return 1;
+        }
+        
+        const tc1 = tinycolor(color1);
+        const tc2 = tinycolor(color2);
+        
+        const l1 = tc1.getLuminance();
+        const l2 = tc2.getLuminance();
+        
+        const lighter = Math.max(l1, l2);
+        const darker = Math.min(l1, l2);
+        
+        return (lighter + 0.05) / (darker + 0.05);
+    }
+
+    function updateContrastBadge(bucketEl, backgroundColor) {
+        const badge = bucketEl.querySelector('.contrast-badge');
+        if (!badge) return;
+        
+        const textColor = getContrastColor(backgroundColor);
+        const ratio = getContrastRatio(backgroundColor, textColor);
+        
+        // WCAG AA requires 4.5:1 for normal text, 3:1 for large text
+        const isAACompliant = ratio >= 4.5;
+        
+        badge.textContent = isAACompliant ? 'AA OK' : 'Needs contrast';
+        badge.className = `contrast-badge ${isAACompliant ? 'contrast-badge--ok' : 'contrast-badge--warn'}`;
+        badge.title = `Contrast ratio: ${ratio.toFixed(2)}:1`;
     }
 
     function updateTypeSpecificSections(bucket, bucketEl) {
@@ -663,6 +717,9 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         updateBucketTotal(bucket, card);
         updateBucketColor(bucket, card);
         
+        // Initialize contrast badge
+        updateContrastBadge(card, bucket.color || '#00cdd6');
+        
         return card;
     }
 
@@ -708,6 +765,11 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             bucket.color = colorInput.value;
             updateBucketColor(bucket, card);
             debouncedSave();
+        });
+        
+        // Also update on input for real-time feedback
+        colorInput.addEventListener('input', () => {
+            updateContrastBadge(card, colorInput.value);
         });
         
         notesTextarea.addEventListener('input', debouncedUpdateNotes);

@@ -10,6 +10,7 @@
     <!-- External libraries for new features -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/autosize@6.0.1/dist/autosize.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tinycolor2@1.6.0/dist/tinycolor-min.js"></script>
     
     <!-- Additional CSS for new features -->
     <style>
@@ -30,6 +31,23 @@
         .quick-entry { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
         .quick-entry input { width: 120px; }
         .sortable-ghost { opacity: 0.4; }
+        .contrast-badge { 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            font-size: 10px; 
+            font-weight: 600; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-left: 4px;
+        }
+        .contrast-badge--ok { 
+            background: #0f2b22; 
+            color: #5eead4; 
+        }
+        .contrast-badge--warn { 
+            background: #2b1616; 
+            color: #ff6b6b; 
+        }
     </style>
 </head>
 <body>
@@ -218,6 +236,7 @@
                         <span>Include</span>
                     </label>
                     <input type="color" class="bucket-color" aria-label="Bucket color" title="Choose bucket color">
+                    <span class="contrast-badge contrast-badge--ok" title="Contrast ratio">AA OK</span>
                     <button type="button" class="delete-btn" aria-label="Delete bucket">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M6 2V1C6 0.448 6.448 0 7 0H9C9.552 0 10 0.448 10 1V2H14C14.552 2 15 2.448 15 3C15 3.552 14.552 4 14 4H13V14C13 15.105 12.105 16 11 16H5C3.895 16 3 15.105 3 14V4H2C1.448 4 1 3.552 1 3C1 2.448 1.448 2 2 2H6ZM5 4V14H11V4H5ZM7 6V12H9V6H7Z" fill="currentColor"/>
