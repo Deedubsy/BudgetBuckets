@@ -1154,13 +1154,29 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         updateDerivedValues();
         saveToCloud();
         
-        // Focus the new bucket's name input
-        const bucketEl = document.querySelector(`[data-bucket-id="${newBucket.id}"]`);
-        if (bucketEl) {
-            const nameInput = bucketEl.querySelector('.bucket-name');
-            nameInput.focus();
-            nameInput.select();
-        }
+        // Focus the new bucket's name input and ensure it's expanded
+        setTimeout(() => {
+            const bucketEl = document.querySelector(`[data-bucket-id="${newBucket.id}"]`);
+            if (bucketEl) {
+                // Expand the new bucket
+                const toggleBtn = bucketEl.querySelector('.bucket-toggle');
+                const content = bucketEl.querySelector('.bucket-content');
+                const toggleIcon = bucketEl.querySelector('.toggle-icon');
+                const headerTotal = bucketEl.querySelector('.bucket-header-total');
+                
+                if (toggleBtn && content) {
+                    content.style.display = 'block';
+                    if (toggleIcon) toggleIcon.textContent = '▼';
+                    toggleBtn.setAttribute('aria-expanded', 'true');
+                    if (headerTotal) headerTotal.style.display = 'none';
+                }
+                
+                // Focus the name input
+                const nameInput = bucketEl.querySelector('.bucket-name');
+                nameInput.focus();
+                nameInput.select();
+            }
+        }, 0);
     }
 
     function renderBuckets() {
@@ -1172,6 +1188,16 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             console.warn('Cannot render buckets: containers not found in DOM');
             return;
         }
+        
+        // Store expanded state of existing buckets
+        const expandedStates = {};
+        document.querySelectorAll('.bucket-card[data-bucket-id]').forEach(card => {
+            const bucketId = card.dataset.bucketId;
+            const toggleBtn = card.querySelector('.bucket-toggle');
+            if (toggleBtn) {
+                expandedStates[bucketId] = toggleBtn.getAttribute('aria-expanded') === 'true';
+            }
+        });
         
         // Clear containers
         expensesContainer.innerHTML = '';
@@ -1217,6 +1243,24 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         wireSortable(expensesContainer);
         wireSortable(savingsContainer);
         wireSortable(debtContainer);
+        
+        // Restore expanded states
+        Object.keys(expandedStates).forEach(bucketId => {
+            const card = document.querySelector(`[data-bucket-id="${bucketId}"]`);
+            if (card && expandedStates[bucketId]) {
+                const toggleBtn = card.querySelector('.bucket-toggle');
+                const content = card.querySelector('.bucket-content');
+                const toggleIcon = card.querySelector('.toggle-icon');
+                const headerTotal = card.querySelector('.bucket-header-total');
+                
+                if (toggleBtn && content) {
+                    content.style.display = 'block';
+                    if (toggleIcon) toggleIcon.textContent = '▼';
+                    toggleBtn.setAttribute('aria-expanded', 'true');
+                    if (headerTotal) headerTotal.style.display = 'none';
+                }
+            }
+        });
     }
 
     // Cloud integration functions (keeping existing structure)
