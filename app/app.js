@@ -103,6 +103,12 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                     needsSave = true;
                 }
                 
+                // Ensure savings buckets have empty items array
+                if (!bucket.items) {
+                    bucket.items = [];
+                    needsSave = true;
+                }
+                
                 // Remove old target structure if it exists
                 if (bucket.target) {
                     delete bucket.target;
@@ -116,6 +122,12 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                     aprPct: 0,
                     minPaymentCents: 0
                 };
+                needsSave = true;
+            }
+            
+            // Ensure all buckets have items array
+            if (!bucket.items) {
+                bucket.items = [];
                 needsSave = true;
             }
         }
@@ -165,6 +177,16 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
     }
 
     function sumIncludedItems(bucket) {
+        // For savings buckets, use the contribution amount instead of items
+        if (bucket.type === 'saving' && bucket.goal) {
+            return bucket.goal.contributionPerPeriodCents / 100 || 0;
+        }
+        
+        // For other bucket types, sum the items
+        if (!bucket.items || !Array.isArray(bucket.items)) {
+            return 0;
+        }
+        
         return bucket.items
             .filter(item => item.include)
             .reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
@@ -1097,7 +1119,8 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                 contributionPerPeriodCents: 0,
                 autoCalc: false
             };
-            // No items for savings buckets
+            // Initialize empty items array for savings buckets
+            newBucket.items = [];
         } else {
             // Add items for expense and debt buckets
             newBucket.items = [{
