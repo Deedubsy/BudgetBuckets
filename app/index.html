@@ -14,6 +14,46 @@
     
     <!-- Additional CSS for new features -->
     <style>
+        /* Theme variables */
+        :root {
+            /* Dark theme (default) */
+            --bg: #0e1821;
+            --bg-card: #1a2332;
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --accent: #00cdd6;
+            --border: #334155;
+            --danger-color: #ff6b6b;
+            --success-color: #5eead4;
+        }
+
+        [data-theme="light"] {
+            /* Light theme */
+            --bg: #ffffff;
+            --bg-card: #f8fafc;
+            --text: #1e293b;
+            --muted: #64748b;
+            --accent: #0891b2;
+            --border: #e2e8f0;
+            --danger-color: #dc2626;
+            --success-color: #059669;
+        }
+
+        .theme-toggle {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: var(--border);
+        }
+
         .drag-handle { cursor: grab; user-select: none; margin-right: 8px; opacity: .8; }
         .badge { padding: 2px 8px; border: 1px solid var(--border); background: #0e1821; border-radius: 999px; color: var(--muted); font-size: 12px; }
         .pct { margin-left: 8px; color: var(--muted); font-size: 12px; }
@@ -51,9 +91,10 @@
         .totals-horizontal {
             display: flex;
             align-items: center;
-            gap: 12px;
+            justify-content: space-between;
             flex-wrap: wrap;
             font-size: 14px;
+            width: 100%;
         }
         .total-item-inline {
             display: inline-flex;
@@ -82,6 +123,7 @@
         <h1><a href="/home.html" style="color: inherit; text-decoration: none;">Budget Buckets</a></h1>
         <nav class="header-actions">
             <span id="userInfo" class="user-info"></span>
+            <button id="themeToggle" type="button" class="theme-toggle" title="Toggle light/dark mode">🌓</button>
             <button id="loadDemoBtn" type="button">Load demo</button>
             <button id="resetBtn" type="button">Reset</button>
             <button id="exportBtn" type="button">Export</button>
@@ -151,22 +193,18 @@
                     <span class="total-label">Income:</span>
                     <span class="total-value" id="totalIncome">$0.00</span>
                 </span>
-                <span class="total-separator">•</span>
                 <span class="total-item-inline">
                     <span class="total-label">Expenses:</span>
                     <span class="total-value" id="totalExpenses">$0.00</span>
                 </span>
-                <span class="total-separator">•</span>
                 <span class="total-item-inline">
                     <span class="total-label">Savings:</span>
                     <span class="total-value" id="totalSavings">$0.00</span>
                 </span>
-                <span class="total-separator">•</span>
                 <span class="total-item-inline">
                     <span class="total-label">Debt:</span>
                     <span class="total-value" id="totalDebt">$0.00</span>
                 </span>
-                <span class="total-separator">•</span>
                 <span class="total-item-inline remaining">
                     <span class="total-label">Remaining:</span>
                     <span class="total-value" id="totalRemaining">$0.00</span>
@@ -255,7 +293,6 @@
                 <span class="badge bank-badge" style="display:none;"></span>
                 <span class="pct">0% of income</span>
                 <span class="bucket-header-total" style="display: none; margin-left: 8px; color: var(--accent); font-weight: 600;">$0.00</span>
-                <span class="pill pill--ok">OK</span>
                 <div class="bucket-controls">
                     <input type="text" class="bank-account" placeholder="Bank account">
                     <label class="include-label">
@@ -263,7 +300,6 @@
                         <span>Include</span>
                     </label>
                     <input type="color" class="bucket-color" aria-label="Bucket color" title="Choose bucket color">
-                    <span class="contrast-badge contrast-badge--ok" title="Contrast ratio">AA OK</span>
                     <button type="button" class="delete-btn" aria-label="Delete bucket">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M6 2V1C6 0.448 6.448 0 7 0H9C9.552 0 10 0.448 10 1V2H14C14.552 2 15 2.448 15 3C15 3.552 14.552 4 14 4H13V14C13 15.105 12.105 16 11 16H5C3.895 16 3 15.105 3 14V4H2C1.448 4 1 3.552 1 3C1 2.448 1.448 2 2 2H6ZM5 4V14H11V4H5ZM7 6V12H9V6H7Z" fill="currentColor"/>

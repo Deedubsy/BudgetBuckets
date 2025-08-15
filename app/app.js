@@ -359,24 +359,11 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             bankBadge.style.display = 'none';
         }
         
-        // Update overspend indicator
+        
+        // Update progress bar
         const spentCents = bucket.spentThisPeriodCents || 0;
         const plannedCents = bucketTotal * 100;
         const ratio = plannedCents > 0 ? spentCents / plannedCents : 0;
-        const pill = bucketEl.querySelector('.pill');
-        
-        if (ratio < 0.8) {
-            pill.className = 'pill pill--ok';
-            pill.textContent = 'OK';
-        } else if (ratio <= 1.0) {
-            pill.className = 'pill pill--warn';
-            pill.textContent = 'Warning';
-        } else {
-            pill.className = 'pill pill--bad';
-            pill.textContent = 'Over';
-        }
-        
-        // Update progress bar
         const progressBar = bucketEl.querySelector('.progress-bar');
         const progressWidth = Math.min(100, ratio * 100);
         progressBar.style.width = `${progressWidth}%`;
@@ -416,8 +403,6 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             const contrastColor = getContrastColor(bucket.color);
             bucketEl.style.setProperty('--bucket-text-color', contrastColor);
             
-            // Update contrast badge if present
-            updateContrastBadge(bucketEl, bucket.color);
         } else {
             bucketEl.removeAttribute('data-bucket-color');
             bucketEl.style.removeProperty('--bucket-bg-color');
@@ -456,20 +441,6 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         return (lighter + 0.05) / (darker + 0.05);
     }
 
-    function updateContrastBadge(bucketEl, backgroundColor) {
-        const badge = bucketEl.querySelector('.contrast-badge');
-        if (!badge) return;
-        
-        const textColor = getContrastColor(backgroundColor);
-        const ratio = getContrastRatio(backgroundColor, textColor);
-        
-        // WCAG AA requires 4.5:1 for normal text, 3:1 for large text
-        const isAACompliant = ratio >= 4.5;
-        
-        badge.textContent = isAACompliant ? 'AA OK' : 'Needs contrast';
-        badge.className = `contrast-badge ${isAACompliant ? 'contrast-badge--ok' : 'contrast-badge--warn'}`;
-        badge.title = `Contrast ratio: ${ratio.toFixed(2)}:1`;
-    }
 
     function updateTypeSpecificSections(bucket, bucketEl) {
         const savingsInfo = bucketEl.querySelector('.savings-info');
@@ -718,8 +689,6 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         updateBucketTotal(bucket, card);
         updateBucketColor(bucket, card);
         
-        // Initialize contrast badge
-        updateContrastBadge(card, bucket.color || '#00cdd6');
         
         return card;
     }
@@ -768,10 +737,6 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             debouncedSave();
         });
         
-        // Also update on input for real-time feedback
-        colorInput.addEventListener('input', () => {
-            updateContrastBadge(card, colorInput.value);
-        });
         
         notesTextarea.addEventListener('input', debouncedUpdateNotes);
         
@@ -1416,9 +1381,33 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         updateDerivedValues();
     }
 
+    // Theme management
+    function setTheme(theme) {
+        if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+        }
+    }
+
     // Event listeners for settings
     function initializeEventListeners() {
         console.log('Initializing event listeners...');
+        
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            // Load saved theme or default to dark
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            setTheme(savedTheme);
+            
+            themeToggle.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                setTheme(newTheme);
+                localStorage.setItem('theme', newTheme);
+            });
+        }
         
         // Settings
         const incomeAmount = document.getElementById('incomeAmount');
