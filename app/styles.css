@@ -286,27 +286,32 @@ input[type="checkbox"] {
 }
 
 .bucket-card[data-bucket-color] {
+    background: var(--bg-card);
+}
+
+.bucket-card[data-bucket-color] .bucket-header {
     background: var(--bucket-bg-color, var(--bg-card));
     color: var(--bucket-text-color, var(--text));
 }
 
-.bucket-card[data-bucket-color] .bucket-header {
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: brightness(0.8);
-    color: var(--bucket-text-color, var(--text));
-}
-
 .bucket-card[data-bucket-color] .bucket-content {
-    background: rgba(0, 0, 0, 0.2);
-    color: var(--bucket-text-color, var(--text));
+    background: rgb(26, 35, 50);
+    color: white;
 }
 
+/* Header elements use auto-contrast */
 .bucket-card[data-bucket-color] .bucket-name,
 .bucket-card[data-bucket-color] .pct,
 .bucket-card[data-bucket-color] .bucket-header-total,
+.bucket-card[data-bucket-color] .bank-badge,
+.bucket-card[data-bucket-color] .drag-handle,
+.bucket-card[data-bucket-color] .toggle-icon {
+    color: var(--bucket-text-color, var(--text));
+}
+
+/* Content elements use white text */
 .bucket-card[data-bucket-color] .spent-label,
 .bucket-card[data-bucket-color] .remaining-amount,
-.bucket-card[data-bucket-color] .bank-badge,
 .bucket-card[data-bucket-color] .items-table th,
 .bucket-card[data-bucket-color] .items-table td,
 .bucket-card[data-bucket-color] .bucket-total,
@@ -324,18 +329,19 @@ input[type="checkbox"] {
 .bucket-card[data-bucket-color] .payoff-text,
 .bucket-card[data-bucket-color] .contrib-freq,
 .bucket-card[data-bucket-color] .track-freq,
-.bucket-card[data-bucket-color] .drag-handle,
-.bucket-card[data-bucket-color] .toggle-icon,
 .bucket-card[data-bucket-color] .delete-btn,
 .bucket-card[data-bucket-color] .use-amount-btn,
 .bucket-card[data-bucket-color] .date-chip {
-    color: var(--bucket-text-color, var(--text));
+    color: white;
 }
 
 .bucket-card[data-bucket-color] .goal-section,
 .bucket-card[data-bucket-color] .bucket-total,
-.bucket-card[data-bucket-color] .add-item-btn {
-    background: rgba(0, 0, 0, 0.3);
+.bucket-card[data-bucket-color] .add-item-btn,
+.bucket-card[data-bucket-color] .savings-info,
+.bucket-card[data-bucket-color] .debt-info,
+.bucket-card[data-bucket-color] .sinking-fund-panel {
+    background: rgba(0, 0, 0, 0.2);
 }
 
 .bucket-card[data-bucket-color] .items-table th {
@@ -344,9 +350,12 @@ input[type="checkbox"] {
 
 .bucket-card[data-bucket-color] input[type="text"],
 .bucket-card[data-bucket-color] input[type="number"],
-.bucket-card[data-bucket-color] select {
-    background: rgba(0, 0, 0, 0.4);
-    border-color: rgba(255, 255, 255, 0.1);
+.bucket-card[data-bucket-color] input[type="date"],
+.bucket-card[data-bucket-color] select,
+.bucket-card[data-bucket-color] textarea {
+    background: rgb(26, 26, 26);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .bucket-header {
