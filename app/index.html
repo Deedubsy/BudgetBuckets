@@ -48,6 +48,33 @@
             background: #2b1616; 
             color: #ff6b6b; 
         }
+        .totals-horizontal {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            font-size: 14px;
+        }
+        .total-item-inline {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .total-separator {
+            color: var(--muted);
+            font-weight: 600;
+        }
+        .total-item-inline .total-label {
+            color: var(--muted);
+            font-weight: 500;
+        }
+        .total-item-inline .total-value {
+            font-weight: 600;
+            color: var(--text);
+        }
+        .total-item-inline.remaining .total-value {
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
@@ -116,34 +143,34 @@
             </div>
         </section>
 
-        <!-- Search bar for buckets -->
-        <div class="card" style="margin-bottom: 16px;">
-            <input id="bucket-search" class="search" placeholder="Search buckets… name, bank, notes" />
-        </div>
 
         <section class="card sticky-totals">
             <h2>Totals (<span id="totalsFrequency">Fortnightly</span>)</h2>
-            <div class="totals-grid">
-                <div class="total-item">
-                    <span class="total-label">Income</span>
+            <div class="totals-horizontal">
+                <span class="total-item-inline">
+                    <span class="total-label">Income:</span>
                     <span class="total-value" id="totalIncome">$0.00</span>
-                </div>
-                <div class="total-item">
-                    <span class="total-label">Expenses</span>
+                </span>
+                <span class="total-separator">•</span>
+                <span class="total-item-inline">
+                    <span class="total-label">Expenses:</span>
                     <span class="total-value" id="totalExpenses">$0.00</span>
-                </div>
-                <div class="total-item">
-                    <span class="total-label">Planned Savings</span>
+                </span>
+                <span class="total-separator">•</span>
+                <span class="total-item-inline">
+                    <span class="total-label">Savings:</span>
                     <span class="total-value" id="totalSavings">$0.00</span>
-                </div>
-                <div class="total-item">
-                    <span class="total-label">Debt Payments</span>
+                </span>
+                <span class="total-separator">•</span>
+                <span class="total-item-inline">
+                    <span class="total-label">Debt:</span>
                     <span class="total-value" id="totalDebt">$0.00</span>
-                </div>
-                <div class="total-item">
-                    <span class="total-label">Remaining</span>
+                </span>
+                <span class="total-separator">•</span>
+                <span class="total-item-inline remaining">
+                    <span class="total-label">Remaining:</span>
                     <span class="total-value" id="totalRemaining">$0.00</span>
-                </div>
+                </span>
             </div>
             <!-- Allocation donut chart (hidden) -->
             <div class="alloc-chart-container" style="display: none;">

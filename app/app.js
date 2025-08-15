@@ -402,10 +402,6 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             remainingEl.textContent = `Remaining: ${formatCurrency(remaining)}`;
         }
         
-        // Update data attributes for search
-        bucketEl.dataset.bucketName = bucket.name || '';
-        bucketEl.dataset.bankAccount = bucket.bankAccount || '';
-        bucketEl.dataset.notes = bucket.notes || '';
         
         // Update type-specific sections
         updateTypeSpecificSections(bucket, bucketEl);
@@ -633,23 +629,6 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         }
     }
 
-    // Search functionality
-    function initializeSearch() {
-        const searchEl = document.getElementById('bucket-search');
-        if (!searchEl) return;
-        
-        searchEl.addEventListener('input', () => {
-            const q = searchEl.value.trim().toLowerCase();
-            document.querySelectorAll('[data-bucket-id]').forEach(card => {
-                const hay = (
-                    (card.dataset.bucketName || '') + ' ' +
-                    (card.dataset.bankAccount || '') + ' ' +
-                    (card.dataset.notes || '')
-                ).toLowerCase();
-                card.style.display = hay.includes(q) ? '' : 'none';
-            });
-        });
-    }
 
     // Drag and drop functionality
     function wireSortable(listEl) {
@@ -1683,7 +1662,6 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         }
         
         initializeEventListeners();
-        initializeSearch();
         updateDerivedValues();
         
         // Sign out functionality
