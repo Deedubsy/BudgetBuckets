@@ -324,11 +324,18 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         const remaining = income - expenses - savings - debt;
         
         document.getElementById('totalsFrequency').textContent = freq;
-        document.getElementById('totalIncome').textContent = formatCurrency(income);
-        document.getElementById('totalExpenses').textContent = formatCurrency(expenses);
-        document.getElementById('totalSavings').textContent = formatCurrency(savings);
-        document.getElementById('totalDebt').textContent = formatCurrency(debt);
-        document.getElementById('totalRemaining').textContent = formatCurrency(remaining);
+        
+        // Calculate percentages
+        const expensesPct = income > 0 ? Math.round((expenses / income) * 100) : 0;
+        const savingsPct = income > 0 ? Math.round((savings / income) * 100) : 0;
+        const debtPct = income > 0 ? Math.round((debt / income) * 100) : 0;
+        const remainingPct = income > 0 ? Math.round((remaining / income) * 100) : 0;
+        
+        document.getElementById('totalIncome').textContent = formatCurrency(income) + ' (100%)';
+        document.getElementById('totalExpenses').textContent = formatCurrency(expenses) + ` (${expensesPct}%)`;
+        document.getElementById('totalSavings').textContent = formatCurrency(savings) + ` (${savingsPct}%)`;
+        document.getElementById('totalDebt').textContent = formatCurrency(debt) + ` (${debtPct}%)`;
+        document.getElementById('totalRemaining').textContent = formatCurrency(remaining) + ` (${remainingPct}%)`;
         
         // Update remaining color
         const remainingEl = document.getElementById('totalRemaining');
@@ -574,8 +581,8 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             const estDateText = `${monthNames[targetDate.getMonth()]} ${targetDate.getFullYear()}`;
             
-            // Compare current contribution to needed amount
-            const onTrack = currentContribution >= neededPerPeriod;
+            // Compare current contribution to needed amount (within $2 tolerance)
+            const onTrack = currentContribution >= (neededPerPeriod - 2);
             let displayText = `Time to goal: ${timeText} • Target: ${estDateText}`;
             displayText += ` <span style="color: ${onTrack ? '#5eead4' : '#ff6b6b'}">(${onTrack ? 'on track' : 'behind'})</span>`;
             
@@ -1425,6 +1432,18 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                 const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
                 setTheme(newTheme);
                 localStorage.setItem('theme', newTheme);
+            });
+        }
+        
+        // Settings accordion
+        const settingsToggle = document.querySelector('.settings-toggle');
+        if (settingsToggle) {
+            settingsToggle.addEventListener('click', () => {
+                const content = document.querySelector('.settings-content');
+                const isExpanded = settingsToggle.getAttribute('aria-expanded') === 'true';
+                
+                content.style.display = isExpanded ? 'none' : 'block';
+                settingsToggle.setAttribute('aria-expanded', !isExpanded);
             });
         }
         
