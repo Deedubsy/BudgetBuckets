@@ -164,11 +164,11 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             return new Intl.NumberFormat('en-US', {
                 style: 'currency',
                 currency: currency,
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
             }).format(amount);
         } catch (e) {
-            return `${currency} ${amount.toFixed(2)}`;
+            return `${currency} ${Math.round(amount)}`;
         }
     }
 
@@ -473,10 +473,10 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         const manualContribEl = bucketEl.querySelector('.manual-contribution');
         
         // Update field values
-        goalAmountEl.value = goal.amountCents ? (goal.amountCents / 100).toFixed(2) : '';
+        goalAmountEl.value = goal.amountCents ? Math.round(goal.amountCents / 100) : '';
         goalDateEl.value = goal.targetDate || '';
-        savedSoFarEl.value = goal.savedSoFarCents ? (goal.savedSoFarCents / 100).toFixed(2) : '';
-        contributionEl.value = goal.contributionPerPeriodCents ? (goal.contributionPerPeriodCents / 100).toFixed(2) : '';
+        savedSoFarEl.value = goal.savedSoFarCents ? Math.round(goal.savedSoFarCents / 100) : '';
+        contributionEl.value = goal.contributionPerPeriodCents ? Math.round(goal.contributionPerPeriodCents / 100) : '';
         
         // Update frequency labels throughout
         const freq = state.settings.incomeFrequency.toLowerCase();
@@ -524,7 +524,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             stayOnTrackEl.style.display = showStayOnTrack ? 'block' : 'none';
             if (showStayOnTrack && trackAmountEl) {
                 const currency = state.settings.currency;
-                trackAmountEl.innerHTML = `${currency}$${neededPerPeriod.toFixed(2)} / <span class="track-freq">${freq}</span>`;
+                trackAmountEl.innerHTML = `${currency}$${Math.round(neededPerPeriod)} / <span class="track-freq">${freq}</span>`;
             }
         }
         
@@ -541,40 +541,59 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         if (progressTarget) progressTarget.textContent = `of ${formatCurrency(goalAmount)}`;
         if (progressBarFill) progressBarFill.style.width = `${percentage}%`;
         
-        // Calculate time to goal with both periods and calendar date
-        const contribution = goal.contributionPerPeriodCents / 100;
+        // Calculate time to goal - use the same logic as "Stay On Track"
         const timeEstimateEl = bucketEl.querySelector('.time-estimate');
         
-        if (contribution > 0 && remaining > 0) {
-            const periodsNeeded = Math.ceil(remaining / contribution);
-            const freqName = state.settings.incomeFrequency.toLowerCase();
-            let timeText = `${periodsNeeded} ${freqName}`;
-            if (periodsNeeded === 1) {
+        if (remaining <= 0) {
+            if (timeEstimateEl) timeEstimateEl.innerHTML = `<span style="color: #5eead4">Goal achieved! 🎉</span>`;
+        } else if (goal.targetDate && goalAmount > 0) {
+            // If target date is set, use the same calculation as "Stay On Track"
+            const targetDate = new Date(goal.targetDate);
+            const now = new Date();
+            const msPerDay = 24 * 60 * 60 * 1000;
+            const daysRemaining = Math.max(1, Math.ceil((targetDate - now) / msPerDay));
+            
+            // Calculate periods remaining based on frequency
+            let periodsRemaining;
+            switch (freq) {
+                case 'weekly': periodsRemaining = Math.max(1, Math.ceil(daysRemaining / 7)); break;
+                case 'fortnightly': periodsRemaining = Math.max(1, Math.ceil(daysRemaining / 14)); break;
+                case 'monthly': periodsRemaining = Math.max(1, Math.ceil(daysRemaining / 30)); break;
+                case 'yearly': periodsRemaining = Math.max(1, Math.ceil(daysRemaining / 365)); break;
+                default: periodsRemaining = 1;
+            }
+            
+            const neededPerPeriod = remaining / periodsRemaining;
+            const currentContribution = goal.contributionPerPeriodCents / 100;
+            
+            let timeText = `${periodsRemaining} ${freq}`;
+            if (periodsRemaining === 1) {
                 timeText = timeText.slice(0, -1); // Remove 's' for singular
             }
             
-            // Calculate estimated completion date
-            const estimatedDate = new Date();
-            const daysPerPeriod = freqName === 'weekly' ? 7 : freqName === 'fortnightly' ? 14 : freqName === 'monthly' ? 30 : 365;
-            estimatedDate.setDate(estimatedDate.getDate() + (periodsNeeded * daysPerPeriod));
-            
             const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            const estDateText = `${monthNames[estimatedDate.getMonth()]} ${estimatedDate.getFullYear()}`;
+            const estDateText = `${monthNames[targetDate.getMonth()]} ${targetDate.getFullYear()}`;
             
-            let displayText = `Time to goal: ${timeText} • Est. date: ${estDateText}`;
-            
-            // Add on-track indicator if goal date is set
-            if (goal.targetDate) {
-                const targetDate = new Date(goal.targetDate);
-                const onTrack = estimatedDate <= targetDate;
-                displayText += ` <span style="color: ${onTrack ? '#5eead4' : '#ff6b6b'}">(${onTrack ? 'on track' : 'behind'})</span>`;
-            }
+            // Compare current contribution to needed amount
+            const onTrack = currentContribution >= neededPerPeriod;
+            let displayText = `Time to goal: ${timeText} • Target: ${estDateText}`;
+            displayText += ` <span style="color: ${onTrack ? '#5eead4' : '#ff6b6b'}">(${onTrack ? 'on track' : 'behind'})</span>`;
             
             if (timeEstimateEl) timeEstimateEl.innerHTML = displayText;
-        } else if (remaining <= 0) {
-            if (timeEstimateEl) timeEstimateEl.innerHTML = `<span style="color: #5eead4">Goal achieved! 🎉</span>`;
         } else {
-            if (timeEstimateEl) timeEstimateEl.textContent = 'Time to goal: Set contribution amount';
+            // No target date set, use current contribution rate
+            const contribution = goal.contributionPerPeriodCents / 100;
+            if (contribution > 0) {
+                const periodsNeeded = Math.ceil(remaining / contribution);
+                let timeText = `${periodsNeeded} ${freq}`;
+                if (periodsNeeded === 1) {
+                    timeText = timeText.slice(0, -1); // Remove 's' for singular
+                }
+                
+                if (timeEstimateEl) timeEstimateEl.textContent = `Time to goal: ${timeText}`;
+            } else {
+                if (timeEstimateEl) timeEstimateEl.textContent = 'Time to goal: Set contribution amount';
+            }
         }
     }
 
@@ -585,7 +604,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         const payoffTextEl = bucketEl.querySelector('.payoff-text');
         
         aprEl.value = debt.aprPct || '';
-        minPaymentEl.value = debt.minPaymentCents ? (debt.minPaymentCents / 100).toFixed(2) : '';
+        minPaymentEl.value = debt.minPaymentCents ? Math.round(debt.minPaymentCents / 100) : '';
         
         // Calculate payoff
         const balance = sumIncludedItems(bucket);
@@ -647,7 +666,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         includeInput.checked = bucket.include !== false;
         colorInput.value = bucket.color || '#00cdd6';
         notesTextarea.value = bucket.notes || '';
-        spentInput.value = bucket.spentThisPeriodCents ? (bucket.spentThisPeriodCents / 100).toFixed(2) : '0.00';
+        spentInput.value = bucket.spentThisPeriodCents ? Math.round(bucket.spentThisPeriodCents / 100) : '0';
         
         // Auto-resize notes textarea
         if (window.autosize) {
@@ -894,7 +913,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                     
                     const neededPerPeriod = remaining / periodsRemaining;
                     bucket.goal.contributionPerPeriodCents = Math.round(neededPerPeriod * 100);
-                    contributionEl.value = neededPerPeriod.toFixed(2);
+                    contributionEl.value = Math.round(neededPerPeriod);
                     
                     updateSavingsSection(bucket, card);
                     updateBucketTotal(bucket, card);

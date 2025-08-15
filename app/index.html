@@ -116,6 +116,9 @@
         .total-item-inline.remaining .total-value {
             font-weight: 700;
         }
+        .bucket-name {
+            width: 300px;
+        }
     </style>
 </head>
 <body>
@@ -334,16 +337,17 @@
                             </div>
                             <div style="flex: 1;">
                                 <label style="display: block; margin-bottom: 4px; font-size: 13px; color: var(--muted);">Goal date:</label>
-                                <input type="date" class="goal-date" style="width: 100%;">
+                                <input type="date" class="goal-date" style="width: 100%; margin-bottom: 8px;">
+                                <!-- Date chips under goal date -->
+                                <div class="date-chips" style="display: flex; gap: 8px;">
+                                    <button type="button" class="date-chip" data-months="3" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: #0f1720; color: var(--text); font-size: 12px; cursor: pointer;">+3m</button>
+                                    <button type="button" class="date-chip" data-months="6" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: #0f1720; color: var(--text); font-size: 12px; cursor: pointer;">+6m</button>
+                                    <button type="button" class="date-chip" data-months="12" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: #0f1720; color: var(--text); font-size: 12px; cursor: pointer;">+12m</button>
+                                </div>
                             </div>
                         </div>
                         
-                        <!-- Date chips -->
-                        <div class="date-chips" style="display: flex; gap: 8px; margin-bottom: 12px;">
-                            <button type="button" class="date-chip" data-months="3" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: #0f1720; color: var(--text); font-size: 12px; cursor: pointer;">+3m</button>
-                            <button type="button" class="date-chip" data-months="6" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: #0f1720; color: var(--text); font-size: 12px; cursor: pointer;">+6m</button>
-                            <button type="button" class="date-chip" data-months="12" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: #0f1720; color: var(--text); font-size: 12px; cursor: pointer;">+12m</button>
-                        </div>
+                        <div style="margin-bottom: 12px;"></div>
                         
                         <!-- 2. Saved so far -->
                         <div style="margin-bottom: 12px;">
