@@ -13,7 +13,11 @@
 
     "rewrites": [
       { "source": "/", "destination": "/auth/login.html" },
-      { "source": "/app/**", "destination": "/app/index.html" }
+      { "source": "/app/**", "destination": "/app/index.html" },
+      { "source": "/privacy", "destination": "/privacy.html" },
+      { "source": "/terms", "destination": "/terms.html" },
+      { "source": "/support", "destination": "/support.html" },
+      { "source": "/contact", "destination": "/support.html" }
     ],
 
     "headers": [
