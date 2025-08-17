@@ -12,6 +12,7 @@
     "trailingSlash": false,
 
     "rewrites": [
+      { "source": "/", "destination": "/auth/login.html" },
       { "source": "/app/**", "destination": "/app/index.html" }
     ],
 
