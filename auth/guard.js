@@ -64,7 +64,7 @@ class AuthGuard {
   }
 
   // Require authentication with redirect on failure
-  async requireAuth(redirectPath = '/auth/login.html') {
+  async requireAuth(redirectPath = '/auth/login.html', hideLoadingAfterAuth = false) {
     try {
       this.showAuthLoading('Verifying authentication...');
       
@@ -93,7 +93,10 @@ class AuthGuard {
         return null;
       }
       
-      this.hideAuthLoading();
+      // Only hide loading if explicitly requested (for backwards compatibility)
+      if (hideLoadingAfterAuth) {
+        this.hideAuthLoading();
+      }
       return user;
       
     } catch (error) {
@@ -239,7 +242,8 @@ class AuthGuard {
     
     // Protected pages - require authentication
     if (currentPath.includes('/app/')) {
-      const user = await this.requireAuth();
+      // Don't hide loading after auth - let the app handle it after data loads
+      const user = await this.requireAuth('/auth/login.html', false);
       if (user) {
         this.setupAuthStateListener();
       }

@@ -1684,8 +1684,18 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         currentUser = authHelpers.getCurrentUser();
         
         if (currentUser) {
+            // Show loading message for bucket data
+            if (window.authGuard) {
+                window.authGuard.showAuthLoading('Loading your budget data...');
+            }
+            
             document.getElementById('userInfo').textContent = `Signed in as ${currentUser.email}`;
             await loadFromCloud();
+            
+            // Hide loading overlay after buckets are loaded
+            if (window.authGuard) {
+                window.authGuard.hideAuthLoading();
+            }
         }
         
         initializeEventListeners();
