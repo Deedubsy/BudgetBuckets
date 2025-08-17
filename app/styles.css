@@ -549,11 +549,31 @@ input[type="checkbox"] {
     background: var(--bg-secondary);
     padding: var(--spacing-md) var(--spacing-lg);
     border-top: 1px solid var(--border);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.footer-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.875rem;
+    width: 100%;
+}
+
+.footer-nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.footer-nav a {
     color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.footer-nav a:hover {
+    color: var(--accent);
 }
 
 .modal {

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support - Budget Buckets</title>
+    <meta name="robots" content="noindex, nofollow, noarchive, noimageindex">
+    <style>
+        /* Theme variables */
+        :root {
+            /* Dark theme (default) */
+            --bg: #0e1821;
+            --bg-card: #1a2332;
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --accent: #00cdd6;
+            --border: #334155;
+            --success-color: #5eead4;
+            --warning-color: #ffd166;
+        }
+
+        [data-theme="light"] {
+            /* Light theme */
+            --bg: #ffffff;
+            --bg-card: #f8fafc;
+            --text: #1e293b;
+            --muted: #64748b;
+            --accent: #0891b2;
+            --border: #e2e8f0;
+            --success-color: #059669;
+            --warning-color: #d97706;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header h1 {
+            color: var(--accent);
+            font-size: 1.5rem;
+        }
+
+        .header a {
+            color: var(--text);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .header a:hover {
+            background: var(--bg-card);
+        }
+
+        .content {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+
+        .content h1 {
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+
+        .content h2 {
+            margin: 2rem 0 1rem 0;
+            color: var(--text);
+            font-size: 1.25rem;
+        }
+
+        .content p, .content li {
+            margin-bottom: 1rem;
+            color: var(--muted);
+        }
+
+        .content ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .faq-section {
+            margin-bottom: 2rem;
+        }
+
+        .faq-item {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .faq-question {
+            padding: 1rem;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .faq-answer {
+            padding: 1rem;
+            color: var(--muted);
+        }
+
+        .contact-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .contact-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .contact-card h3 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        .contact-card p {
+            margin-bottom: 1rem;
+        }
+
+        .contact-card a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .contact-card a:hover {
+            text-decoration: underline;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .status-operational {
+            background: rgba(94, 234, 212, 0.1);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+
+        .footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Budget Buckets</h1>
+            <a href="/app/index.html">← Back to App</a>
+        </header>
+
+        <main class="content">
+            <h1>Support & Help</h1>
+            <p>Need help with Budget Buckets? Check out our frequently asked questions below or contact us directly.</p>
+
+            <div class="status-indicator status-operational">
+                <span>●</span>
+                <span>All systems operational</span>
+            </div>
+        </main>
+
+        <section class="faq-section">
+            <div class="content">
+                <h2>Frequently Asked Questions</h2>
+                
+                <div class="faq-item">
+                    <div class="faq-question">How do I get started with Budget Buckets?</div>
+                    <div class="faq-answer">
+                        Start by setting your income amount and frequency in the "Income & Settings" section. Then create expense buckets for your regular spending categories (housing, transport, groceries, etc.) and add savings buckets for your financial goals. Add specific items to each bucket with their amounts.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Does Budget Buckets connect to my bank accounts?</div>
+                    <div class="faq-answer">
+                        No, Budget Buckets is a manual budgeting tool. It doesn't connect to your bank accounts or automatically import transactions. You'll need to manually enter your spending and update your progress. This gives you full control over your data and privacy.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">How do savings goals work?</div>
+                    <div class="faq-answer">
+                        Savings buckets let you set a goal amount and target date. The app will calculate how much you need to save each period to reach your goal on time. You can also manually set your contribution amount and track your progress toward the goal.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Can I access my budget on multiple devices?</div>
+                    <div class="faq-answer">
+                        Yes! Your budget data is automatically synced to the cloud when you're signed in. You can access your budget from any device by signing in with the same account.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">How do I backup my data?</div>
+                    <div class="faq-answer">
+                        Use the "Export" button in the app header to download a JSON file containing all your budget data. This serves as a backup that you can import later if needed. We recommend doing this regularly.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">What happens if I delete my account?</div>
+                    <div class="faq-answer">
+                        If you delete your account, all your budget data will be permanently removed from our servers within 30 days. Make sure to export your data first if you want to keep a copy.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Is my financial data secure?</div>
+                    <div class="faq-answer">
+                        Yes, your data is stored securely using Google Firebase with industry-standard encryption. We don't share your financial information with third parties, and you can read our full Privacy Policy for more details.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Can I use different currencies?</div>
+                    <div class="faq-answer">
+                        Yes, Budget Buckets supports multiple currencies including AUD, USD, EUR, GBP, CAD, NZD, JPY, CNY, and INR. You can change your currency in the settings section.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content">
+            <h2>Contact Support</h2>
+            <p>Still need help? Get in touch with us using one of the methods below:</p>
+
+            <div class="contact-methods">
+                <div class="contact-card">
+                    <h3>📧 Email Support</h3>
+                    <p>For general questions, bug reports, or feature requests</p>
+                    <a href="mailto:support@budgetbucket.app">support@budgetbucket.app</a>
+                    <p><small>Response time: 1-2 business days</small></p>
+                </div>
+
+                <div class="contact-card">
+                    <h3>🔧 Technical Issues</h3>
+                    <p>For technical problems or account issues</p>
+                    <a href="mailto:tech@budgetbucket.app">tech@budgetbucket.app</a>
+                    <p><small>Response time: 24-48 hours</small></p>
+                </div>
+
+                <div class="contact-card">
+                    <h3>💡 Feature Requests</h3>
+                    <p>Have an idea to improve Budget Buckets?</p>
+                    <a href="mailto:feedback@budgetbucket.app">feedback@budgetbucket.app</a>
+                    <p><small>We read every suggestion!</small></p>
+                </div>
+            </div>
+
+            <h2>Before Contacting Support</h2>
+            <p>To help us assist you better, please:</p>
+            <ul>
+                <li>Check the FAQ above for common solutions</li>
+                <li>Try refreshing your browser or signing out and back in</li>
+                <li>Include details about your browser, device, and what you were trying to do</li>
+                <li>If reporting a bug, include the steps to reproduce the issue</li>
+                <li>Export your data before making major changes (as a backup)</li>
+            </ul>
+        </section>
+
+        <footer class="footer">
+            <p>&copy; 2025 Budget Buckets. All rights reserved.</p>
+            <p>
+                <a href="/privacy.html">Privacy Policy</a> • 
+                <a href="/terms.html">Terms of Service</a> • 
+                <a href="/support.html">Support</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

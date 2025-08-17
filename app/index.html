@@ -167,7 +167,7 @@
 
     <main class="main-content">
         <section class="card income-settings">
-            <header class="settings-header">
+            <header class="settings-header" style="margin-bottom: 10px;">
                 <button type="button" class="settings-toggle" aria-expanded="false">
                     <span class="toggle-icon">▶</span>
                     <h2>Income & Settings</h2>
@@ -288,8 +288,15 @@
     </main>
 
     <footer class="footer">
-        <span>Budget Buckets v1.0</span>
-        <button id="helpBtn" type="button">Help</button>
+        <div class="footer-content">
+            <span>Budget Buckets v1.0</span>
+            <nav class="footer-nav">
+                <a href="/privacy.html">Privacy</a>
+                <a href="/terms.html">Terms</a>
+                <a href="/support.html">Support</a>
+                <button id="helpBtn" type="button">Help</button>
+            </nav>
+        </div>
     </footer>
 
     <dialog id="helpModal" class="modal">
