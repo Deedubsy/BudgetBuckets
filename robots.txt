@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Disallow: /app/
+Disallow: /auth/
+Disallow: /test/
+Disallow: /environment-switcher.html
+Disallow: /server.js
+Disallow: /package.json
+Disallow: /firebase.json
+Disallow: /apphosting.yaml
+Disallow: /Procfile
+
+# Sitemap
+Sitemap: https://budgetbucket.app/sitemap.xml
+
+# Crawl-delay for politeness  
+Crawl-delay: 1

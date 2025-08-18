@@ -173,6 +173,17 @@ app.get('/contact', (req, res) => {
   res.sendFile(path.join(__dirname, 'support.html'));
 });
 
+// SEO files
+app.get('/sitemap.xml', (req, res) => {
+  res.setHeader('Content-Type', 'application/xml');
+  res.sendFile(path.join(__dirname, 'sitemap.xml'));
+});
+
+app.get('/robots.txt', (req, res) => {
+  res.setHeader('Content-Type', 'text/plain');
+  res.sendFile(path.join(__dirname, 'robots.txt'));
+});
+
 app.get('/environment', (req, res) => {
   res.sendFile(path.join(__dirname, 'environment-switcher.html'));
 });

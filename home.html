@@ -3,24 +3,30 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Budget Buckets — Simple Fortnightly Budgeting (AUD)</title>
-  <meta name="description" content="Budget Buckets is a simple, fast budgeting app built for Australian pay cycles. Track expenses and savings in buckets, convert weekly/fortnightly/monthly, and stay on top of your money." />
+  <title>Budget Buckets — Simple Weekly & Fortnightly Budgeting</title>
+  <meta name="description" content="Free budgeting app for weekly, fortnightly & monthly pay cycles. Track expenses and savings in simple buckets. Multi-currency support for USD, AUD, EUR & more." />
   
   <!-- TODO: Replace with your live domain -->
   <link rel="canonical" href="https://budgetbucket.app/" />
 
   <!-- Open Graph / Social -->
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Budget Buckets — Simple Fortnightly Budgeting (AUD)" />
-  <meta property="og:description" content="Buckets-based budgeting built for weekly & fortnightly pay cycles in AUD. Free calculators and a clean, fast app." />
+  <meta property="og:title" content="Budget Buckets — Simple Weekly & Fortnightly Budgeting" />
+  <meta property="og:description" content="Free budgeting app built for weekly & fortnightly pay cycles. Multi-currency support with clean, fast interface." />
   <meta property="og:url" content="https://budgetbucket.app/" />
   <meta property="og:image" content="/assets/og-image.png" />
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Budget Buckets — Simple Fortnightly Budgeting (AUD)" />
-  <meta name="twitter:description" content="Buckets-based budgeting built for weekly & fortnightly pay cycles in AUD." />
+  <meta name="twitter:title" content="Budget Buckets — Simple Weekly & Fortnightly Budgeting" />
+  <meta name="twitter:description" content="Free budgeting app built for weekly & fortnightly pay cycles. Multi-currency support." />
   <meta name="twitter:image" content="/assets/og-image.png" />
+
+  <!-- Favicon and PWA Assets -->
+  <link rel="icon" href="/budget-buckets-dollar.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon-dollar.png">
+  <link rel="manifest" href="/site-dollar.webmanifest">
+  <meta name="theme-color" content="#0b0f14">
 
   <style>
     :root{
@@ -137,7 +143,7 @@
     <section class="hero container">
       <div class="grid">
         <div class="card pitch">
-          <span class="eyebrow">Built for Australian pay cycles</span>
+          <span class="eyebrow">Built for flexible pay cycles</span>
           <h1>Budgeting that fits your <em>fortnight</em>.</h1>
           <p class="lead">Track expenses and savings in simple buckets. One global frequency (Weekly/Fortnightly/Monthly/Yearly), clean math, no spreadsheets. Free calculators included.</p>
           <div class="actions">
@@ -172,12 +178,12 @@
     <!-- Feature highlights -->
     <section class="section container">
       <h2>Why Budget Buckets?</h2>
-      <p class="muted">Purpose-built for Australia, with real-world pay cycles and plain-English controls.</p>
+      <p class="muted">Purpose-built for real-world pay cycles with plain-English controls and multi-currency support.</p>
       <div class="features">
         <article class="feature">
           <div class="kicker">Fortnight-first</div>
           <h3>Weekly ⇄ Fortnightly ⇄ Monthly</h3>
-          <p class="muted">Switch the global income frequency and the app updates every bucket instantly. Calculators use AUD formatting via Intl APIs.</p>
+          <p class="muted">Switch the global income frequency and the app updates every bucket instantly. Multi-currency support with local formatting via Intl APIs.</p>
         </article>
         <article class="feature">
           <div class="kicker">Buckets not chaos</div>
@@ -197,8 +203,8 @@
       <h2>Get started</h2>
       <div class="tiles">
         <a class="tile" href="/calculators">
-          <h3>Fortnightly Budget Calculator (AUD)</h3>
-          <p class="muted">Convert weekly, fortnightly, monthly and see your totals instantly.</p>
+          <h3>Budget Calculator</h3>
+          <p class="muted">Convert between weekly, fortnightly, monthly frequencies and see your totals instantly.</p>
         </a>
         <a class="tile" href="/calculators">
           <h3>Savings Rate & Time-to-Goal</h3>
@@ -229,8 +235,8 @@
         <p class="muted">Yes, the app is free while in active development. We may add a paid Pro tier later with advanced features.</p>
       </details>
       <details>
-        <summary>Does it support Australian pay cycles?</summary>
-        <p class="muted">Absolutely. Weekly and fortnightly are first-class, with clean conversions to monthly and yearly when needed.</p>
+        <summary>Does it support weekly and fortnightly pay cycles?</summary>
+        <p class="muted">Yes! Weekly and fortnightly are first-class, with clean conversions to monthly and yearly when needed.</p>
       </details>
       <details>
         <summary>Where is my data stored?</summary>
@@ -279,11 +285,11 @@
     "name": "Budget Buckets",
     "applicationCategory": "FinanceApplication",
     "operatingSystem": "Web",
-    "offers": {"@type": "Offer", "price": "0", "priceCurrency": "AUD"},
+    "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
     "url": "https://budgetbucket.app/",
     "creator": {"@type": "Organization", "name": "Budget Buckets"},
-    "description": "A simple web app for bucket-based budgeting with weekly and fortnightly support in AUD.",
-    "image": "https://your-domain.app/assets/og-image.png"
+    "description": "A simple web app for bucket-based budgeting with weekly and fortnightly pay cycle support.",
+    "image": "https://budgetbucket.app/assets/og-image.png"
   }
   </script>
 
@@ -294,7 +300,7 @@
     "@type": "FAQPage",
     "mainEntity": [
       {"@type": "Question", "name": "Is this free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, the app is free while in active development. We may add a paid Pro tier later with advanced features."}},
-      {"@type": "Question", "name": "Does it support Australian pay cycles?", "acceptedAnswer": {"@type": "Answer", "text": "Absolutely. Weekly and fortnightly are first-class, with clean conversions to monthly and yearly when needed."}},
+      {"@type": "Question", "name": "Does it support weekly and fortnightly pay cycles?", "acceptedAnswer": {"@type": "Answer", "text": "Yes! Weekly and fortnightly are first-class, with clean conversions to monthly and yearly when needed."}},
       {"@type": "Question", "name": "Where is my data stored?", "acceptedAnswer": {"@type": "Answer", "text": "In your own secure Firestore account, scoped to your login. You can export/import at any time."}}
     ]
   }

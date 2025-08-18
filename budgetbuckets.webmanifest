@@ -1,0 +1,26 @@
+{
+  "name": "Budget Buckets",
+  "short_name": "Buckets",
+  "icons": [
+    {
+      "src": "/icon-dollar-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-dollar-256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    },
+    {
+      "src": "/budget-buckets-512-dollar.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "theme_color": "#0b0f14",
+  "background_color": "#0b0f14",
+  "display": "standalone",
+  "start_url": "/"
+}
