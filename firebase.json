@@ -12,10 +12,6 @@
     "trailingSlash": false,
 
     "rewrites": [
-      { "source": "/privacy", "destination": "/privacy.html" },
-      { "source": "/terms", "destination": "/terms.html" },
-      { "source": "/support", "destination": "/support.html" },
-      { "source": "/contact", "destination": "/support.html" },
       { "source": "/app/**", "destination": "/app/index.html" }
     ],
 
