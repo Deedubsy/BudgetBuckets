@@ -1576,6 +1576,10 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         });
         
         loadDemoBtn?.addEventListener('click', loadDemoData);
+        
+        // Sample data button for screenshots
+        const loadSampleBtn = document.getElementById('loadSampleBtn');
+        loadSampleBtn?.addEventListener('click', loadSampleData);
     }
 
     function loadDemoData() {
@@ -1670,6 +1674,171 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         saveToCloud();
     }
 
+    function loadSampleData() {
+        if (!confirm('Load realistic sample data for screenshots? This will replace your current budget.')) return;
+        
+        state.settings = {
+            incomeAmount: 4800,
+            incomeFrequency: 'Fortnightly', 
+            currency: 'USD'
+        };
+        
+        state.expenses = [
+            {
+                id: generateId(),
+                name: 'Housing',
+                items: [
+                    { id: generateId(), name: 'Rent', amount: 1800, include: true },
+                    { id: generateId(), name: 'Utilities', amount: 180, include: true },
+                    { id: generateId(), name: 'Internet', amount: 65, include: true }
+                ],
+                include: true,
+                color: '#ff6b6b',
+                bankAccount: 'Main Account',
+                type: 'expense',
+                orderIndex: 0,
+                notes: 'Housing expenses',
+                overspendThresholdPct: 85,
+                spentThisPeriodCents: 185000
+            },
+            {
+                id: generateId(),
+                name: 'Groceries & Food',
+                items: [
+                    { id: generateId(), name: 'Groceries', amount: 400, include: true },
+                    { id: generateId(), name: 'Dining out', amount: 150, include: true }
+                ],
+                include: true,
+                color: '#4ecdc4',
+                bankAccount: 'Main Account',
+                type: 'expense',
+                orderIndex: 1,
+                notes: 'Food and groceries',
+                overspendThresholdPct: 80,
+                spentThisPeriodCents: 42500
+            },
+            {
+                id: generateId(),
+                name: 'Transportation',
+                items: [
+                    { id: generateId(), name: 'Car payment', amount: 320, include: true },
+                    { id: generateId(), name: 'Gas', amount: 140, include: true },
+                    { id: generateId(), name: 'Car insurance', amount: 95, include: true }
+                ],
+                include: true,
+                color: '#45b7d1',
+                bankAccount: 'Main Account', 
+                type: 'expense',
+                orderIndex: 2,
+                notes: 'Vehicle expenses',
+                overspendThresholdPct: 80,
+                spentThisPeriodCents: 48000
+            },
+            {
+                id: generateId(),
+                name: 'Personal & Lifestyle',
+                items: [
+                    { id: generateId(), name: 'Phone bill', amount: 85, include: true },
+                    { id: generateId(), name: 'Entertainment', amount: 120, include: true },
+                    { id: generateId(), name: 'Clothing', amount: 80, include: true }
+                ],
+                include: true,
+                color: '#a8e6cf',
+                bankAccount: 'Main Account',
+                type: 'expense', 
+                orderIndex: 3,
+                notes: 'Personal expenses',
+                overspendThresholdPct: 80,
+                spentThisPeriodCents: 22000
+            }
+        ];
+        
+        state.savings = [
+            {
+                id: generateId(),
+                name: 'Emergency Fund',
+                include: true,
+                color: '#5eead4',
+                bankAccount: 'Savings Account',
+                type: 'saving',
+                orderIndex: 0,
+                notes: '6 months of expenses target',
+                overspendThresholdPct: 80,
+                spentThisPeriodCents: 0,
+                goal: {
+                    amountCents: 1500000, // $15,000
+                    targetDate: '2025-08-01',
+                    savedSoFarCents: 750000, // $7,500 already saved
+                    contributionPerPeriodCents: 25000, // $250 per period
+                    autoCalc: false
+                }
+            },
+            {
+                id: generateId(),
+                name: 'Vacation Fund',
+                include: true,
+                color: '#ffd93d',
+                bankAccount: 'Savings Account',
+                type: 'saving',
+                orderIndex: 1,
+                notes: 'European trip next summer',
+                overspendThresholdPct: 80,
+                spentThisPeriodCents: 0,
+                goal: {
+                    amountCents: 500000, // $5,000
+                    targetDate: '2025-06-15',
+                    savedSoFarCents: 180000, // $1,800 already saved
+                    contributionPerPeriodCents: 15000, // $150 per period
+                    autoCalc: false
+                }
+            },
+            {
+                id: generateId(),
+                name: 'House Down Payment',
+                include: true,
+                color: '#c7ecee',
+                bankAccount: 'Savings Account',
+                type: 'saving',
+                orderIndex: 2,
+                notes: '20% down payment goal',
+                overspendThresholdPct: 80,
+                spentThisPeriodCents: 0,
+                goal: {
+                    amountCents: 8000000, // $80,000
+                    targetDate: '2027-12-31',
+                    savedSoFarCents: 2400000, // $24,000 already saved
+                    contributionPerPeriodCents: 50000, // $500 per period
+                    autoCalc: false
+                }
+            }
+        ];
+        
+        state.debt = [
+            {
+                id: generateId(),
+                name: 'Student Loans',
+                items: [
+                    { id: generateId(), name: 'Federal loan payment', amount: 280, include: true }
+                ],
+                include: true,
+                color: '#ffb3ba',
+                bankAccount: 'Main Account',
+                type: 'debt',
+                orderIndex: 0,
+                notes: 'Federal student loan',
+                overspendThresholdPct: 80,
+                spentThisPeriodCents: 0,
+                debt: {
+                    aprPct: 5.5,
+                    minPaymentCents: 25000 // $250
+                }
+            }
+        ];
+        
+        updateUI();
+        saveToCloud();
+    }
+
     // Update button visibility based on authentication state
     function updateButtonVisibility() {
         const isLoggedIn = !!currentUser;
@@ -1688,6 +1857,12 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                 button.style.display = isLoggedIn ? 'none' : '';
             }
         });
+        
+        // Sample data button - only show when logged in (for screenshots)
+        const loadSampleBtn = document.getElementById('loadSampleBtn');
+        if (loadSampleBtn) {
+            loadSampleBtn.style.display = isLoggedIn ? '' : 'none';
+        }
     }
 
     // Initialize the app

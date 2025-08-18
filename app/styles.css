@@ -811,6 +811,26 @@ input[type="checkbox"] {
     .sticky-totals {
         top: 120px;
     }
+}
+
+/* Sample Data Button Styling */
+#loadSampleBtn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: #667eea;
+    font-weight: 600;
+}
+
+#loadSampleBtn:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    border-color: #5a6fd8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+#loadSampleBtn:active {
+    transform: translateY(0);
+}
     
     .totals-grid {
         grid-template-columns: 1fr;
