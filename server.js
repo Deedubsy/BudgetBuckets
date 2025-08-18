@@ -7,23 +7,37 @@ const express = require('express');
 const path = require('path');
 const compression = require('compression');
 const helmet = require('helmet');
+const fs = require('fs');
 
 const app = express();
+const ROOT = __dirname;
 
 // Get port from environment or default to 8080
 const PORT = process.env.PORT || 8080;
 
 // Security headers with CSP for Firebase
 app.use(helmet({
+  // Strong HSTS (".app" is HSTS by default, but keep this for any proxies)
+  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+  // Basic hardening
+  xssFilter: true,
+  frameguard: { action: 'sameorigin' },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  // CSP aligned with Firebase SDK + your libs
   contentSecurityPolicy: {
+    useDefaults: false,
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: [
         "'self'",
-        "'unsafe-inline'",
+        // Firebase / Google
         "https://www.gstatic.com",
-        "https://www.googletagmanager.com",
         "https://apis.google.com",
+        "https://www.googleapis.com",
+        // (optional) GTM/GA — only keep if you actually use them
+        "https://www.googletagmanager.com",
+        "https://www.google-analytics.com",
+        // (optional) tinycolor2 via jsDelivr; remove if you self-host it
         "https://cdn.jsdelivr.net"
       ],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
@@ -31,17 +45,16 @@ app.use(helmet({
       imgSrc: ["'self'", "data:", "https:", "blob:"],
       connectSrc: [
         "'self'",
-        "https://*.googleapis.com",
-        "https://*.firebaseapp.com",
-        "https://*.firebaseio.com",
-        "wss://*.firebaseio.com",
+        "https://firestore.googleapis.com",
         "https://identitytoolkit.googleapis.com",
         "https://securetoken.googleapis.com",
-        "https://firestore.googleapis.com",
-        "http://localhost:*",
-        "ws://localhost:*"
+        "https://www.googleapis.com",
+        // dev tools / local testing
+        "http://localhost:*", "ws://localhost:*"
       ],
-      frameSrc: ["'self'", "https://accounts.google.com", "https://*.firebaseapp.com"]
+      frameAncestors: ["'self'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"]
     }
   }
 }));
@@ -131,6 +144,35 @@ app.get('/guide', (req, res) => {
   res.sendFile(path.join(__dirname, 'Method.html'));
 });
 
+// Legal pages
+app.get('/privacy', (req, res) => {
+  res.sendFile(path.join(__dirname, 'privacy.html'));
+});
+
+app.get('/privacy.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'privacy.html'));
+});
+
+app.get('/terms', (req, res) => {
+  res.sendFile(path.join(__dirname, 'terms.html'));
+});
+
+app.get('/terms.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'terms.html'));
+});
+
+app.get('/support', (req, res) => {
+  res.sendFile(path.join(__dirname, 'support.html'));
+});
+
+app.get('/support.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'support.html'));
+});
+
+app.get('/contact', (req, res) => {
+  res.sendFile(path.join(__dirname, 'support.html'));
+});
+
 app.get('/environment', (req, res) => {
   res.sendFile(path.join(__dirname, 'environment-switcher.html'));
 });
@@ -183,8 +225,17 @@ app.get('*', (req, res, next) => {
     return res.status(404).send('File not found');
   }
   
-  // For paths without extensions, serve the login page
-  res.sendFile(path.join(__dirname, 'auth', 'login.html'));
+  // For unknown paths without extensions, return 404 with helpful message
+  res.status(404).send(`
+    <html>
+      <head><title>Page Not Found - Budget Buckets</title></head>
+      <body style="font-family: sans-serif; padding: 2rem; text-align: center;">
+        <h1>404 - Page Not Found</h1>
+        <p>The page you're looking for doesn't exist.</p>
+        <p><a href="/">Go to Home</a> | <a href="/auth/login">Login</a></p>
+      </body>
+    </html>
+  `);
 });
 
 // Error handler
