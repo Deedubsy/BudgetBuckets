@@ -1670,6 +1670,26 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         saveToCloud();
     }
 
+    // Update button visibility based on authentication state
+    function updateButtonVisibility() {
+        const isLoggedIn = !!currentUser;
+        
+        // Buttons to hide when logged in
+        const buttonsToHide = [
+            'loadDemoBtn',
+            'importBtn', 
+            'exportBtn',
+            'themeToggle'
+        ];
+        
+        buttonsToHide.forEach(buttonId => {
+            const button = document.getElementById(buttonId);
+            if (button) {
+                button.style.display = isLoggedIn ? 'none' : '';
+            }
+        });
+    }
+
     // Initialize the app
     async function init() {
         console.log('Starting app initialization...');
@@ -1697,6 +1717,9 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                 window.authGuard.hideAuthLoading();
             }
         }
+        
+        // Update button visibility based on auth state
+        updateButtonVisibility();
         
         initializeEventListeners();
         updateDerivedValues();
