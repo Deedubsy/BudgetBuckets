@@ -329,10 +329,23 @@ input[type="checkbox"] {
 .bucket-card[data-bucket-color] .payoff-text,
 .bucket-card[data-bucket-color] .contrib-freq,
 .bucket-card[data-bucket-color] .track-freq,
-.bucket-card[data-bucket-color] .delete-btn,
 .bucket-card[data-bucket-color] .use-amount-btn,
 .bucket-card[data-bucket-color] .date-chip {
     color: white;
+}
+
+/* Delete button uses contrast color in header */
+.bucket-card[data-bucket-color] .delete-btn {
+    color: var(--bucket-text-color, var(--danger));
+}
+
+/* Bucket header total uses accent color by default, contrast color on colored backgrounds */
+.bucket-header-total {
+    color: var(--accent);
+}
+
+.bucket-card[data-bucket-color] .bucket-header-total {
+    color: var(--bucket-text-color, var(--accent));
 }
 
 .bucket-card[data-bucket-color] .goal-section,
@@ -415,7 +428,7 @@ input[type="checkbox"] {
 }
 
 .bank-account {
-    width: 150px;
+    width: 100%;
 }
 
 .include-label {
@@ -780,9 +793,6 @@ input[type="checkbox"] {
         align-items: stretch;
     }
 
-    .bank-account {
-        width: 100%;
-    }
 
     .items-table {
         font-size: 0.875rem;

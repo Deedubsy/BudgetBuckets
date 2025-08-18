@@ -346,9 +346,8 @@
                 </button>
                 <span class="badge bank-badge" style="display:none;"></span>
                 <span class="pct">0% of income</span>
-                <span class="bucket-header-total" style="display: none; margin-left: 8px; margin-right: 8px; color: var(--accent); font-weight: 600;">$0.00</span>
+                <span class="bucket-header-total" style="display: none; margin-left: 8px; margin-right: 8px; font-weight: 600;">$0.00</span>
                 <div class="bucket-controls">
-                    <input type="text" class="bank-account" placeholder="Bank account">
                     <label class="include-label">
                         <input type="checkbox" class="bucket-include" checked>
                         <span>Include</span>
@@ -362,6 +361,12 @@
                 </div>
             </header>
             <div class="bucket-content" style="display: none;">
+                <!-- Bank account section -->
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="bank-account">Bank account:</label>
+                    <input type="text" class="bank-account" placeholder="Bank account">
+                </div>
+                
                 <!-- Notes section -->
                 <textarea class="bucket-notes" placeholder="Notes..." maxlength="800"></textarea>
                 
