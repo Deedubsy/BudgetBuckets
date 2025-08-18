@@ -8,6 +8,16 @@
     <meta name="robots" content="noindex, nofollow, noarchive, noimageindex">
     <link rel="canonical" href="https://budgetbucket.app/auth/login">
     
+    <!-- Security and Anti-Phishing Meta Tags -->
+    <meta name="description" content="Secure login to Budget Buckets personal finance app">
+    <meta property="og:title" content="Budget Buckets Login">
+    <meta property="og:description" content="Login to your secure Budget Buckets account">
+    <meta property="og:url" content="https://budgetbucket.app/auth/login">
+    <meta property="og:site_name" content="Budget Buckets">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Budget Buckets Login">
+    <meta name="twitter:description" content="Secure login to Budget Buckets personal finance app">
+    
     <!-- Favicon and PWA Assets -->
     <link rel="icon" href="/budget-buckets-dollar.ico" sizes="any">
     <link rel="apple-touch-icon" href="/apple-touch-icon-dollar.png">
@@ -21,6 +31,9 @@
             <header class="auth-header">
                 <h1><a href="/home.html" style="color: inherit; text-decoration: none;">Budget Buckets</a></h1>
                 <p class="tagline">Your personal budgeting companion</p>
+                <div class="security-notice">
+                    <small>🔒 Secure login powered by Google Firebase Authentication</small>
+                </div>
             </header>
 
             <div class="auth-tabs">
@@ -28,32 +41,32 @@
                 <button type="button" class="tab-button" data-tab="register">Create Account</button>
             </div>
 
-            <form id="signinForm" class="auth-form active">
+            <form id="signinForm" class="auth-form active" name="login" data-purpose="authentication">
                 <div class="form-group">
                     <label for="signinEmail">Email</label>
-                    <input type="email" id="signinEmail" required autocomplete="email">
+                    <input type="email" id="signinEmail" name="email" required autocomplete="email" spellcheck="false" data-lpignore="true">
                 </div>
                 <div class="form-group">
                     <label for="signinPassword">Password</label>
-                    <input type="password" id="signinPassword" required autocomplete="current-password">
+                    <input type="password" id="signinPassword" name="password" required autocomplete="current-password" data-lpignore="true">
                 </div>
                 <button type="submit" class="btn btn-primary">Sign In</button>
                 <button type="button" class="btn btn-link" id="forgotPasswordBtn">Forgot password?</button>
             </form>
 
-            <form id="registerForm" class="auth-form">
+            <form id="registerForm" class="auth-form" name="register" data-purpose="registration">
                 <div class="form-group">
                     <label for="registerEmail">Email</label>
-                    <input type="email" id="registerEmail" required autocomplete="email">
+                    <input type="email" id="registerEmail" name="email" required autocomplete="email" spellcheck="false" data-lpignore="true">
                 </div>
                 <div class="form-group">
                     <label for="registerPassword">Password</label>
-                    <input type="password" id="registerPassword" required autocomplete="new-password" minlength="8">
+                    <input type="password" id="registerPassword" name="password" required autocomplete="new-password" minlength="8" data-lpignore="true">
                     <span class="help-text">Minimum 8 characters</span>
                 </div>
                 <div class="form-group">
                     <label for="registerConfirmPassword">Confirm Password</label>
-                    <input type="password" id="registerConfirmPassword" required autocomplete="new-password">
+                    <input type="password" id="registerConfirmPassword" name="confirmPassword" required autocomplete="new-password" data-lpignore="true">
                 </div>
                 <button type="submit" class="btn btn-primary">Create Account</button>
             </form>

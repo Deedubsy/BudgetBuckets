@@ -69,6 +69,18 @@ body {
     font-size: 0.875rem;
 }
 
+.security-notice {
+    margin-top: var(--spacing-sm);
+}
+
+.security-notice small {
+    color: var(--success);
+    font-size: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
 .auth-tabs {
     display: flex;
     gap: var(--spacing-xs);
