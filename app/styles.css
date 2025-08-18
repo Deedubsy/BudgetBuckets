@@ -348,6 +348,11 @@ input[type="checkbox"] {
     color: var(--bucket-text-color, var(--accent));
 }
 
+/* Bank badge uses contrast color on colored backgrounds */
+.bucket-card[data-bucket-color] .bank-badge {
+    color: var(--bucket-text-color, var(--muted)) !important;
+}
+
 .bucket-card[data-bucket-color] .goal-section,
 .bucket-card[data-bucket-color] .bucket-total,
 .bucket-card[data-bucket-color] .add-item-btn,
