@@ -21,8 +21,11 @@
     <!-- Favicon and PWA Assets -->
     <link rel="icon" href="/budget-buckets-dollar.ico" sizes="any">
     <link rel="apple-touch-icon" href="/apple-touch-icon-dollar.png">
-    <link rel="manifest" href="/site-dollar.webmanifest">
+    <link rel="manifest" href="/budgetbuckets.webmanifest">
     <meta name="theme-color" content="#0b0f14">
+    
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://www.googleapis.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com; frame-src 'self' https://budgetbucket.app https://accounts.google.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'">
     
 </head>
 <body>

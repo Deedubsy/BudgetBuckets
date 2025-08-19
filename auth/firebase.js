@@ -43,7 +43,7 @@ import {
 // Firebase configuration (from existing config)
 const firebaseConfig = {
   apiKey: "AIzaSyAyQnI3I5IRm2MZ16ttVaaA-8bneE3lWeo",
-  authDomain: "budgetbuckets-79b3b.firebaseapp.com", 
+  authDomain: "budgetbucket.app", 
   projectId: "budgetbuckets-79b3b",
   storageBucket: "budgetbuckets-79b3b.firebasestorage.app",
   messagingSenderId: "268145092645",
