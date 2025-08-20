@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Force Production Firebase</title>
+</head>
+<body>
+    <h1>Firebase Environment Setup</h1>
+    <p>Current environment: <span id="currentEnv"></span></p>
+    
+    <button onclick="forceProduction()">Force Production Firebase</button>
+    <button onclick="forceEmulators()">Force Emulators</button>
+    <button onclick="clearOverride()">Auto-detect</button>
+    
+    <script>
+        function updateDisplay() {
+            const override = localStorage.getItem('firebase-environment');
+            const envDisplay = override || 'auto-detect';
+            document.getElementById('currentEnv').textContent = envDisplay;
+        }
+        
+        function forceProduction() {
+            localStorage.setItem('firebase-environment', 'production');
+            updateDisplay();
+            alert('Set to production Firebase. Refresh your app.');
+        }
+        
+        function forceEmulators() {
+            localStorage.setItem('firebase-environment', 'emulators');
+            updateDisplay();
+            alert('Set to Firebase emulators. Make sure they are running.');
+        }
+        
+        function clearOverride() {
+            localStorage.removeItem('firebase-environment');
+            updateDisplay();
+            alert('Cleared override. App will auto-detect environment.');
+        }
+        
+        updateDisplay();
+    </script>
+</body>
+</html>

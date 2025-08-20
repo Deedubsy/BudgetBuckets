@@ -63,11 +63,9 @@ function determineEnvironment() {
     return true; // Force emulators
   }
   
-  // Auto-detect based on URL
-  return window.location.hostname === 'localhost' || 
-         window.location.hostname === '127.0.0.1' ||
-         window.location.port === '5000' ||
-         window.location.search.includes('emulator=true');
+  // For local development, use production Firebase by default
+  // Only use emulators if explicitly requested
+  return window.location.search.includes('emulator=true');
 }
 
 const USE_EMULATORS = determineEnvironment();
