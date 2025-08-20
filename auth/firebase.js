@@ -4,7 +4,7 @@
  */
 
 // Import Firebase v10+ modular SDK
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
 import { 
   getAuth, 
   connectAuthEmulator,
@@ -19,7 +19,7 @@ import {
   signOut,
   setPersistence,
   browserLocalPersistence
-} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+} from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
 import { 
   getFirestore, 
   connectFirestoreEmulator,
@@ -40,7 +40,7 @@ import {
   serverTimestamp,
   writeBatch,
   enableMultiTabIndexedDbPersistence
-} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+} from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
 
 // Firebase configuration (from existing config)
 const firebaseConfig = {
@@ -72,9 +72,41 @@ function determineEnvironment() {
 
 const USE_EMULATORS = determineEnvironment();
 
+// Standalone retry function for auth operations
+async function retryAuthOperation(operation, maxRetries = 3, delay = 1000) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      console.warn(`Auth operation failed (attempt ${attempt}/${maxRetries}):`, error.code);
+      
+      // Check if this is a retryable error
+      const retryableErrors = [
+        'auth/visibility-check-was-unavailable.-please-retry-the-request-and-contact-support-if-the-problem-persists',
+        'auth/network-request-failed',
+        'auth/too-many-requests'
+      ];
+      
+      const shouldRetry = retryableErrors.some(code => error.code?.includes(code));
+      
+      if (!shouldRetry || attempt === maxRetries) {
+        throw error;
+      }
+      
+      // Exponential backoff delay
+      const backoffDelay = delay * Math.pow(2, attempt - 1);
+      console.log(`Retrying in ${backoffDelay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, backoffDelay));
+    }
+  }
+}
+
 console.log(`🔥 Firebase Environment: ${USE_EMULATORS ? 'EMULATORS' : 'PRODUCTION'}`);
 console.log(`🌐 Current URL: ${window.location.href}`);
+console.log(`🏠 Hostname: ${window.location.hostname}`);
+console.log(`🔌 Port: ${window.location.port}`);
 console.log(`📡 Online status: ${navigator.onLine ? 'Online' : 'Offline'}`);
+console.log(`💾 Manual override: ${localStorage.getItem('firebase-environment') || 'none'}`);
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -159,11 +191,9 @@ async function initializeFirebase() {
     await initializeAuth();
     await configureLongPolling();
     
-    // Check for redirect result from Google OAuth with retry
+    // Check for redirect result from Google OAuth
     try {
-      const result = await authHelpers.retryAuthOperation(
-        () => getRedirectResult(auth)
-      );
+      const result = await getRedirectResult(auth);
       if (result) {
         console.log('✅ Google redirect sign-in successful:', result.user.uid);
         currentUser = result.user;
@@ -231,7 +261,7 @@ const authHelpers = {
   async signInWithEmail(email, password) {
     try {
       console.log('🔐 Signing in with email:', email);
-      const result = await this.retryAuthOperation(
+      const result = await retryAuthOperation(
         () => signInWithEmailAndPassword(auth, email, password)
       );
       currentUser = result.user;
@@ -247,7 +277,7 @@ const authHelpers = {
   async createAccount(email, password) {
     try {
       console.log('🔐 Creating account for:', email);
-      const result = await this.retryAuthOperation(
+      const result = await retryAuthOperation(
         () => createUserWithEmailAndPassword(auth, email, password)
       );
       currentUser = result.user;
@@ -269,7 +299,7 @@ const authHelpers = {
       
       // Try popup first, fallback to redirect if it fails
       try {
-        const result = await this.retryAuthOperation(
+        const result = await retryAuthOperation(
           () => signInWithPopup(auth, provider)
         );
         currentUser = result.user;
@@ -291,7 +321,7 @@ const authHelpers = {
   async resetPassword(email) {
     try {
       console.log('📧 Sending password reset to:', email);
-      await this.retryAuthOperation(
+      await retryAuthOperation(
         () => sendPasswordResetEmail(auth, email)
       );
       console.log('✅ Password reset email sent');
@@ -332,35 +362,6 @@ const authHelpers = {
 
     const message = friendlyMessages[error.code] || error.message || 'Authentication failed';
     return new Error(message);
-  },
-
-  // Retry wrapper for auth operations
-  async retryAuthOperation(operation, maxRetries = 3, delay = 1000) {
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        return await operation();
-      } catch (error) {
-        console.warn(`Auth operation failed (attempt ${attempt}/${maxRetries}):`, error.code);
-        
-        // Check if this is a retryable error
-        const retryableErrors = [
-          'auth/visibility-check-was-unavailable.-please-retry-the-request-and-contact-support-if-the-problem-persists',
-          'auth/network-request-failed',
-          'auth/too-many-requests'
-        ];
-        
-        const shouldRetry = retryableErrors.some(code => error.code?.includes(code));
-        
-        if (!shouldRetry || attempt === maxRetries) {
-          throw error;
-        }
-        
-        // Exponential backoff delay
-        const backoffDelay = delay * Math.pow(2, attempt - 1);
-        console.log(`Retrying in ${backoffDelay}ms...`);
-        await new Promise(resolve => setTimeout(resolve, backoffDelay));
-      }
-    }
   }
 };
 
