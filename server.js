@@ -8,6 +8,19 @@ const path = require('path');
 const compression = require('compression');
 const helmet = require('helmet');
 const fs = require('fs');
+const Stripe = require('stripe');
+const admin = require('firebase-admin');
+
+// Initialize Stripe
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+// Initialize Firebase Admin
+if (!admin.apps.length) {
+  admin.initializeApp({
+    // Firebase will use default credentials in the App Hosting environment
+    projectId: process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT
+  });
+}
 
 const app = express();
 const ROOT = __dirname;
@@ -62,6 +75,10 @@ app.use(helmet({
 // Enable gzip compression
 app.use(compression());
 
+// Body parser for JSON (except webhook endpoint)
+app.use('/api/billing/webhook', express.raw({ type: 'application/json' }));
+app.use(express.json());
+
 // Serve static files from root directory with proper MIME types
 // Exclude index.html from being served automatically to allow our custom routing
 app.use(express.static(path.join(__dirname), {
@@ -93,6 +110,276 @@ app.use(express.static(path.join(__dirname), {
 // Health check endpoint for Firebase App Hosting
 app.get('/__/health', (req, res) => {
   res.status(200).json({ status: 'healthy', service: 'budget-buckets' });
+});
+
+// Billing API endpoints
+app.post('/api/billing/checkout', async (req, res) => {
+  try {
+    // Verify Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Missing or invalid authorization header' });
+    }
+
+    const idToken = authHeader.split('Bearer ')[1];
+    
+    // Verify Firebase ID token
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const { uid: tokenUid, email: tokenEmail } = decodedToken;
+    
+    const { uid, email, priceId } = req.body;
+    
+    // Verify the token matches the request
+    if (uid !== tokenUid || email !== tokenEmail) {
+      return res.status(403).json({ error: 'Token mismatch' });
+    }
+    
+    if (!uid || !email || !priceId) {
+      return res.status(400).json({ error: 'Missing required fields: uid, email, priceId' });
+    }
+
+    // Create or retrieve Stripe customer
+    let customer;
+    try {
+      // Try to find existing customer by email
+      const customers = await stripe.customers.list({ email, limit: 1 });
+      
+      if (customers.data.length > 0) {
+        customer = customers.data[0];
+      } else {
+        // Create new customer
+        customer = await stripe.customers.create({
+          email,
+          metadata: {
+            firebase_uid: uid
+          }
+        });
+      }
+    } catch (stripeError) {
+      console.error('Stripe customer error:', stripeError);
+      return res.status(500).json({ error: 'Failed to create customer' });
+    }
+
+    // Create Stripe Checkout session
+    const session = await stripe.checkout.sessions.create({
+      customer: customer.id,
+      payment_method_types: ['card'],
+      line_items: [{
+        price: priceId,
+        quantity: 1,
+      }],
+      mode: 'subscription',
+      success_url: `${req.headers.origin}/app?upgrade=success`,
+      cancel_url: `${req.headers.origin}/app?upgrade=cancelled`,
+      metadata: {
+        firebase_uid: uid
+      },
+      subscription_data: {
+        metadata: {
+          firebase_uid: uid
+        }
+      }
+    });
+
+    // Store customer ID in Firestore for future reference
+    const db = admin.firestore();
+    await db.collection('users').doc(uid).set({
+      stripeCustomerId: customer.id,
+      email: email
+    }, { merge: true });
+
+    res.json({ url: session.url });
+    
+  } catch (error) {
+    console.error('Checkout error:', error);
+    
+    if (error.code === 'auth/id-token-expired') {
+      return res.status(401).json({ error: 'Token expired' });
+    } else if (error.code === 'auth/argument-error') {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/billing/portal', async (req, res) => {
+  try {
+    // Verify Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Missing or invalid authorization header' });
+    }
+
+    const idToken = authHeader.split('Bearer ')[1];
+    
+    // Verify Firebase ID token
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const { uid } = decodedToken;
+    
+    // Get user's Stripe customer ID from Firestore
+    const db = admin.firestore();
+    const userDoc = await db.collection('users').doc(uid).get();
+    
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    const userData = userDoc.data();
+    const stripeCustomerId = userData.stripeCustomerId;
+    
+    if (!stripeCustomerId) {
+      return res.status(400).json({ error: 'No billing account found. Please upgrade first.' });
+    }
+
+    // Create Stripe Customer Portal session
+    const session = await stripe.billingPortal.sessions.create({
+      customer: stripeCustomerId,
+      return_url: `${req.headers.origin}/app`,
+    });
+
+    res.json({ url: session.url });
+    
+  } catch (error) {
+    console.error('Portal error:', error);
+    
+    if (error.code === 'auth/id-token-expired') {
+      return res.status(401).json({ error: 'Token expired' });
+    } else if (error.code === 'auth/argument-error') {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Stripe webhook endpoint
+app.post('/api/billing/webhook', async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+  } catch (err) {
+    console.error('Webhook signature verification failed:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // Handle the event
+  try {
+    const db = admin.firestore();
+    
+    switch (event.type) {
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated': {
+        const subscription = event.data.object;
+        const customerId = subscription.customer;
+        const status = subscription.status;
+        const firebaseUid = subscription.metadata?.firebase_uid;
+
+        if (firebaseUid) {
+          await db.collection('users').doc(firebaseUid).set({
+            subscriptionId: subscription.id,
+            subscriptionStatus: status,
+            stripeCustomerId: customerId,
+            planType: status === 'active' ? 'plus' : 'free',
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+
+          // Set custom claims for plan access
+          if (status === 'active') {
+            await admin.auth().setCustomUserClaims(firebaseUid, { plan: 'plus' });
+          } else {
+            await admin.auth().setCustomUserClaims(firebaseUid, { plan: 'free' });
+          }
+
+          console.log(`Updated user ${firebaseUid} subscription to ${status}`);
+        }
+        break;
+      }
+
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object;
+        const firebaseUid = subscription.metadata?.firebase_uid;
+
+        if (firebaseUid) {
+          await db.collection('users').doc(firebaseUid).set({
+            subscriptionStatus: 'canceled',
+            planType: 'free',
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+
+          // Remove plus plan from custom claims
+          await admin.auth().setCustomUserClaims(firebaseUid, { plan: 'free' });
+
+          console.log(`Canceled subscription for user ${firebaseUid}`);
+        }
+        break;
+      }
+
+      case 'invoice.payment_succeeded': {
+        const invoice = event.data.object;
+        const subscriptionId = invoice.subscription;
+        
+        if (subscriptionId) {
+          // Get subscription to find the Firebase UID
+          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+          const firebaseUid = subscription.metadata?.firebase_uid;
+
+          if (firebaseUid) {
+            await db.collection('users').doc(firebaseUid).set({
+              lastPaymentStatus: 'succeeded',
+              lastPaymentDate: admin.firestore.FieldValue.serverTimestamp(),
+              updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+
+            console.log(`Payment succeeded for user ${firebaseUid}`);
+          }
+        }
+        break;
+      }
+
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object;
+        const subscriptionId = invoice.subscription;
+        
+        if (subscriptionId) {
+          // Get subscription to find the Firebase UID
+          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+          const firebaseUid = subscription.metadata?.firebase_uid;
+
+          if (firebaseUid) {
+            await db.collection('users').doc(firebaseUid).set({
+              lastPaymentStatus: 'failed',
+              lastPaymentDate: admin.firestore.FieldValue.serverTimestamp(),
+              updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+
+            console.log(`Payment failed for user ${firebaseUid}`);
+          }
+        }
+        break;
+      }
+
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
+    }
+
+    res.json({ received: true });
+
+  } catch (error) {
+    console.error('Error processing webhook:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get billing configuration
+app.get('/api/billing/config', (req, res) => {
+  res.json({
+    priceId: process.env.PRICE_ID_MONTHLY
+  });
 });
 
 // Root path - serve home.html as the main page

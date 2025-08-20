@@ -1,5 +1,7 @@
 import { authHelpers } from '../auth/firebase.js';
 import cloudStore from './cloud-store.js';
+import { isPlus } from './lib/plan.js';
+import { bootstrapUser } from './lib/bucket-store.js';
 
 // Import new libraries for enhanced features
 import Sortable from "https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/modular/sortable.esm.js";
@@ -1061,12 +1063,36 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             state.debt = state.debt.filter(b => b.id !== bucketId);
         }
         
+        // Update bucket counter
+        if (window.updateBucketCounter) {
+            window.updateBucketCounter();
+        }
+        
         renderBuckets();
         updateDerivedValues();
         saveToCloud();
     }
 
+    // Expose bucket count for UI
+    window.getBucketCountForUI = function() {
+        return (state.expenses?.length || 0) + (state.savings?.length || 0) + (state.debt?.length || 0);
+    };
+    
+    function showUpgradePrompt() {
+        if (confirm('Free plan allows up to 5 buckets. Upgrade to Plus for unlimited buckets?')) {
+            // Navigate to account page for upgrade
+            const event = new Event('click');
+            document.getElementById('navAccount')?.dispatchEvent(event);
+        }
+    }
+
     function addNewBucket(section) {
+        // Check plan limits
+        const currentCount = window.getBucketCountForUI();
+        if (!isPlus() && currentCount >= 5) {
+            showUpgradePrompt();
+            return;
+        }
         const newBucket = {
             id: generateId(),
             name: '',
@@ -1118,6 +1144,11 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             newBucket.orderIndex = (state.debt || []).length;
             state.debt = state.debt || [];
             state.debt.push(newBucket);
+        }
+        
+        // Update bucket counter
+        if (window.updateBucketCounter) {
+            window.updateBucketCounter();
         }
         
         renderBuckets();
@@ -1877,6 +1908,15 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         // Wait for auth to be ready
         await authHelpers.waitForAuth();
         currentUser = authHelpers.getCurrentUser();
+        
+        // Bootstrap user on first sign-in
+        if (currentUser) {
+            try {
+                await bootstrapUser(currentUser.uid, currentUser.email);
+            } catch (error) {
+                console.log('User bootstrap completed or failed:', error.message);
+            }
+        }
         
         if (currentUser) {
             // Show loading message for bucket data

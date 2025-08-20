@@ -1,6 +1,14 @@
+---
+title: "Budget Buckets – Overview"
+owner: "engineering"
+status: "active"
+last_review: "2025-08-20"
+tags: ["overview"]
+---
+
 # Budget Buckets
 
-A personal budgeting application with cloud authentication and storage. Track your income, expenses, and savings goals with real-time syncing across devices.
+A personal budgeting application with cloud authentication and storage. Track your income, expenses, and savings goals with real-time syncing across devices using Firebase.
 
 ## 📚 Documentation
 
@@ -10,31 +18,43 @@ For comprehensive documentation, see our **[Documentation Index](./docs/INDEX.md
 - **[Project Structure](./docs/architecture/project-structure.md)** - Codebase organization and architecture
 - **[Optimization Recommendations](./docs/planning/optimization-recommendations.md)** - Performance improvements and roadmap
 
-## Quick Start
+## Stack at a Glance
 
-1. **Clone and Setup**:
-   ```bash
-   git clone <repository-url>
-   cd BudgetBuckets
-   npm install -g firebase-tools
-   ```
+- **Backend**: Node.js Express server with static file serving
+- **Frontend**: Vanilla HTML/CSS/JavaScript (framework-free)
+- **Database**: Cloud Firestore with Firebase Authentication
+- **Hosting**: Firebase App Hosting with custom domain support
 
-2. **Configure Firebase**:
-   - Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com/)
-   - Copy config to `auth/firebase-config.js`
-   - Deploy security rules: `firebase deploy --only firestore`
+## Quickstart
 
-3. **Start Development**:
-   ```bash
-   firebase emulators:start  # Start local emulators
-   npx serve .              # Serve the app
-   ```
+```bash
+# Clone and setup
+git clone https://github.com/Deedubsy/BudgetBuckets.git
+cd BudgetBuckets
+npm install -g firebase-tools
 
-4. **Access the App**:
-   - Login: http://localhost:8080/auth/login.html
-   - App: http://localhost:8080/app/index.html
+# Configure Firebase (see setup guide for details)
+cp auth/firebase-config.sample.js auth/firebase-config.js
+# Edit firebase-config.js with your Firebase project config
 
-For detailed setup instructions, see the **[Setup & Development Guide](./docs/guides/setup-and-development.md)**.
+# Start development
+firebase emulators:start  # Start Firebase emulators
+npm run dev              # Start Express server
+```
+
+Access the app:
+- Login: http://localhost:8080/auth/login.html
+- App: http://localhost:8080/app/index.html
+
+## Common Commands
+
+```bash
+npm start                    # Start production server
+npm run dev                  # Start development server
+npm test                     # Run tests (placeholder)
+firebase emulators:start     # Start Firebase emulators
+firebase deploy --only firestore  # Deploy Firestore rules
+```
 
 ## Features
 
@@ -51,6 +71,20 @@ For detailed setup instructions, see the **[Setup & Development Guide](./docs/gu
 - **Authentication**: Firebase Auth
 - **Database**: Cloud Firestore
 - **Development**: Firebase Emulators
+
+## Links
+
+- **[📚 Documentation Index](./docs/INDEX.md)** - Complete documentation hub
+- **[🏗️ System Architecture](./docs/architecture/system-overview.md)** - C4 diagrams and component overview
+- **[📖 Setup Guide](./docs/guides/setup-dev.md)** - Detailed development setup
+- **[🔧 API Reference](./docs/reference/http-api.md)** - Express routes and endpoints
+- **[📋 Runbooks](./docs/runbooks/)** - Operational procedures
+
+## Badges
+
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
+![Node Version](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
 ## Contributing
 

@@ -155,6 +155,47 @@
         .settings-toggle[aria-expanded="true"] .toggle-icon {
             transform: rotate(90deg);
         }
+
+        /* Email Verification Banner */
+        .verify-banner {
+            background: linear-gradient(135deg, #2b1616, #2b2410);
+            border: 1px solid #3d2f20;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin: 16px auto;
+            max-width: 1200px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .verify-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        
+        .verify-text {
+            color: var(--text);
+            font-size: 14px;
+            margin-right: 12px;
+        }
+
+        .btn-link {
+            background: none;
+            border: none;
+            color: var(--accent);
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px 8px;
+            margin: 0 4px;
+        }
+
+        .btn-link:hover {
+            color: var(--accent2);
+        }
     </style>
 </head>
 <body>
@@ -162,6 +203,8 @@
         <h1><a href="/home.html" style="color: inherit; text-decoration: none;">Budget Buckets</a></h1>
         <nav class="header-actions">
             <span id="userInfo" class="user-info"></span>
+            <span id="bucketCounter" style="color: var(--muted); font-size: 12px; margin-left: 8px; display: none;"></span>
+            <a id="navAccount" href="#account" style="color: var(--text); text-decoration: none; padding: 8px 12px; display: none;">Account</a>
             <button id="themeToggle" type="button" class="theme-toggle" title="Toggle light/dark mode">🌓</button>
             <button id="loadDemoBtn" type="button">Load demo</button>
             <button id="resetBtn" type="button">Reset</button>
@@ -172,6 +215,16 @@
             <input type="file" id="importFile" accept=".json" style="display: none;">
         </nav>
     </header>
+
+    <!-- Email Verification Banner -->
+    <div id="verifyBanner" hidden class="verify-banner">
+        <div class="verify-content">
+            <span class="verify-icon">⚠️</span>
+            <span class="verify-text">Verify your email to secure your account.</span>
+            <button id="resendVerification" class="btn-link">Resend verification email</button>
+            <button id="iveVerified" class="btn-link">I've verified</button>
+        </div>
+    </div>
 
     <main class="main-content">
         <section class="card income-settings">
@@ -294,6 +347,489 @@
             </div>
         </section>
     </main>
+
+    <!-- Account View Section -->
+    <section id="accountView" hidden>
+      <style scoped>
+        :root {
+          --bg:#0b0f14; --text:#e6edf3; --muted:#9fb0c3;
+          --card:#10161d; --border:#1c2733;
+          --accent:#00cdd6; --accent2:#5eead4;
+          --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.35);
+        }
+
+        #accountView {
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 2rem 1rem;
+        }
+
+        .account-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 2rem;
+        }
+
+        .account-title {
+          font-size: 2rem;
+          font-weight: 700;
+          color: var(--text);
+        }
+
+        .card {
+          background: var(--card);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          padding: 1.5rem;
+          margin-bottom: 1.5rem;
+          box-shadow: var(--shadow);
+        }
+
+        .card-title {
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: var(--text);
+          margin-bottom: 1rem;
+        }
+
+        .profile-header {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+        }
+
+        .avatar {
+          width: 64px;
+          height: 64px;
+          border-radius: 50%;
+          background: var(--accent);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: var(--bg);
+        }
+
+        .profile-info {
+          flex: 1;
+        }
+
+        .profile-name {
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: var(--text);
+          margin-bottom: 0.25rem;
+        }
+
+        .profile-email {
+          color: var(--muted);
+          font-size: 0.9rem;
+        }
+
+        .badge {
+          display: inline-block;
+          padding: 0.25rem 0.75rem;
+          border-radius: 12px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          margin-left: 0.5rem;
+        }
+
+        .badge-verified {
+          background: rgba(16, 185, 129, 0.2);
+          color: var(--accent2);
+        }
+
+        .badge-plan {
+          background: rgba(0, 205, 214, 0.2);
+          color: var(--accent);
+        }
+
+        .badge-plan.plus {
+          background: rgba(94, 234, 212, 0.2);
+          color: var(--accent2);
+        }
+
+        .form-group {
+          margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+          display: block;
+          font-weight: 500;
+          color: var(--text);
+          margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+          width: 100%;
+          padding: 0.75rem;
+          background: var(--bg);
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          color: var(--text);
+          font-size: 1rem;
+        }
+
+        .form-input:focus {
+          outline: 2px solid var(--accent);
+          outline-offset: 2px;
+          border-color: var(--accent);
+        }
+
+        .form-help {
+          font-size: 0.875rem;
+          color: var(--muted);
+          margin-top: 0.5rem;
+        }
+
+        .btn {
+          display: inline-block;
+          padding: 0.75rem 1.5rem;
+          border: none;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 0.875rem;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-decoration: none;
+          text-align: center;
+        }
+
+        .btn:focus {
+          outline: 2px solid var(--accent);
+          outline-offset: 2px;
+        }
+
+        .btn-primary {
+          background: var(--accent);
+          color: var(--bg);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+          background: var(--accent2);
+          transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+          background: transparent;
+          color: var(--accent);
+          border: 1px solid var(--accent);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+          background: var(--accent);
+          color: var(--bg);
+        }
+
+        .btn-link {
+          background: transparent;
+          color: var(--muted);
+          border: none;
+          padding: 0.5rem;
+          text-decoration: underline;
+        }
+
+        .btn-link:hover {
+          color: var(--accent);
+        }
+
+        .btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .btn-group {
+          display: flex;
+          gap: 0.75rem;
+          align-items: center;
+        }
+
+        .billing-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1rem;
+        }
+
+        .billing-status {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.9rem;
+        }
+
+        .status-active {
+          color: var(--accent2);
+        }
+
+        .status-inactive {
+          color: var(--muted);
+        }
+
+        .billing-info {
+          font-size: 0.875rem;
+          color: var(--muted);
+          margin-bottom: 1rem;
+        }
+
+        .toast-container {
+          position: fixed;
+          bottom: 2rem;
+          right: 2rem;
+          z-index: 1000;
+        }
+
+        .toast {
+          background: var(--card);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          padding: 1rem;
+          margin-bottom: 0.5rem;
+          max-width: 400px;
+          box-shadow: var(--shadow);
+          opacity: 0;
+          transform: translateX(100%);
+          transition: all 0.3s ease;
+        }
+
+        .toast.show {
+          opacity: 1;
+          transform: translateX(0);
+        }
+
+        .toast-success {
+          border-left: 4px solid var(--accent2);
+        }
+
+        .toast-error {
+          border-left: 4px solid #ef4444;
+        }
+
+        .loading-spinner {
+          display: inline-block;
+          width: 16px;
+          height: 16px;
+          border: 2px solid var(--border);
+          border-top: 2px solid var(--accent);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+          display: none;
+        }
+
+        .sr-only {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          white-space: nowrap;
+          border: 0;
+        }
+
+        .sign-in-prompt {
+          text-align: center;
+          padding: 3rem 1rem;
+        }
+
+        .sign-in-prompt h2 {
+          font-size: 1.5rem;
+          color: var(--text);
+          margin-bottom: 1rem;
+        }
+
+        .sign-in-prompt p {
+          color: var(--muted);
+          margin-bottom: 2rem;
+        }
+
+        @media (max-width: 640px) {
+          .account-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+          }
+
+          .profile-header {
+            flex-direction: column;
+            text-align: center;
+          }
+
+          .btn-group {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .billing-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+          }
+
+          .toast-container {
+            right: 1rem;
+            left: 1rem;
+          }
+
+          .toast {
+            max-width: none;
+          }
+        }
+      </style>
+
+      <div class="account-header">
+        <h1 class="account-title">Account</h1>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn btn-secondary" id="manageAccountBtn" hidden>
+            Manage Billing
+          </button>
+          <button type="button" class="btn btn-link" id="refreshPlanBtn" title="Refresh plan status">
+            ↻ Refresh Plan
+          </button>
+        </div>
+      </div>
+
+      <!-- Sign-in prompt (shown when not authenticated) -->
+      <div id="signInPrompt" class="sign-in-prompt hidden">
+        <h2>Sign in to manage your account</h2>
+        <p>Access your profile, billing, and account preferences.</p>
+        <a href="/auth/login.html" class="btn btn-primary">Sign In</a>
+      </div>
+
+      <!-- Account content (shown when authenticated) -->
+      <div id="accountContent" class="hidden">
+        
+        <!-- Profile Card -->
+        <div class="card">
+          <h2 class="card-title">Profile</h2>
+          <div class="profile-header">
+            <div class="avatar" id="profileAvatar">
+              <!-- Initials will be inserted here -->
+            </div>
+            <div class="profile-info">
+              <div class="profile-name" id="profileName">
+                <!-- Display name will be inserted here -->
+              </div>
+              <div class="profile-email">
+                <span id="profileEmail"><!-- Email will be inserted here --></span>
+                <span id="verifiedBadge" class="badge badge-verified hidden">Verified</span>
+                <span id="planBadge" class="badge badge-plan">Free</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-link" id="resendVerificationBtn" hidden>
+              Resend Verification
+            </button>
+          </div>
+        </div>
+
+        <!-- Billing Card -->
+        <div class="card">
+          <div class="billing-header">
+            <h2 class="card-title">Billing</h2>
+            <div class="billing-status" id="billingStatus"></div>
+          </div>
+          
+          <div id="freeUserBilling">
+            <p class="billing-info">Upgrade to Plus for unlimited buckets and priority support.</p>
+            <div class="btn-group">
+              <button type="button" class="btn btn-primary" id="upgradeBtn">
+                Upgrade to Plus — $3.99/mo
+              </button>
+              <button type="button" class="btn btn-secondary" id="manageBillingBtn">
+                Manage Billing
+              </button>
+            </div>
+          </div>
+
+          <div id="plusUserBilling" class="hidden">
+            <p class="billing-info">You have access to unlimited buckets and priority support.</p>
+            <div class="btn-group">
+              <button type="button" class="btn btn-secondary" id="manageBillingBtn2">
+                Manage Billing
+              </button>
+              <button type="button" class="btn btn-link" id="downgradePlan">
+                Cancel Subscription
+              </button>
+            </div>
+          </div>
+
+          <div id="billingDetails" class="billing-info" style="margin-top: 1rem;">
+            <!-- Customer ID and subscription details will be shown here -->
+          </div>
+        </div>
+
+        <!-- Security Card -->
+        <div class="card">
+          <h2 class="card-title">Security</h2>
+          
+          <!-- Change Email -->
+          <div class="form-group">
+            <label for="newEmail" class="form-label">Change Email</label>
+            <input type="email" id="newEmail" class="form-input" placeholder="Enter new email address">
+            <div id="passwordForEmail" class="form-group" style="margin-top: 1rem;">
+              <label for="currentPasswordEmail" class="form-label">Current Password</label>
+              <input type="password" id="currentPasswordEmail" class="form-input" placeholder="Enter current password">
+            </div>
+            <div id="googleReauthEmail" class="form-help hidden">
+              You'll need to reauthenticate with Google to change your email address.
+            </div>
+            <div style="margin-top: 1rem;">
+              <button type="button" class="btn btn-primary" id="changeEmailBtn">
+                Change Email
+              </button>
+            </div>
+          </div>
+
+          <!-- Change Password -->
+          <div id="changePasswordSection" class="form-group">
+            <label for="currentPassword" class="form-label">Change Password</label>
+            <input type="password" id="currentPassword" class="form-input" placeholder="Current password" style="margin-bottom: 0.75rem;">
+            <input type="password" id="newPassword" class="form-input" placeholder="New password" style="margin-bottom: 0.75rem;">
+            <input type="password" id="confirmPassword" class="form-input" placeholder="Confirm new password">
+            <div style="margin-top: 1rem;">
+              <button type="button" class="btn btn-primary" id="changePasswordBtn">
+                Change Password
+              </button>
+            </div>
+          </div>
+
+          <div id="googlePasswordInfo" class="form-help hidden">
+            Your account uses Google Sign-In. Manage your password in your Google Account.
+          </div>
+        </div>
+
+        <!-- Preferences Card -->
+        <div class="card">
+          <h2 class="card-title">Preferences</h2>
+          <div class="form-group">
+            <label for="preferredName" class="form-label">Preferred Name</label>
+            <input type="text" id="preferredName" class="form-input" placeholder="How should we address you?">
+            <div class="form-help">This name will be used throughout the app.</div>
+            <div style="margin-top: 1rem;">
+              <button type="button" class="btn btn-primary" id="savePreferencesBtn">
+                Save Preferences
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toast Container -->
+      <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+    </section>
 
     <footer class="footer">
         <div class="footer-content">
@@ -514,5 +1050,133 @@
     <script type="module" src="../auth/guard.js"></script>
     <script type="module" src="./cloud-store.js"></script>
     <script type="module" src="./app.js"></script>
+
+    <!-- Account Integration -->
+    <script type="module">
+      import { getAuth, onAuthStateChanged, sendEmailVerification } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
+      import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+      import { mountAccountView, showAccountView, hideAccountView } from '/app/account.js';
+      import { watchPlan, getPlan, isPlus } from '/app/lib/plan.js';
+
+      const auth = getAuth();
+      const db = getFirestore();
+
+      const accountRoot = document.getElementById('accountView');
+      mountAccountView(accountRoot, { auth, db });
+
+      // Start plan watching
+      watchPlan(updatePlanUI);
+
+      // Show/hide Account nav link based on auth state
+      const navAccount = document.getElementById('navAccount');
+      onAuthStateChanged(auth, (user) => {
+        if (navAccount) {
+          navAccount.style.display = user ? 'inline-block' : 'none';
+        }
+        handleEmailVerification(user);
+        updateBucketCounter();
+      });
+
+      // Simple nav wiring
+      if (navAccount) {
+        navAccount.addEventListener('click', (e) => {
+          e.preventDefault();
+          
+          // Hide main content and show account view
+          const mainContent = document.querySelector('.main-content');
+          if (mainContent) mainContent.style.display = 'none';
+          
+          accountRoot.hidden = false;
+          if (typeof showAccountView === 'function') showAccountView();
+          history.replaceState(null, '', '#account');
+        });
+      }
+
+      // Hash router (open Account on reload)
+      if (location.hash === '#account') {
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) mainContent.style.display = 'none';
+        
+        accountRoot.hidden = false;
+        if (typeof showAccountView === 'function') showAccountView();
+      }
+
+      // Handle back navigation or closing account view
+      window.addEventListener('popstate', () => {
+        if (location.hash !== '#account') {
+          const mainContent = document.querySelector('.main-content');
+          if (mainContent) mainContent.style.display = 'block';
+          
+          accountRoot.hidden = true;
+          if (typeof hideAccountView === 'function') hideAccountView();
+        }
+      });
+
+      // Plan UI updates
+      function updatePlanUI(plan) {
+        updateBucketCounter();
+      }
+
+      // Update bucket counter display
+      function updateBucketCounter() {
+        const counter = document.getElementById('bucketCounter');
+        if (counter && window.getBucketCountForUI) {
+          const count = window.getBucketCountForUI();
+          const plan = getPlan();
+          
+          if (plan === 'plus') {
+            counter.textContent = `${count} buckets`;
+          } else {
+            counter.textContent = `${count}/5 buckets`;
+          }
+          counter.style.display = 'inline';
+        }
+      }
+
+      // Email verification banner
+      function handleEmailVerification(user) {
+        const banner = document.getElementById('verifyBanner');
+        const resendBtn = document.getElementById('resendVerification');
+        const verifiedBtn = document.getElementById('iveVerified');
+        
+        if (!banner || !user) {
+          if (banner) banner.hidden = true;
+          return;
+        }
+
+        // Show banner for unverified email/password users
+        const hasPasswordProvider = user.providerData.some(p => p.providerId === 'password');
+        const shouldShow = hasPasswordProvider && !user.emailVerified;
+        
+        banner.hidden = !shouldShow;
+
+        // Resend verification
+        resendBtn.onclick = async () => {
+          try {
+            await sendEmailVerification(user);
+            alert('Verification email sent!');
+          } catch (error) {
+            alert('Failed to send verification email: ' + error.message);
+          }
+        };
+
+        // Check verification status
+        verifiedBtn.onclick = async () => {
+          try {
+            await user.reload();
+            if (user.emailVerified) {
+              banner.hidden = true;
+            } else {
+              alert('Email not yet verified. Please check your inbox and click the verification link.');
+            }
+          } catch (error) {
+            alert('Failed to check verification status: ' + error.message);
+          }
+        };
+      }
+
+      // Expose updateBucketCounter globally for app.js to call
+      window.updateBucketCounter = updateBucketCounter;
+    </script>
 </body>
 </html>

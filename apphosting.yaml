@@ -5,6 +5,23 @@ env:
   - variable: NODE_ENV
     value: production
 
+    # Public-ish value you’re happy to keep server-side only
+  - variable: PRICE_ID_MONTHLY
+    value: prod_SttjiRWLK9NWVI
+    availability:
+      - RUNTIME
+
+  # Stripe secrets (configure these in Firebase Secret Manager)
+  - variable: STRIPE_SECRET_KEY
+    secret: stripe-secret-key
+    availability:
+      - RUNTIME
+
+  - variable: STRIPE_WEBHOOK_SECRET
+    secret: stripe-webhook-secret
+    availability:
+      - RUNTIME
+
 # Runtime settings
 runConfig:
   runtime: nodejs20

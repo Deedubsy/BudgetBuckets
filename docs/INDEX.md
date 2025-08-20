@@ -13,19 +13,66 @@ Welcome to the Budget Buckets documentation hub. This index provides navigation 
 ## 📚 Documentation Categories
 
 ### 🏗️ Architecture
-System design, components, and project structure documentation.
+System design, data models, and technical decisions.
 
+- **[System Overview](./architecture/system-overview.md)** *(active, 2025-08-20)* - C4 Context & Container diagrams, component overview
+- **[Data Flow](./architecture/dataflow.md)** *(active, 2025-08-20)* - Authentication and feature request flows
+- **[Data Model](./architecture/data-model.md)** *(active, 2025-08-20)* - Firestore collections and document schemas
 - **[Project Structure](./architecture/project-structure.md)** *(active, 2025-08-11)* - System architecture and file organization
+
+### 🎯 Decisions (ADRs)
+Architecture Decision Records documenting key technical choices.
+
+- **[ADR-20250820-stack-choice](./decisions/ADR-20250820-stack-choice.md)** *(accepted, 2025-08-20)* - Framework-free vanilla JS approach
+- **[ADR-20250820-auth-approach](./decisions/ADR-20250820-auth-approach.md)** *(accepted, 2025-08-20)* - Firebase Authentication strategy
+- **[ADR-20250820-frontend-framework](./decisions/ADR-20250820-frontend-framework.md)** *(accepted, 2025-08-20)* - No framework decision
+
+### 📖 Guides
+Step-by-step instructions and how-to documentation.
+
+- **[Development Setup](./guides/setup-dev.md)** *(active, 2025-08-20)* - Clean machine to running app
+- **[Deployment Guide](./guides/deploy.md)** *(active, 2025-08-20)* - Firebase App Hosting deployment
+- **[Database Migrations](./guides/database-migrations.md)** *(active, 2025-08-20)* - Firestore schema changes
+- **[Troubleshooting](./guides/troubleshooting.md)** *(active, 2025-08-20)* - Common issues and solutions
+- **[Setup and Development Guide](./guides/setup-and-development.md)** *(active, 2025-08-13)* - Complete setup and development guide
+
+### 🔧 Reference
+API documentation, configuration, and technical specifications.
+
+- **[HTTP API](./reference/http-api.md)** *(active, 2025-08-20)* - Express routes and endpoints
+- **[Configuration](./reference/configuration.md)** *(active, 2025-08-20)* - Environment variables and settings
+
+### 📋 Runbooks
+Operational procedures and incident response.
+
+- **[Restart Services](./runbooks/restart-services.md)** *(active, 2025-08-20)* - Service restart procedures
+- **[Incident Playbook](./runbooks/incident-playbook.md)** *(active, 2025-08-20)* - Emergency response procedures
+- **[Rotate Secrets](./runbooks/rotate-secrets.md)** *(active, 2025-08-20)* - Firebase API key rotation
+
+### 🔒 Security & Compliance
+Security measures, data protection, and compliance documentation.
+
+- **[Security Notes](./security/security-notes.md)** *(active, 2025-08-20)* - Authentication, authorization, and data protection
+
+### 🧪 Testing
+Testing strategy, tools, and procedures.
+
+- **[Testing Strategy](./testing/testing-strategy.md)** *(active, 2025-08-20)* - Test types, coverage, and execution
 
 ### 📋 Planning
 Roadmaps, optimization plans, and future enhancements.
 
 - **[Optimization Recommendations](./planning/optimization-recommendations.md)** *(active, 2025-08-11)* - Performance and feature planning document
 
-### 📖 Guides
-Step-by-step instructions and how-to documentation.
+### 🤝 Contributing
+Development processes and contribution guidelines.
 
-- **[Setup and Development Guide](./guides/setup-and-development.md)** *(active, 2025-08-13)* - Complete setup and development guide
+- **[Contributing Guide](./contributing.md)** *(active, 2025-08-20)* - Development workflow and standards
+
+### 📝 Changelog
+Release history and changes.
+
+- **[Changelog](./changelog.md)** *(active, 2025-08-20)* - Version history and notable changes
 
 ### 🗃️ Templates
 Document templates for creating new documentation.
