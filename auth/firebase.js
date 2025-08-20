@@ -159,9 +159,11 @@ async function initializeFirebase() {
     await initializeAuth();
     await configureLongPolling();
     
-    // Check for redirect result from Google OAuth
+    // Check for redirect result from Google OAuth with retry
     try {
-      const result = await getRedirectResult(auth);
+      const result = await authHelpers.retryAuthOperation(
+        () => getRedirectResult(auth)
+      );
       if (result) {
         console.log('✅ Google redirect sign-in successful:', result.user.uid);
         currentUser = result.user;
@@ -229,7 +231,9 @@ const authHelpers = {
   async signInWithEmail(email, password) {
     try {
       console.log('🔐 Signing in with email:', email);
-      const result = await signInWithEmailAndPassword(auth, email, password);
+      const result = await this.retryAuthOperation(
+        () => signInWithEmailAndPassword(auth, email, password)
+      );
       currentUser = result.user;
       console.log('✅ Email sign-in successful:', result.user.uid);
       return result.user;
@@ -243,7 +247,9 @@ const authHelpers = {
   async createAccount(email, password) {
     try {
       console.log('🔐 Creating account for:', email);
-      const result = await createUserWithEmailAndPassword(auth, email, password);
+      const result = await this.retryAuthOperation(
+        () => createUserWithEmailAndPassword(auth, email, password)
+      );
       currentUser = result.user;
       console.log('✅ Account created:', result.user.uid);
       return result.user;
@@ -263,7 +269,9 @@ const authHelpers = {
       
       // Try popup first, fallback to redirect if it fails
       try {
-        const result = await signInWithPopup(auth, provider);
+        const result = await this.retryAuthOperation(
+          () => signInWithPopup(auth, provider)
+        );
         currentUser = result.user;
         console.log('✅ Google sign-in successful:', result.user.uid);
         return result.user;
@@ -283,7 +291,9 @@ const authHelpers = {
   async resetPassword(email) {
     try {
       console.log('📧 Sending password reset to:', email);
-      await sendPasswordResetEmail(auth, email);
+      await this.retryAuthOperation(
+        () => sendPasswordResetEmail(auth, email)
+      );
       console.log('✅ Password reset email sent');
     } catch (error) {
       console.error('❌ Password reset failed:', error);
@@ -317,10 +327,40 @@ const authHelpers = {
       'auth/popup-closed-by-user': 'Sign-in popup was closed. Please try again.',
       'auth/popup-blocked': 'Sign-in popup was blocked. Please allow popups.',
       'auth/network-request-failed': 'Network error. Please check your connection.',
+      'auth/visibility-check-was-unavailable.-please-retry-the-request-and-contact-support-if-the-problem-persists': 'Temporary authentication issue. Please try again in a moment.',
     };
 
     const message = friendlyMessages[error.code] || error.message || 'Authentication failed';
     return new Error(message);
+  },
+
+  // Retry wrapper for auth operations
+  async retryAuthOperation(operation, maxRetries = 3, delay = 1000) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        console.warn(`Auth operation failed (attempt ${attempt}/${maxRetries}):`, error.code);
+        
+        // Check if this is a retryable error
+        const retryableErrors = [
+          'auth/visibility-check-was-unavailable.-please-retry-the-request-and-contact-support-if-the-problem-persists',
+          'auth/network-request-failed',
+          'auth/too-many-requests'
+        ];
+        
+        const shouldRetry = retryableErrors.some(code => error.code?.includes(code));
+        
+        if (!shouldRetry || attempt === maxRetries) {
+          throw error;
+        }
+        
+        // Exponential backoff delay
+        const backoffDelay = delay * Math.pow(2, attempt - 1);
+        console.log(`Retrying in ${backoffDelay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, backoffDelay));
+      }
+    }
   }
 };
 
