@@ -116,13 +116,25 @@ const db = getFirestore(app);
 // Global auth state
 let currentUser = null;
 let authStateReady = false;
+let authStateChangeCount = 0;
 const authReadyPromise = new Promise((resolve) => {
-  const unsubscribe = onAuthStateChanged(auth, (user) => {
+  let hasResolved = false;
+  onAuthStateChanged(auth, (user) => {
+    authStateChangeCount++;
+    const previousUser = currentUser;
     currentUser = user;
     authStateReady = true;
-    console.log(`🔐 Auth state changed: ${user ? `User ${user.uid}` : 'No user'}`);
-    resolve(user);
-    unsubscribe();
+    
+    console.log(`🔐 Auth state changed (${authStateChangeCount}): ${user ? `User ${user.uid}` : 'No user'}`);
+    if (previousUser && !user) {
+      console.warn('⚠️ User was logged out - this might indicate a token issue');
+    }
+    
+    // Only resolve the first time, but keep listening for state changes
+    if (!hasResolved) {
+      hasResolved = true;
+      resolve(user);
+    }
   });
 });
 
@@ -137,7 +149,7 @@ async function initializeEmulators() {
     console.log('🔐 Connected to Auth Emulator');
     
     // Connect Firestore emulator  
-    connectFirestoreEmulator(db, 'localhost', 8080);
+    connectFirestoreEmulator(db, 'localhost', 8081);
     console.log('🔥 Connected to Firestore Emulator');
     
     emulatorsInitialized = true;
@@ -254,7 +266,12 @@ const authHelpers = {
   async getIdToken() {
     const user = await this.waitForAuth();
     if (!user) throw new Error('User not authenticated');
-    return await user.getIdToken();
+    try {
+      return await user.getIdToken();
+    } catch (error) {
+      console.warn('getIdToken failed, but not retrying to avoid loops:', error.code);
+      throw error;
+    }
   },
 
   // Sign in with email/password

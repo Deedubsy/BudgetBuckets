@@ -3,7 +3,7 @@
  * Ensures authentication before allowing access to protected resources
  */
 
-import { authHelpers } from './firebase.js';
+import { authHelpers, auth } from './firebase.js';
 
 // Route protection with loading states
 class AuthGuard {
@@ -217,8 +217,11 @@ class AuthGuard {
     const isProtectedPage = protectedPages.some(path => currentPath.includes(path));
     
     if (isProtectedPage) {
+      // Import onAuthStateChanged from Firebase v10 SDK
+      const { onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js');
+      
       // Automatically redirect if auth state changes to null
-      firebase.auth.onAuthStateChanged((user) => {
+      onAuthStateChanged(auth, (user) => {
         if (this.isInitialized && !user) {
           console.log('🔐 Auth state changed to null, redirecting to login');
           window.location.href = '/auth/login.html';
