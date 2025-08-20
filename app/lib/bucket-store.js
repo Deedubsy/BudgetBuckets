@@ -9,7 +9,14 @@ import {
   setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-const db = getFirestore();
+// Lazy initialization to ensure Firebase is ready
+let db;
+function getDB() {
+  if (!db) {
+    db = getFirestore();
+  }
+  return db;
+}
 
 /**
  * Create a bucket with atomic counter increment
@@ -18,6 +25,7 @@ const db = getFirestore();
  * @param {Object} bucketData - Bucket data
  */
 export async function createBucketDoc(uid, budgetId, bucketData) {
+  const db = getDB();
   const batch = writeBatch(db);
   
   // Create bucket document
@@ -40,6 +48,7 @@ export async function createBucketDoc(uid, budgetId, bucketData) {
  * @param {string} budgetId - Budget ID (bucket document ID)
  */
 export async function deleteBucketDoc(uid, budgetId) {
+  const db = getDB();
   const batch = writeBatch(db);
   
   // Delete bucket document
@@ -62,6 +71,7 @@ export async function deleteBucketDoc(uid, budgetId) {
  * @param {string} email - User email
  */
 export async function bootstrapUser(uid, email) {
+  const db = getDB();
   const batch = writeBatch(db);
   
   // Create user profile document
@@ -88,6 +98,7 @@ export async function bootstrapUser(uid, email) {
  * @returns {number} Current bucket count
  */
 export async function getBucketCount(uid) {
+  const db = getDB();
   const counterRef = doc(db, 'users', uid, 'meta', 'bucketCounts');
   const counterDoc = await getDoc(counterRef);
   
