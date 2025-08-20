@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Firebase Environment</title>
+    <script>
+        // Force production Firebase immediately
+        localStorage.setItem('firebase-environment', 'production');
+        console.log('FORCED: Set firebase-environment to production');
+        
+        // Also clear any cached emulator settings
+        localStorage.removeItem('firebase:previous_websocket_failure');
+        localStorage.removeItem('firebase:host:localhost:9099');
+        
+        console.log('Cleared any emulator cache');
+    </script>
+</head>
+<body>
+    <h1>Firebase Environment Debug</h1>
+    <p>✅ Forced production Firebase mode</p>
+    <p>✅ Cleared emulator cache</p>
+    
+    <a href="/auth/login.html">Go to Login Page</a>
+    
+    <script>
+        console.log('Current localStorage firebase-environment:', localStorage.getItem('firebase-environment'));
+        console.log('All localStorage keys:', Object.keys(localStorage));
+    </script>
+</body>
+</html>

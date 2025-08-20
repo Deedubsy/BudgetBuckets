@@ -105,6 +105,13 @@ console.log(`🏠 Hostname: ${window.location.hostname}`);
 console.log(`🔌 Port: ${window.location.port}`);
 console.log(`📡 Online status: ${navigator.onLine ? 'Online' : 'Offline'}`);
 console.log(`💾 Manual override: ${localStorage.getItem('firebase-environment') || 'none'}`);
+console.log(`⚙️ Will try to connect emulators: ${USE_EMULATORS}`);
+
+if (USE_EMULATORS) {
+  console.warn('🚨 EMULATOR MODE: Will try to connect to Auth:9099 and Firestore:8081');
+} else {
+  console.log('✅ PRODUCTION MODE: Will use real Firebase services');
+}
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -139,21 +146,34 @@ const authReadyPromise = new Promise((resolve) => {
 // Initialize emulators if needed (must be done before any auth/db operations)
 let emulatorsInitialized = false;
 async function initializeEmulators() {
-  if (!USE_EMULATORS || emulatorsInitialized) return;
+  if (!USE_EMULATORS) {
+    console.log('⏩ Skipping emulator initialization - using production Firebase');
+    return;
+  }
+  
+  if (emulatorsInitialized) {
+    console.log('⏩ Emulators already initialized');
+    return;
+  }
   
   try {
+    console.log('🔧 Attempting to connect to Firebase emulators...');
+    
     // Connect auth emulator
     connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
-    console.log('🔐 Connected to Auth Emulator');
+    console.log('🔐 Connected to Auth Emulator on localhost:9099');
     
     // Connect Firestore emulator  
     connectFirestoreEmulator(db, 'localhost', 8081);
-    console.log('🔥 Connected to Firestore Emulator');
+    console.log('🔥 Connected to Firestore Emulator on localhost:8081');
     
     emulatorsInitialized = true;
+    console.log('✅ Emulator initialization complete');
   } catch (error) {
-    console.warn('⚠️ Emulator connection failed (may already be connected):', error.message);
+    console.error('❌ Emulator connection failed:', error.message);
+    console.error('💡 Make sure to run: firebase emulators:start');
     emulatorsInitialized = true; // Don't keep trying
+    throw new Error(`Emulator connection failed: ${error.message}`);
   }
 }
 
