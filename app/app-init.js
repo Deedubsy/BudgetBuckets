@@ -193,13 +193,36 @@ function handleEmailVerification(user) {
   // Check verification status
   verifiedBtn.onclick = async () => {
     try {
-      await user.reload();
-      if (user.emailVerified) {
+      console.log('✅ Checking verification status...');
+      verifiedBtn.disabled = true;
+      verifiedBtn.textContent = 'Checking...';
+      
+      // Get fresh user instance and reload
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error('No authenticated user found');
+      }
+      
+      console.log('📧 Current verification status before reload:', currentUser.emailVerified);
+      await currentUser.reload();
+      console.log('📧 Current verification status after reload:', currentUser.emailVerified);
+      
+      if (currentUser.emailVerified) {
+        console.log('✅ Email is now verified! Hiding banner...');
         banner.hidden = true;
+        alert('Email verified successfully!');
       } else {
+        console.log('⚠️ Email still not verified');
         alert('Email not yet verified. Please check your inbox and click the verification link.');
       }
+      
+      verifiedBtn.textContent = 'I\'ve verified';
+      verifiedBtn.disabled = false;
+      
     } catch (error) {
+      console.error('❌ Failed to check verification status:', error);
+      verifiedBtn.textContent = 'I\'ve verified';
+      verifiedBtn.disabled = false;
       alert('Failed to check verification status: ' + error.message);
     }
   };
