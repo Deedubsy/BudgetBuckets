@@ -1135,12 +1135,27 @@
 
       // Email verification banner
       function handleEmailVerification(user) {
+        console.log('🔍 handleEmailVerification called with user:', user?.uid);
+        
         const banner = document.getElementById('verifyBanner');
         const resendBtn = document.getElementById('resendVerification');
         const verifiedBtn = document.getElementById('iveVerified');
         
+        console.log('🔍 Email verification elements:', {
+          banner: !!banner,
+          resendBtn: !!resendBtn,
+          verifiedBtn: !!verifiedBtn,
+          user: !!user
+        });
+        
         if (!banner || !user) {
+          console.log('⚠️ Missing banner or user, hiding banner');
           if (banner) banner.hidden = true;
+          return;
+        }
+        
+        if (!resendBtn || !verifiedBtn) {
+          console.error('❌ Missing verification buttons:', { resendBtn: !!resendBtn, verifiedBtn: !!verifiedBtn });
           return;
         }
 
@@ -1148,7 +1163,20 @@
         const hasPasswordProvider = user.providerData.some(p => p.providerId === 'password');
         const shouldShow = hasPasswordProvider && !user.emailVerified;
         
+        console.log('🔍 Email verification logic:', {
+          hasPasswordProvider,
+          emailVerified: user.emailVerified,
+          shouldShow,
+          providerData: user.providerData.map(p => p.providerId)
+        });
+        
         banner.hidden = !shouldShow;
+        
+        console.log('📎 Attaching event handlers to verification buttons...');
+
+        // Test that buttons are clickable
+        resendBtn.addEventListener('click', () => console.log('🔄 Resend button clicked!'), { once: true });
+        verifiedBtn.addEventListener('click', () => console.log('✅ Verified button clicked!'), { once: true });
 
         // Resend verification
         resendBtn.onclick = async () => {
