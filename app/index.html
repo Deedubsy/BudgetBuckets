@@ -1154,6 +1154,13 @@
         resendBtn.onclick = async () => {
           try {
             console.log('🔄 Attempting to resend verification email...');
+            console.log('🔍 Available objects:', {
+              'window.firebase': !!window.firebase,
+              'window.firebase.authHelpers': !!window.firebase?.authHelpers,
+              'auth': !!auth,
+              'auth.currentUser': !!auth?.currentUser
+            });
+            
             resendBtn.disabled = true;
             resendBtn.textContent = 'Sending...';
             
@@ -1163,8 +1170,21 @@
               throw new Error('No authenticated user found');
             }
             
-            console.log('📧 Sending verification to:', currentUser.email);
-            await window.firebase.authHelpers.sendEmailVerification(currentUser);
+            console.log('📧 User details:', {
+              uid: currentUser.uid,
+              email: currentUser.email,
+              emailVerified: currentUser.emailVerified
+            });
+            
+            // Try direct import method as fallback
+            if (window.firebase?.authHelpers?.sendEmailVerification) {
+              console.log('📧 Using authHelpers.sendEmailVerification...');
+              await window.firebase.authHelpers.sendEmailVerification(currentUser);
+            } else {
+              console.log('📧 Using direct Firebase import...');
+              const { sendEmailVerification } = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js');
+              await sendEmailVerification(currentUser);
+            }
             
             console.log('✅ Verification email sent successfully');
             resendBtn.textContent = 'Email sent!';
@@ -1175,6 +1195,12 @@
             
           } catch (error) {
             console.error('❌ Failed to send verification email:', error);
+            console.error('❌ Error details:', {
+              code: error.code,
+              message: error.message,
+              stack: error.stack
+            });
+            
             resendBtn.textContent = 'Resend verification email';
             resendBtn.disabled = false;
             
@@ -1184,6 +1210,8 @@
               errorMessage = 'Too many requests. Please wait a moment before trying again.';
             } else if (error.code === 'auth/user-token-expired') {
               errorMessage = 'Session expired. Please sign out and sign in again.';
+            } else if (error.message.includes('network')) {
+              errorMessage = 'Network error. Please check your connection.';
             }
             alert(errorMessage + ': ' + error.message);
           }
