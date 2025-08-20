@@ -144,6 +144,15 @@ app.get('/guide', (req, res) => {
   res.sendFile(path.join(__dirname, 'Method.html'));
 });
 
+// Pricing page
+app.get('/pricing', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pricing.html'));
+});
+
+app.get('/pricing.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pricing.html'));
+});
+
 // Legal pages
 app.get('/privacy', (req, res) => {
   res.sendFile(path.join(__dirname, 'privacy.html'));
