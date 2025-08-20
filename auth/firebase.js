@@ -12,6 +12,8 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider,
   sendPasswordResetEmail,
   signOut,
@@ -157,6 +159,17 @@ async function initializeFirebase() {
     await initializeAuth();
     await configureLongPolling();
     
+    // Check for redirect result from Google OAuth
+    try {
+      const result = await getRedirectResult(auth);
+      if (result) {
+        console.log('✅ Google redirect sign-in successful:', result.user.uid);
+        currentUser = result.user;
+      }
+    } catch (error) {
+      console.warn('⚠️ Redirect result check failed:', error);
+    }
+    
     // Wait for auth state with timeout
     const authPromise = Promise.race([
       authReadyPromise,
@@ -248,10 +261,18 @@ const authHelpers = {
       provider.addScope('email');
       provider.addScope('profile');
       
-      const result = await signInWithPopup(auth, provider);
-      currentUser = result.user;
-      console.log('✅ Google sign-in successful:', result.user.uid);
-      return result.user;
+      // Try popup first, fallback to redirect if it fails
+      try {
+        const result = await signInWithPopup(auth, provider);
+        currentUser = result.user;
+        console.log('✅ Google sign-in successful:', result.user.uid);
+        return result.user;
+      } catch (popupError) {
+        console.log('🔄 Popup failed, trying redirect method...');
+        await signInWithRedirect(auth, provider);
+        // The redirect will handle the rest
+        return null;
+      }
     } catch (error) {
       console.error('❌ Google sign-in failed:', error);
       throw this.getAuthError(error);
