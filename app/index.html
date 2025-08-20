@@ -1153,10 +1153,39 @@
         // Resend verification
         resendBtn.onclick = async () => {
           try {
-            await sendEmailVerification(user);
-            alert('Verification email sent!');
+            console.log('🔄 Attempting to resend verification email...');
+            resendBtn.disabled = true;
+            resendBtn.textContent = 'Sending...';
+            
+            // Get fresh user instance
+            const currentUser = auth.currentUser;
+            if (!currentUser) {
+              throw new Error('No authenticated user found');
+            }
+            
+            console.log('📧 Sending verification to:', currentUser.email);
+            await window.firebase.authHelpers.sendEmailVerification(currentUser);
+            
+            console.log('✅ Verification email sent successfully');
+            resendBtn.textContent = 'Email sent!';
+            setTimeout(() => {
+              resendBtn.textContent = 'Resend verification email';
+              resendBtn.disabled = false;
+            }, 3000);
+            
           } catch (error) {
-            alert('Failed to send verification email: ' + error.message);
+            console.error('❌ Failed to send verification email:', error);
+            resendBtn.textContent = 'Resend verification email';
+            resendBtn.disabled = false;
+            
+            // Show user-friendly error
+            let errorMessage = 'Failed to send verification email';
+            if (error.code === 'auth/too-many-requests') {
+              errorMessage = 'Too many requests. Please wait a moment before trying again.';
+            } else if (error.code === 'auth/user-token-expired') {
+              errorMessage = 'Session expired. Please sign out and sign in again.';
+            }
+            alert(errorMessage + ': ' + error.message);
           }
         };
 

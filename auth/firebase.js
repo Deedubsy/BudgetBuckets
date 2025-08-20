@@ -57,15 +57,28 @@ const firebaseConfig = {
 function determineEnvironment() {
   const manualOverride = localStorage.getItem('firebase-environment');
   
+  console.log('🔍 Environment determination:');
+  console.log('  - manualOverride:', manualOverride);
+  console.log('  - window.location.hostname:', window.location.hostname);
+  console.log('  - window.location.search:', window.location.search);
+  
   if (manualOverride === 'production') {
+    console.log('  → FORCED PRODUCTION via localStorage');
     return false; // Force production
   } else if (manualOverride === 'emulators') {
+    console.log('  → FORCED EMULATORS via localStorage');
     return true; // Force emulators
   }
   
-  // For local development, use production Firebase by default
-  // Only use emulators if explicitly requested
-  return window.location.search.includes('emulator=true');
+  // Check URL parameter
+  if (window.location.search.includes('emulator=true')) {
+    console.log('  → EMULATORS via URL parameter');
+    return true;
+  }
+  
+  // For local development, default to production Firebase
+  console.log('  → DEFAULT: PRODUCTION (localhost uses production Firebase)');
+  return false;
 }
 
 const USE_EMULATORS = determineEnvironment();
@@ -366,6 +379,21 @@ const authHelpers = {
     }
   },
 
+  // Send email verification
+  async sendEmailVerification(user) {
+    const { sendEmailVerification } = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js');
+    try {
+      console.log('📧 Sending email verification to:', user.email);
+      await retryAuthOperation(
+        () => sendEmailVerification(user)
+      );
+      console.log('✅ Email verification sent');
+    } catch (error) {
+      console.error('❌ Email verification failed:', error);
+      throw this.getAuthError(error);
+    }
+  },
+
   // Sign out
   async signOut() {
     try {
@@ -393,6 +421,8 @@ const authHelpers = {
       'auth/popup-blocked': 'Sign-in popup was blocked. Please allow popups.',
       'auth/network-request-failed': 'Network error. Please check your connection.',
       'auth/visibility-check-was-unavailable.-please-retry-the-request-and-contact-support-if-the-problem-persists': 'Temporary authentication issue. Please try again in a moment.',
+      'auth/too-many-requests': 'Too many email requests. Please wait before trying again.',
+      'auth/user-token-expired': 'Your session has expired. Please sign out and sign in again.',
     };
 
     const message = friendlyMessages[error.code] || error.message || 'Authentication failed';
