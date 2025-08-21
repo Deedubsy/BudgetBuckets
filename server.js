@@ -18,17 +18,21 @@ if (process.env.NODE_ENV !== 'production' && fs.existsSync('.env')) {
 
 // Initialize Stripe
 console.log('🔧 Environment check:');
-console.log('  STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY ? 'SET' : 'MISSING');
-console.log('  STRIPE_WEBHOOK_SECRET:', process.env.STRIPE_WEBHOOK_SECRET ? 'SET' : 'MISSING');
+console.log('  STRIPE_SECRET_KEY:', (process.env.STRIPE_SECRET_KEY || process.env['stripe-secret-key']) ? 'SET' : 'MISSING');
+console.log('  STRIPE_WEBHOOK_SECRET:', (process.env.STRIPE_WEBHOOK_SECRET || process.env['stripe-webhook-secret']) ? 'SET' : 'MISSING');
 console.log('  PRICE_ID_MONTHLY:', process.env.PRICE_ID_MONTHLY ? 'SET' : 'MISSING');
 
+// Get Stripe configuration from either naming convention
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY || process.env['stripe-secret-key'];
+const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET || process.env['stripe-webhook-secret'];
+
 // Validate Stripe configuration
-if (!process.env.STRIPE_SECRET_KEY) {
+if (!stripeSecretKey) {
   console.error('❌ STRIPE_SECRET_KEY is required. Please check your environment configuration.');
   console.log('💡 For local development, copy .env.example to .env and add your test keys');
 }
 
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+const stripe = stripeSecretKey ? new Stripe(stripeSecretKey) : null;
 console.log('✅ Stripe', stripe ? 'initialized' : 'NOT INITIALIZED (missing secret key)');
 
 // Initialize Firebase Admin
@@ -294,7 +298,7 @@ app.post('/api/billing/portal', async (req, res) => {
 // Stripe webhook endpoint
 app.post('/api/billing/webhook', async (req, res) => {
   const sig = req.headers['stripe-signature'];
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const webhookSecret = stripeWebhookSecret;
 
   let event;
 
