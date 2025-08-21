@@ -95,7 +95,10 @@ function handleEmailVerification(user) {
   
   if (!banner || !user) {
     console.log('⚠️ Missing banner or user, hiding banner');
-    if (banner) banner.hidden = true;
+    if (banner) {
+      banner.style.display = 'none';
+      banner.hidden = true;
+    }
     return;
   }
   
@@ -115,7 +118,15 @@ function handleEmailVerification(user) {
     providerData: user.providerData.map(p => p.providerId)
   });
   
-  banner.hidden = !shouldShow;
+  if (shouldShow) {
+    console.log('📧 Showing verification banner');
+    banner.style.display = 'block';
+    banner.hidden = false;
+  } else {
+    console.log('📧 Hiding verification banner (user verified or not password provider)');
+    banner.style.display = 'none';
+    banner.hidden = true;
+  }
   
   console.log('📎 Attaching event handlers to verification buttons...');
 
@@ -209,7 +220,21 @@ function handleEmailVerification(user) {
       
       if (currentUser.emailVerified) {
         console.log('✅ Email is now verified! Hiding banner...');
+        console.log('📧 Banner element before hiding:', banner);
+        console.log('📧 Banner current styles:', {
+          display: banner.style.display,
+          hidden: banner.hidden,
+          className: banner.className
+        });
+        
+        banner.style.display = 'none';
         banner.hidden = true;
+        
+        console.log('📧 Banner styles after hiding:', {
+          display: banner.style.display,
+          hidden: banner.hidden
+        });
+        
         alert('Email verified successfully!');
       } else {
         console.log('⚠️ Email still not verified');
