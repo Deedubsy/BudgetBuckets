@@ -408,7 +408,7 @@ app.get('/home', (req, res) => {
 });
 
 app.get('/home.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'home.html'));
+  res.redirect(301, '/');
 });
 
 app.get('/calculators', (req, res) => {
@@ -429,6 +429,23 @@ app.get('/Method.html', (req, res) => {
 
 app.get('/guide', (req, res) => {
   res.sendFile(path.join(__dirname, 'Method.html'));
+});
+
+// SEO redirects for Google-expected URLs
+app.get('/guide/budget-buckets-method', (req, res) => {
+  res.redirect(301, '/method');
+});
+
+app.get('/contact', (req, res) => {
+  res.redirect(301, '/support');
+});
+
+app.get('/blog', (req, res) => {
+  res.redirect(301, '/');
+});
+
+app.get('/blog/', (req, res) => {
+  res.redirect(301, '/');
 });
 
 // Pricing page
