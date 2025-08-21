@@ -1920,16 +1920,27 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         
         if (currentUser) {
             // Show loading message for bucket data
+            console.log('📊 Starting to load user data...');
             if (window.authGuard) {
+                console.log('📊 Showing loading for bucket data');
                 window.authGuard.showAuthLoading('Loading your budget data...');
             }
             
             document.getElementById('userInfo').textContent = `Signed in as ${currentUser.email}`;
-            await loadFromCloud();
+            
+            try {
+                console.log('📊 Loading from cloud...');
+                await loadFromCloud();
+                console.log('📊 Cloud data loaded successfully');
+            } catch (error) {
+                console.error('📊 Failed to load cloud data:', error);
+            }
             
             // Hide loading overlay after buckets are loaded
+            console.log('📊 Hiding auth loading overlay');
             if (window.authGuard) {
                 window.authGuard.hideAuthLoading();
+                console.log('📊 Auth loading hidden');
             }
         }
         

@@ -14,7 +14,19 @@ class AuthGuard {
 
   // Show loading overlay during auth checks
   showAuthLoading(message = 'Checking authentication...') {
-    if (this.loadingElement) return;
+    console.log('🔄 showAuthLoading called with message:', message);
+    if (this.loadingElement) {
+      console.log('🔄 Loading element already exists, updating message');
+      // Update existing message
+      const messageElement = this.loadingElement.querySelector('p');
+      if (messageElement) {
+        messageElement.textContent = message;
+        console.log('🔄 Message updated to:', message);
+      }
+      return;
+    }
+    
+    console.log('🔄 Creating new loading element');
     
     this.loadingElement = document.createElement('div');
     this.loadingElement.id = 'authLoadingOverlay';
@@ -57,9 +69,12 @@ class AuthGuard {
 
   // Hide loading overlay
   hideAuthLoading() {
+    console.log('🔄 hideAuthLoading called, loadingElement exists:', !!this.loadingElement);
     if (this.loadingElement) {
+      console.log('🔄 Removing loading element');
       this.loadingElement.remove();
       this.loadingElement = null;
+      console.log('🔄 Loading element removed');
     }
   }
 
