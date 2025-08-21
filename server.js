@@ -11,8 +11,25 @@ const fs = require('fs');
 const Stripe = require('stripe');
 const admin = require('firebase-admin');
 
+// Load .env file for local development
+if (process.env.NODE_ENV !== 'production' && fs.existsSync('.env')) {
+  require('dotenv').config();
+}
+
 // Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+console.log('🔧 Environment check:');
+console.log('  STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY ? 'SET' : 'MISSING');
+console.log('  STRIPE_WEBHOOK_SECRET:', process.env.STRIPE_WEBHOOK_SECRET ? 'SET' : 'MISSING');
+console.log('  PRICE_ID_MONTHLY:', process.env.PRICE_ID_MONTHLY ? 'SET' : 'MISSING');
+
+// Validate Stripe configuration
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.error('❌ STRIPE_SECRET_KEY is required. Please check your environment configuration.');
+  console.log('💡 For local development, copy .env.example to .env and add your test keys');
+}
+
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+console.log('✅ Stripe', stripe ? 'initialized' : 'NOT INITIALIZED (missing secret key)');
 
 // Initialize Firebase Admin
 if (!admin.apps.length) {
@@ -114,10 +131,21 @@ app.get('/__/health', (req, res) => {
 
 // Billing API endpoints
 app.post('/api/billing/checkout', async (req, res) => {
+  console.log('💳 Checkout request received');
+  console.log('  Body:', req.body);
+  console.log('  Headers:', { auth: !!req.headers.authorization, contentType: req.headers['content-type'] });
+  
+  // Check if Stripe is configured
+  if (!stripe) {
+    console.log('❌ Stripe not configured');
+    return res.status(503).json({ error: 'Billing service not configured' });
+  }
+  
   try {
     // Verify Authorization header
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('❌ Missing or invalid auth header');
       return res.status(401).json({ error: 'Missing or invalid authorization header' });
     }
 
@@ -204,10 +232,20 @@ app.post('/api/billing/checkout', async (req, res) => {
 });
 
 app.post('/api/billing/portal', async (req, res) => {
+  console.log('🏛️ Portal request received');
+  console.log('  Headers:', { auth: !!req.headers.authorization, origin: req.headers.origin });
+  
+  // Check if Stripe is configured
+  if (!stripe) {
+    console.log('❌ Stripe not configured');
+    return res.status(503).json({ error: 'Billing service not configured' });
+  }
+  
   try {
     // Verify Authorization header
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('❌ Missing or invalid auth header');
       return res.status(401).json({ error: 'Missing or invalid authorization header' });
     }
 
@@ -377,6 +415,13 @@ app.post('/api/billing/webhook', async (req, res) => {
 
 // Get billing configuration
 app.get('/api/billing/config', (req, res) => {
+  console.log('⚙️ Config request received');
+  
+  if (!process.env.PRICE_ID_MONTHLY) {
+    console.log('❌ PRICE_ID_MONTHLY not configured');
+    return res.status(503).json({ error: 'Billing configuration not available' });
+  }
+  
   res.json({
     priceId: process.env.PRICE_ID_MONTHLY
   });
