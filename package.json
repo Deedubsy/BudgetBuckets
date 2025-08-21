@@ -7,7 +7,21 @@
     "start": "node server.js",
     "dev": "node server-dev.js",
     "dev:full": "node server.js",
-    "test": "echo \"No tests configured\" && exit 0"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:unit": "jest test/unit",
+    "test:integration": "jest test/integration",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:billing": "playwright test tests/e2e/account-billing.spec.ts",
+    "test:e2e:billing:headed": "playwright test tests/e2e/account-billing.spec.ts --headed",
+    "test:performance": "jest test/performance",
+    "test:perf:e2e": "playwright test test/performance",
+    "test:visual": "playwright test e2e-tests/visual-regression.spec.js",
+    "test:all": "node scripts/run-all-tests.js",
+    "test:all:quick": "node scripts/run-all-tests.js --skip-e2e --skip-visual"
   },
   "engines": {
     "node": ">=20"
@@ -36,5 +50,11 @@
   "bugs": {
     "url": "https://github.com/Deedubsy/BudgetBuckets/issues"
   },
-  "homepage": "https://github.com/Deedubsy/BudgetBuckets#readme"
+  "homepage": "https://github.com/Deedubsy/BudgetBuckets#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "jest": "^30.0.5",
+    "jest-environment-jsdom": "^30.0.5",
+    "jsdom": "^26.1.0"
+  }
 }
