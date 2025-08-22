@@ -57,6 +57,22 @@ window.addEventListener('popstate', () => {
   }
 });
 
+// Back to Budgets button
+const backToBudgetsBtn = document.getElementById('backToBudgetsBtn');
+if (backToBudgetsBtn) {
+  backToBudgetsBtn.addEventListener('click', () => {
+    // Show main content and hide account view
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) mainContent.style.display = 'block';
+    
+    accountRoot.hidden = true;
+    if (typeof hideAccountView === 'function') hideAccountView();
+    
+    // Update URL
+    history.replaceState(null, '', window.location.pathname);
+  });
+}
+
 // Plan UI updates
 function updatePlanUI(plan) {
   updateBucketCounter();

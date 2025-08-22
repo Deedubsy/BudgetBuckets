@@ -691,7 +691,12 @@
       </style>
 
       <div class="account-header">
-        <h1 class="account-title">Account</h1>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <button type="button" class="btn btn-link" id="backToBudgetsBtn" title="Back to Budget Buckets">
+            ← Back to Budgets
+          </button>
+          <h1 class="account-title">Account</h1>
+        </div>
         <div style="display: flex; gap: 8px;">
           <button type="button" class="btn btn-secondary" id="manageAccountBtn" hidden>
             Manage Billing
@@ -781,7 +786,7 @@
             <input type="email" id="newEmail" class="form-input" placeholder="Enter new email address">
             <div id="passwordForEmail" class="form-group" style="margin-top: 1rem;">
               <label for="currentPasswordEmail" class="form-label">Current Password</label>
-              <input type="password" id="currentPasswordEmail" class="form-input" placeholder="Enter current password">
+              <input type="password" id="currentPasswordEmail" class="form-input" placeholder="Required for security" autocomplete="current-password">
             </div>
             <div id="googleReauthEmail" class="form-help hidden">
               You'll need to reauthenticate with Google to change your email address.
@@ -796,9 +801,9 @@
           <!-- Change Password -->
           <div id="changePasswordSection" class="form-group">
             <label for="currentPassword" class="form-label">Change Password</label>
-            <input type="password" id="currentPassword" class="form-input" placeholder="Current password" style="margin-bottom: 0.75rem;">
-            <input type="password" id="newPassword" class="form-input" placeholder="New password" style="margin-bottom: 0.75rem;">
-            <input type="password" id="confirmPassword" class="form-input" placeholder="Confirm new password">
+            <input type="password" id="currentPassword" class="form-input" placeholder="Enter current password" autocomplete="current-password" style="margin-bottom: 0.75rem;">
+            <input type="password" id="newPassword" class="form-input" placeholder="Enter new password" autocomplete="new-password" style="margin-bottom: 0.75rem;">
+            <input type="password" id="confirmPassword" class="form-input" placeholder="Confirm new password" autocomplete="new-password">
             <div style="margin-top: 1rem;">
               <button type="button" class="btn btn-primary" id="changePasswordBtn">
                 Change Password

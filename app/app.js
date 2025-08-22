@@ -307,6 +307,11 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         document.getElementById('leftoverAfterSavings').textContent = formatCurrency(leftover);
         document.getElementById('savingsRate').textContent = formatPercent(savingsRate);
         
+        // Update bucket counter whenever derived values update
+        if (window.updateBucketCounter) {
+            window.updateBucketCounter();
+        }
+        
         updateTotals();
         
         // Update allocation ring
