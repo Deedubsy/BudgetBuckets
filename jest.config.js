@@ -1,9 +1,13 @@
 module.exports = {
   testEnvironment: 'jsdom',
   setupFiles: ['<rootDir>/test/setup.js'],
+  testPathIgnorePatterns: [
+    '<rootDir>/node_modules/',
+    '<rootDir>/e2e-tests/',
+    '<rootDir>/tests/e2e/'
+  ],
   testMatch: [
-    '**/__tests__/**/*.js',
-    '**/?(*.)+(spec|test).js'
+    '<rootDir>/test/**/*.test.js'
   ],
   collectCoverageFrom: [
     'app/**/*.js',
