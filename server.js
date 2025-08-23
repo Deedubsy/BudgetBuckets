@@ -440,31 +440,67 @@ app.get('/api/billing/config', (req, res) => {
 
 // EJS-rendered public pages
 app.get(['/', '/home'], (req, res) =>
-  res.render('pages/home', { active: 'home', pageCss: 'home.css' })
+  res.render('pages/home', { 
+    active: 'home', 
+    pageCss: 'home.css', 
+    pageScript: null, // Home page uses only JSON-LD, no interactive JS
+    year: new Date().getFullYear() 
+  })
 );
 
 app.get(['/pricing', '/pricing/'], (req, res) =>
-  res.render('pages/pricing', { active: 'pricing', pageCss: 'pricing.css' })
+  res.render('pages/pricing', { 
+    active: 'pricing', 
+    pageCss: 'pricing.css', 
+    pageScript: 'pricing.js', // Smooth scrolling functionality
+    year: new Date().getFullYear() 
+  })
 );
 
 app.get(['/guide/budget-buckets-method', '/guide', '/method'], (req, res) =>
-  res.render('pages/guide-budget-method', { active: 'guide', pageCss: 'guide.css' })
+  res.render('pages/guide-budget-method', { 
+    active: 'guide', 
+    pageCss: 'guide.css', 
+    pageScript: null, // No interactive JS needed after EJS substitution
+    year: new Date().getFullYear(),
+    lastUpdated: 'August 2025'
+  })
 );
 
 app.get(['/calculators', '/calculator'], (req, res) =>
-  res.render('pages/calculators', { active: 'calculators', pageCss: 'calculators.css' })
+  res.render('pages/calculators', { 
+    active: 'calculators', 
+    pageCss: 'calculators.css', 
+    pageScript: 'calculators.js', // Complex calculator functionality
+    year: new Date().getFullYear() 
+  })
 );
 
 app.get(['/privacy'], (req, res) =>
-  res.render('pages/privacy', { active: null, pageCss: 'privacy.css' })
+  res.render('pages/privacy', { 
+    active: null, 
+    pageCss: 'privacy.css', 
+    pageScript: null, // No interactive JS needed
+    year: new Date().getFullYear() 
+  })
 );
 
 app.get(['/terms'], (req, res) =>
-  res.render('pages/terms', { active: null, pageCss: 'terms.css' })
+  res.render('pages/terms', { 
+    active: null, 
+    pageCss: 'terms.css', 
+    pageScript: null, // No interactive JS needed
+    year: new Date().getFullYear() 
+  })
 );
 
 app.get(['/support', '/contact'], (req, res) =>
-  res.render('pages/support', { active: null, pageCss: 'support.css' })
+  res.render('pages/support', { 
+    active: null, 
+    pageCss: 'support.css', 
+    pageScript: null, // No interactive JS needed
+    year: new Date().getFullYear() 
+  })
 );
 
 // Redirects for old .html URLs

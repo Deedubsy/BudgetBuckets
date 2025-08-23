@@ -17,4 +17,9 @@
   <link rel="stylesheet" href="/assets/css/base.css">
   <link rel="stylesheet" href="/assets/css/components.css">
   <% if (pageCss) { %><link rel="stylesheet" href="/assets/css/pages/<%= pageCss %>"><% } %>
+  
+  <!-- Page-specific JavaScript -->
+  <% if (pageScript) { %>
+    <script type="module" src="/assets/js/<%= pageScript %>" defer></script>
+  <% } %>
 </head>

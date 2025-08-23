@@ -2,7 +2,7 @@
   <div class="container footgrid">
     <div>
       <div class="brand"><span class="dot" aria-hidden="true"></span><span>Budget Buckets</span></div>
-      <p class="tiny">© <span id="year"></span> Budget Buckets. All rights reserved.</p>
+      <p class="tiny">© <%= year || new Date().getFullYear() %> Budget Buckets. All rights reserved.</p>
     </div>
     <nav>
       <strong class="tiny">Product</strong><br>
@@ -18,8 +18,3 @@
     </nav>
   </div>
 </footer>
-
-<script>
-  // Set current year
-  document.getElementById('year').textContent = new Date().getFullYear();
-</script>
