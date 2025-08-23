@@ -2,7 +2,7 @@
 title: "Budget Buckets - Changelog"
 owner: "engineering"
 status: "active"
-last_review: "2025-08-20"
+last_review: "2025-08-23"
 tags: ["changelog", "releases", "history"]
 ---
 
@@ -15,14 +15,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 
 ### Added
-- Comprehensive documentation structure with architecture diagrams
-- Security notes and compliance documentation
-- Testing strategy and runbook procedures
-- Contributing guidelines and development workflow
+- Modern **Stripe.js client-side integration** replacing server-side redirects
+- Embedded Payment Element with dark theme matching app design
+- Dynamic payment modal for in-app subscription upgrades
+- New API endpoints: `/api/billing/stripe-key`, `/api/billing/setup-intent`, `/api/billing/create-subscription`
+- Setup Intent pattern for secure payment method collection
+- Enhanced Content Security Policy with Stripe domains
+- Comprehensive error handling for billing operations
 
 ### Changed
-- Organized documentation into logical categories (architecture, guides, runbooks, etc.)
-- Updated README with streamlined quick start and documentation links
+- **BREAKING**: Migrated from Stripe Checkout sessions to modern Payment Elements
+- Upgrade flow now uses embedded payment form instead of redirects
+- Improved user experience with in-app payment processing
+- Enhanced billing error messages for better user guidance
+- Removed duplicate manage billing button from account header
+- Updated documentation with modern Stripe.js implementation details
+
+### Fixed
+- Content Security Policy violations preventing Stripe.js loading
+- Billing portal access errors for users without Stripe customers
+- Calculator input visibility and tab switching functionality
+- Stripe initialization and payment element creation error handling
+
+### Technical Improvements
+- Added `stripe-publish-key` environment variable support
+- Enhanced logging and debugging for payment flows
+- Improved client-side Stripe integration with comprehensive error handling
+- Updated server-side billing endpoints for modern Stripe patterns
 
 ## [2.1.0] - 2025-08-20
 

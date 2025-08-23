@@ -228,71 +228,131 @@ watchPlan((plan) => {
 
 ## 3. Billing Flows
 
-### 3.1 Upgrade to Plus Flow
+### 3.1 Upgrade to Plus Flow (Modern Stripe.js Implementation)
 
 ```mermaid
 sequenceDiagram
     participant U as User
     participant App as Client App
+    participant Modal as Payment Modal
     participant API as Express API
-    participant Stripe as Stripe Checkout
+    participant Stripe as Stripe.js
+    participant StripeAPI as Stripe API
     participant Webhook as Stripe Webhook
     participant Firebase as Firebase Auth
     participant Firestore as Firestore DB
 
     U->>App: Click "Upgrade to Plus"
-    App->>API: POST /api/billing/checkout + ID token
+    App->>Stripe: Initialize Stripe.js with publishable key
+    App->>API: POST /api/billing/setup-intent + ID token
     API->>API: Verify Firebase ID token
-    API->>Stripe: Create customer (if new)
-    API->>Stripe: Create checkout session
-    Stripe->>API: Checkout URL
-    API->>App: Return checkout URL
-    App->>U: Redirect to Stripe Checkout
+    API->>StripeAPI: Create customer (if new)
+    API->>StripeAPI: Create Setup Intent
+    StripeAPI->>API: Setup Intent client secret
+    API->>App: Return client secret + customer ID
+    App->>Modal: Show payment modal with Stripe Elements
+    Modal->>U: Display embedded payment form
     
-    U->>Stripe: Complete payment
-    Stripe->>Webhook: subscription.created event
+    U->>Modal: Enter payment details
+    U->>Modal: Click "Complete Payment"
+    Modal->>Stripe: Confirm Setup Intent
+    Stripe->>StripeAPI: Process payment method
+    StripeAPI->>Modal: Setup Intent confirmed
+    Modal->>API: POST /api/billing/create-subscription
+    API->>StripeAPI: Create subscription with payment method
+    StripeAPI->>Webhook: subscription.created event
     Webhook->>Firestore: Update user subscription status
     Webhook->>Firebase: Set custom claims { plan: 'plus' }
-    Stripe->>U: Redirect to /app?upgraded=success
     
-    U->>App: Return to app
-    App->>Firebase: Force token refresh (detect ?upgraded)
+    Modal->>App: Payment success
+    App->>U: Show success message + reload page
+    App->>Firebase: Force token refresh
     Firebase->>App: New claims { plan: 'plus' }
     App->>U: Show Plus features unlocked
 ```
 
 **Implementation:**
 ```javascript
-// app/account.js - Upgrade flow
-async function upgradeToPlus() {
-  try {
-    const user = auth.currentUser;
-    const token = await user.getIdToken();
-    
-    const response = await fetch('/api/billing/checkout', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        uid: user.uid,
-        email: user.email,
-        priceId: PRICE_ID_MONTHLY
-      })
+// assets/js/stripe-payment.js - Modern Stripe.js integration
+export async function initializeStripe() {
+  // Load Stripe.js library dynamically
+  if (!window.Stripe) {
+    const script = document.createElement('script');
+    script.src = 'https://js.stripe.com/v3/';
+    document.head.appendChild(script);
+    await new Promise((resolve, reject) => {
+      script.onload = resolve;
+      script.onerror = reject;
     });
-    
-    if (!response.ok) {
-      throw new Error('Failed to create checkout session');
-    }
-    
-    const { url } = await response.json();
-    window.location.href = url; // Redirect to Stripe
-    
-  } catch (error) {
-    console.error('Upgrade error:', error);
-    showError('Failed to start upgrade process. Please try again.');
   }
+  
+  // Get publishable key from server
+  const response = await fetch('/api/billing/stripe-key');
+  const { publishableKey } = await response.json();
+  
+  // Initialize Stripe with publishable key
+  stripe = window.Stripe(publishableKey);
+  return stripe;
+}
+
+export async function createPaymentElement(containerId, options) {
+  // Create Setup Intent for subscription
+  const response = await fetch('/api/billing/setup-intent', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${options.idToken}`
+    },
+    body: JSON.stringify({
+      uid: options.uid,
+      email: options.email,
+      priceId: options.priceId
+    })
+  });
+  
+  const { clientSecret, customerId } = await response.json();
+  
+  // Create Stripe Elements with dark theme
+  elements = stripe.elements({
+    clientSecret,
+    appearance: {
+      theme: 'night',
+      variables: {
+        colorPrimary: '#00cdd6',
+        colorBackground: '#0f1720',
+        colorText: '#ffffff'
+      }
+    }
+  });
+  
+  // Create and mount Payment Element
+  paymentElement = elements.create('payment', {
+    layout: 'tabs'
+  });
+  paymentElement.mount(`#${containerId}`);
+  
+  return { elements, paymentElement, clientSecret, customerId };
+}
+
+// app/account.js - Updated upgrade flow
+async function handleUpgrade() {
+  if (!stripe) {
+    stripe = await initializeStripe();
+  }
+  
+  // Create payment modal dynamically
+  createPaymentModal();
+  
+  // Create payment element
+  paymentElementData = await createPaymentElement('stripe-payment-element', {
+    uid: currentUser.uid,
+    email: currentUser.email,
+    priceId: PRICE_ID_MONTHLY,
+    idToken: await getIdToken(currentUser)
+  });
+  
+  // Show modal
+  showPaymentModal();
 }
 ```
 
@@ -577,4 +637,4 @@ async function handleBillingAction(action) {
 
 ---
 
-**Last updated: 21 Aug 2025 (AEST)**
+**Last updated: 23 Aug 2025 (AEST)** - Updated with modern Stripe.js implementation
