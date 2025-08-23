@@ -29,6 +29,29 @@ th{background:rgba(0,205,214,.1);color:var(--text);font-weight:600}
 tr:last-child td{border-bottom:none}
 .right{text-align:right}
 
+/* Table input styling for better visibility */
+.table-input {
+  width: 100%;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.table-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: #0f1720;
+}
+
+.table-input.number-input {
+  width: 80px;
+  text-align: right;
+}
+
 .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#0e1821;border:1px solid var(--border);color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.2px}
 
 .kpi{padding:16px;border-radius:14px;background:linear-gradient(180deg,#0f1520,#0c1117);border:1px solid var(--border);transition:border-color 0.3s ease}

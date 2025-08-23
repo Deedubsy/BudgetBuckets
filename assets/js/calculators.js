@@ -9,7 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
       $$('.tab').forEach(t => t.setAttribute('aria-selected', 'false'));
       $$('[role="tabpanel"]').forEach(p => p.hidden = true);
       this.setAttribute('aria-selected', 'true');
-      $(this.getAttribute('aria-controls')).hidden = false;
+      const targetPanel = $(this.getAttribute('aria-controls'));
+      if (targetPanel) {
+        targetPanel.hidden = false;
+      }
     });
   });
 
@@ -53,8 +56,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!bc.table) return; // Safety check
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><input type="text" placeholder="e.g. Groceries" value="${data.name || ''}" style="width:100%;border:none;background:transparent;color:inherit" /></td>
-      <td class="right"><input type="number" min="0" step="0.01" placeholder="0.00" value="${data.amount || ''}" style="width:80px;border:none;background:transparent;color:inherit;text-align:right" /></td>
+      <td><input type="text" class="table-input" placeholder="e.g. Groceries" value="${data.name || ''}" /></td>
+      <td class="right"><input type="number" class="table-input number-input" min="0" step="0.01" placeholder="0.00" value="${data.amount || ''}" /></td>
       <td class="right"><button class="remove-row-btn" style="background:transparent;border:1px solid var(--border);color:var(--text);padding:2px 6px;border-radius:4px;cursor:pointer">×</button></td>
     `;
     bc.table.appendChild(tr);
