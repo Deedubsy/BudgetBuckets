@@ -107,6 +107,13 @@
   font-weight: 600;
 }
 
+.comparison-table th:nth-child(2),
+.comparison-table th:nth-child(3),
+.comparison-table td:nth-child(2),
+.comparison-table td:nth-child(3) {
+  text-align: center;
+}
+
 .comparison-table .check {
   color: var(--accent2);
   text-align: center;
