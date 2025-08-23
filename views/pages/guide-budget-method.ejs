@@ -1,0 +1,186 @@
+<%
+const layoutData = {
+  title: 'Budget Buckets Method — What It Is, Why It Works, and How To Use It',
+  description: 'A practical guide to the Budget Buckets method: why buckets beat categories, how to set them up for weekly/fortnightly pay, and example bucket plans.',
+  active: 'guide',
+  pageCss: 'guide.css',
+  body: `
+    <div class="container">
+      <section class="hero">
+        <span class="eyebrow">Complete Guide</span>
+        <h1>Budget Buckets Method — What It Is, Why It Works, and How To Use It</h1>
+        <p class="lead">Step‑by‑step setup for bucket budgeting, with weekly & fortnightly pay cycle tips, example allocations, and common mistakes to avoid.</p>
+      </section>
+
+      <div class="content">
+        <div class="card section">
+          <div class="kicker">The Basics</div>
+          <h2>What Are Budget Buckets?</h2>
+          <p>Budget buckets are simple containers for your money, organized by purpose rather than complex categories. Instead of tracking dozens of line items, you allocate money to a few meaningful buckets like "Housing & Utilities," "Food & Transport," and "Emergency Fund."</p>
+
+          <h3>Why Buckets Beat Categories</h3>
+          <p>Traditional budgeting fails because it's too granular. Buckets work because they:</p>
+          <ul>
+            <li><strong>Reduce decision fatigue</strong> — 5-8 buckets vs 20+ categories</li>
+            <li><strong>Match real spending</strong> — Money flows between related expenses naturally</li>
+            <li><strong>Stay flexible</strong> — Overspend on groceries? It comes from your Food & Transport bucket</li>
+            <li><strong>Work with any pay cycle</strong> — Weekly, fortnightly, monthly frequencies supported</li>
+          </ul>
+
+          <div class="viz">
+            <div class="bucket">
+              <h4>Housing & Utilities</h4>
+              <div class="amt">$1,800/month</div>
+            </div>
+            <div class="bucket">
+              <h4>Food & Transport</h4>
+              <div class="amt">$800/month</div>
+            </div>
+            <div class="bucket">
+              <h4>Emergency Fund</h4>
+              <div class="amt">$500/month</div>
+            </div>
+          </div>
+
+          <h2>Setting Up Your Buckets</h2>
+          <p>Follow this process to create buckets that actually work:</p>
+
+          <h3>Step 1: Track Your Current Spending</h3>
+          <p>Look at 2-3 months of bank statements and group expenses into natural clusters. Don't overthink it—if you regularly spend money on something, it needs a bucket.</p>
+
+          <h3>Step 2: Choose Your Global Frequency</h3>
+          <p>This is key: pick ONE frequency that matches your main income source. If you're paid fortnightly, think in fortnightly amounts for everything.</p>
+
+          <table>
+            <thead>
+              <tr><th>Pay Cycle</th><th>Best For</th><th>Tips</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Weekly</td>
+                <td>Hourly workers, freelancers</td>
+                <td>Divide monthly bills by 4.33</td>
+              </tr>
+              <tr>
+                <td>Fortnightly</td>
+                <td>Most Australian employees</td>
+                <td>Divide monthly bills by 2.17</td>
+              </tr>
+              <tr>
+                <td>Monthly</td>
+                <td>Salary workers, contractors</td>
+                <td>Easiest for bill planning</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>Step 3: Create Your Buckets</h3>
+          <p>Start with these essential buckets, then customize:</p>
+
+          <h4>Essential Buckets</h4>
+          <ul>
+            <li><strong>Housing & Utilities</strong> — Rent/mortgage, electricity, gas, water, internet</li>
+            <li><strong>Food & Transport</strong> — Groceries, fuel, public transport, car maintenance</li>
+            <li><strong>Insurance & Bills</strong> — Health, car, contents insurance, phone bills</li>
+            <li><strong>Personal & Entertainment</strong> — Dining out, streaming, hobbies, clothing</li>
+            <li><strong>Emergency Fund</strong> — Build to 3-6 months of expenses</li>
+          </ul>
+
+          <h4>Optional Buckets (if they apply)</h4>
+          <ul>
+            <li><strong>Debt Payments</strong> — Credit cards, personal loans (separate from mortgage)</li>
+            <li><strong>Savings Goals</strong> — Holiday, car deposit, home deposit</li>
+            <li><strong>Annual Expenses</strong> — Rego, insurance premiums, subscriptions paid yearly</li>
+          </ul>
+
+          <div class="tip">
+            <p><strong>Pro tip:</strong> Start with 5-6 buckets maximum. You can always add more later, but it's harder to simplify once you've complicated things.</p>
+          </div>
+
+          <h2>Example Bucket Setups</h2>
+
+          <h3>Young Professional ($5,000/month after tax)</h3>
+          <table>
+            <thead>
+              <tr><th>Bucket</th><th>Amount</th><th>%</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Housing & Utilities</td><td>$1,800</td><td>36%</td></tr>
+              <tr><td>Food & Transport</td><td>$800</td><td>16%</td></tr>
+              <tr><td>Insurance & Bills</td><td>$300</td><td>6%</td></tr>
+              <tr><td>Personal & Entertainment</td><td>$600</td><td>12%</td></tr>
+              <tr><td>Emergency Fund</td><td>$500</td><td>10%</td></tr>
+              <tr><td>Savings Goals</td><td>$1,000</td><td>20%</td></tr>
+            </tbody>
+          </table>
+
+          <h3>Family with Kids ($7,500/month after tax)</h3>
+          <table>
+            <thead>
+              <tr><th>Bucket</th><th>Amount</th><th>%</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Housing & Utilities</td><td>$2,500</td><td>33%</td></tr>
+              <tr><td>Food & Transport</td><td>$1,200</td><td>16%</td></tr>
+              <tr><td>Insurance & Bills</td><td>$500</td><td>7%</td></tr>
+              <tr><td>Kids & Education</td><td>$800</td><td>11%</td></tr>
+              <tr><td>Personal & Entertainment</td><td>$700</td><td>9%</td></tr>
+              <tr><td>Emergency Fund</td><td>$600</td><td>8%</td></tr>
+              <tr><td>Savings Goals</td><td>$1,200</td><td>16%</td></tr>
+            </tbody>
+          </table>
+
+          <h2>Common Mistakes to Avoid</h2>
+          
+          <h3>1. Too Many Buckets</h3>
+          <p>If you have more than 8-10 buckets, you're probably overcomplicating things. Combine similar expenses into broader buckets.</p>
+
+          <h3>2. Mixing Frequencies</h3>
+          <p>Don't think "rent is monthly but groceries are weekly." Pick one frequency and convert everything to match.</p>
+
+          <h3>3. Perfect Allocation Paralysis</h3>
+          <p>Your first budget won't be perfect. Start with rough estimates and adjust after a month or two of real data.</p>
+
+          <h3>4. Ignoring Irregular Expenses</h3>
+          <p>Car registration, annual insurance, holiday spending—these will break your budget if you don't plan for them.</p>
+
+          <h2>Making It Work</h2>
+
+          <h3>Review Monthly</h3>
+          <p>Check if your bucket allocations match reality. Consistently overspending in one bucket? Either increase its allocation or examine your spending habits.</p>
+
+          <h3>Use the 50/30/20 Rule as a Guide</h3>
+          <ul>
+            <li><strong>50% Needs</strong> — Housing, utilities, groceries, transport, minimum debt payments</li>
+            <li><strong>30% Wants</strong> — Entertainment, dining out, hobbies, non-essential shopping</li>
+            <li><strong>20% Savings & Debt</strong> — Emergency fund, retirement, extra debt payments</li>
+          </ul>
+
+          <h3>Start Conservative</h3>
+          <p>It's easier to increase a bucket than to deal with constant overspending. Start with conservative estimates and adjust upward if needed.</p>
+
+          <div class="tip">
+            <p><strong>Remember:</strong> The best budget is the one you'll actually use. Simple buckets that match your real spending patterns will always beat a complex system you abandon after two weeks.</p>
+          </div>
+
+          <h2>Ready to Start?</h2>
+          <p>Use our <a href="/calculators">free budget calculator</a> to experiment with different bucket allocations, or <a href="/auth/login">open the app</a> to create your first budget with cloud sync across all your devices.</p>
+        </div>
+
+        <aside class="card toc">
+          <h3>Contents</h3>
+          <ul>
+            <li><a href="#what-are-buckets">What Are Budget Buckets?</a></li>
+            <li><a href="#setting-up">Setting Up Your Buckets</a></li>
+            <li><a href="#examples">Example Setups</a></li>
+            <li><a href="#mistakes">Common Mistakes</a></li>
+            <li><a href="#making-it-work">Making It Work</a></li>
+          </ul>
+        </aside>
+      </div>
+    </div>
+  `
+};
+%>
+
+<%- include('../layout', layoutData) %>

@@ -1,53 +1,42 @@
 # Local Billing Setup for Development
 
-## Overview
-To test billing functionality locally, you need to configure Stripe test environment variables.
+> **⚠️ Note**: This is a quick setup guide for local development. For comprehensive documentation, see:
+> - **[Setup Stripe Billing](./docs/setup-stripe.md)** - Complete Stripe configuration
+> - **[App Hosting Deploy](./docs/app-hosting-deploy.md)** - Production deployment
+> - **[Troubleshooting](./docs/troubleshooting.md)** - Common issues and fixes
 
-## Setup Steps
+## Quick Start
 
 ### 1. Get Stripe Test Keys
 
 1. Go to [Stripe Dashboard](https://dashboard.stripe.com/test/apikeys)
-2. Copy your **Publishable key** and **Secret key** (both should start with `pk_test_` and `sk_test_`)
+2. Copy your **Secret key** (starts with `sk_test_`)
 
 ### 2. Create Local Environment File
 
-1. Copy the example environment file:
-   ```bash
-   cp .env.example .env
-   ```
+```bash
+# Copy example file
+cp .env.example .env
 
-2. Edit `.env` and replace the placeholder values:
-   ```env
-   # Replace these with your actual Stripe test keys
-   STRIPE_SECRET_KEY=sk_test_your_actual_secret_key_here
-   STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
-   PRICE_ID_MONTHLY=price_your_price_id_here
-   ```
+# Edit with your test keys
+STRIPE_SECRET_KEY=sk_test_your_actual_secret_key_here
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
+PRICE_ID_MONTHLY=price_your_price_id_here
+```
 
-### 3. Create Stripe Price
+### 3. Create Stripe Product & Price
 
 1. In [Stripe Dashboard](https://dashboard.stripe.com/test/products), create a product
 2. Add a price: **$3.99 AUD monthly recurring**
 3. Copy the Price ID (starts with `price_`) to your `.env` file
 
-### 4. Set Up Webhook (Optional for Local Testing)
-
-1. Install Stripe CLI: https://stripe.com/docs/stripe-cli
-2. Login: `stripe login`
-3. Forward webhooks to local server:
-   ```bash
-   stripe listen --forward-to http://localhost:8080/api/billing/webhook
-   ```
-4. Copy the webhook secret (starts with `whsec_`) to your `.env` file
-
-### 5. Start Development Server
+### 4. Start Development Server
 
 ```bash
 npm run dev:full
 ```
 
-You should see:
+✅ **Success indicators**:
 ```
 🔧 Environment check:
   STRIPE_SECRET_KEY: SET
@@ -56,31 +45,54 @@ You should see:
 ✅ Stripe initialized
 ```
 
-## Testing Billing Flows
+## Testing Flows
 
-### Upgrade Flow
-1. Login to the app
-2. Go to Account page
-3. Click "Upgrade $3.99/mo"
-4. Use test card: `4242 4242 4242 4242`
-5. Complete checkout → should return to app with Plus plan
+### Complete Test Sequence
 
-### Manage Billing Flow  
-1. Click "Manage Billing" 
-2. Cancel subscription in Stripe portal
-3. Return to app → should revert to Free plan
+1. **Sign up** → Email verification → App access
+2. **Create 5 buckets** → Hit free limit → Upgrade prompt
+3. **Upgrade to Plus** → Stripe Checkout → Unlimited buckets
+4. **Manage billing** → Customer Portal → Cancel subscription
+5. **Verify downgrade** → Back to Free plan → 5 bucket limit
 
-## Test Cards
+### Test Cards
 
-- **Success**: `4242 4242 4242 4242`
-- **Decline**: `4000 0000 0000 0002`
-- **3D Secure**: `4000 0027 6000 3184`
+| Card Number | Result |
+|-------------|--------|
+| `4242 4242 4242 4242` | ✅ Success |
+| `4000 0000 0000 0002` | ❌ Decline |
+| `4000 0027 6000 3184` | 🔐 3D Secure |
 
-Any future expiry date and any 3-digit CVC will work.
+*Any future expiry date and 3-digit CVC works*
 
-## Production vs Development
+## Webhook Testing (Optional)
 
-- **Local Development**: Uses test Stripe keys from `.env`
-- **Firebase App Hosting**: Uses production Stripe keys from Firebase Secret Manager
+For local webhook testing:
 
-The `.env` file is gitignored and won't be deployed to production.
+```bash
+# Install Stripe CLI
+brew install stripe/stripe-cli/stripe
+
+# Forward webhooks to local server
+stripe listen --forward-to http://localhost:8080/api/billing/webhook
+
+# Copy the webhook secret (whsec_...) to your .env file
+```
+
+## Environment Overview
+
+| Environment | Stripe Keys | Configuration |
+|-------------|-------------|---------------|
+| **Local Development** | Test keys from `.env` | This guide |
+| **Firebase App Hosting** | Live keys from Secret Manager | [Deploy Guide](./docs/app-hosting-deploy.md) |
+
+## Need Help?
+
+- **Setup Issues**: See [Setup Stripe Guide](./docs/setup-stripe.md)
+- **Deployment Problems**: See [App Hosting Deploy](./docs/app-hosting-deploy.md)  
+- **Errors & Debugging**: See [Troubleshooting Guide](./docs/troubleshooting.md)
+- **Complete Documentation**: See [README.md](./README.md)
+
+---
+
+**Last updated: 21 Aug 2025 (AEST)**

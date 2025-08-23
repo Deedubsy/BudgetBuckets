@@ -1,0 +1,66 @@
+<%
+const layoutData = {
+  title: 'Privacy Policy — Budget Buckets',
+  description: 'How Budget Buckets collects, uses and protects your personal information.',
+  active: null,
+  pageCss: 'privacy.css',
+  body: `
+    <div class="container">
+      <div class="legal-content">
+        <h1>Privacy Policy</h1>
+        <p class="updated">Last updated: January 2025</p>
+        
+        <h2>Overview</h2>
+        <p>Budget Buckets is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and protect your information when you use our budget management application.</p>
+
+        <h2>Information We Collect</h2>
+        <p>We collect and store the following information:</p>
+        <ul>
+          <li><strong>Account Information:</strong> Email address and authentication data through Firebase Authentication</li>
+          <li><strong>Budget Data:</strong> Your budget buckets, income settings, expenses, savings goals, and financial data you enter into the app</li>
+          <li><strong>Usage Data:</strong> Basic app usage statistics to improve our service</li>
+        </ul>
+
+        <h2>How We Use Your Information</h2>
+        <p>We use your information to:</p>
+        <ul>
+          <li>Provide and maintain the Budget Buckets service</li>
+          <li>Sync your budget data across your devices</li>
+          <li>Authenticate your account and ensure security</li>
+          <li>Improve our app based on usage patterns</li>
+          <li>Provide customer support when requested</li>
+        </ul>
+
+        <h2>Data Storage and Security</h2>
+        <p>Your data is stored securely using Google Firebase services with industry-standard encryption. We implement appropriate security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.</p>
+
+        <h2>Data Sharing</h2>
+        <p>We do not sell, trade, or share your personal financial data with third parties. Your budget information remains private and is only accessible to you through your authenticated account.</p>
+
+        <h2>Your Rights</h2>
+        <p>You have the right to:</p>
+        <ul>
+          <li>Access your personal data</li>
+          <li>Export your budget data using our export feature</li>
+          <li>Delete your account and associated data</li>
+          <li>Request corrections to your data</li>
+        </ul>
+
+        <h2>Data Retention</h2>
+        <p>We retain your data as long as your account is active. If you delete your account, we will delete your associated data within 30 days, except where required by law.</p>
+
+        <h2>Cookies and Tracking</h2>
+        <p>Budget Buckets uses minimal tracking technologies necessary for authentication and app functionality. We do not use advertising cookies or third-party tracking.</p>
+
+        <h2>Changes to This Policy</h2>
+        <p>We may update this Privacy Policy from time to time. We will notify users of any significant changes by updating the "Last updated" date and, where appropriate, providing additional notice.</p>
+
+        <h2>Contact Us</h2>
+        <p>If you have questions about this Privacy Policy, please contact us through our <a href="/support">Support page</a>.</p>
+      </div>
+    </div>
+  `
+};
+%>
+
+<%- include('../layout', layoutData) %>

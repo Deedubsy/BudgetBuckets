@@ -3,17 +3,17 @@
   "short_name": "Buckets",
   "icons": [
     {
-      "src": "/icon-dollar-192.png",
+      "src": "/assets/img/icon-dollar-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icon-dollar-256.png",
+      "src": "/assets/img/icon-dollar-256.png",
       "sizes": "256x256",
       "type": "image/png"
     },
     {
-      "src": "/budget-buckets-512-dollar.png",
+      "src": "/assets/img/budget-buckets-512-dollar.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

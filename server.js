@@ -96,6 +96,13 @@ app.use(helmet({
 // Enable gzip compression
 app.use(compression());
 
+// EJS template engine
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+
+// Serve static assets with long cache
+app.use('/assets', express.static(path.join(__dirname, 'assets'), { maxAge: '1y' }));
+
 // Body parser for JSON (except webhook endpoint)
 app.use('/api/billing/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
@@ -431,11 +438,45 @@ app.get('/api/billing/config', (req, res) => {
   });
 });
 
-// Root path - serve home.html as the main page
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'home.html'));
-});
+// EJS-rendered public pages
+app.get(['/', '/home'], (req, res) =>
+  res.render('pages/home', { active: 'home', pageCss: 'home.css' })
+);
 
+app.get(['/pricing', '/pricing/'], (req, res) =>
+  res.render('pages/pricing', { active: 'pricing', pageCss: 'pricing.css' })
+);
+
+app.get(['/guide/budget-buckets-method', '/guide', '/method'], (req, res) =>
+  res.render('pages/guide-budget-method', { active: 'guide', pageCss: 'guide.css' })
+);
+
+app.get(['/calculators', '/calculator'], (req, res) =>
+  res.render('pages/calculators', { active: 'calculators', pageCss: 'calculators.css' })
+);
+
+app.get(['/privacy'], (req, res) =>
+  res.render('pages/privacy', { active: null, pageCss: 'privacy.css' })
+);
+
+app.get(['/terms'], (req, res) =>
+  res.render('pages/terms', { active: null, pageCss: 'terms.css' })
+);
+
+app.get(['/support', '/contact'], (req, res) =>
+  res.render('pages/support', { active: null, pageCss: 'support.css' })
+);
+
+// Redirects for old .html URLs
+app.get('/home.html', (req, res) => res.redirect(301, '/'));
+app.get('/calculators.html', (req, res) => res.redirect(301, '/calculators'));
+app.get('/Method.html', (req, res) => res.redirect(301, '/guide/budget-buckets-method'));
+app.get('/pricing.html', (req, res) => res.redirect(301, '/pricing'));
+app.get('/privacy.html', (req, res) => res.redirect(301, '/privacy'));
+app.get('/terms.html', (req, res) => res.redirect(301, '/terms'));
+app.get('/support.html', (req, res) => res.redirect(301, '/support'));
+
+// Auth and App routes (keep existing functionality)
 app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'auth', 'login.html'));
 });
@@ -449,35 +490,7 @@ app.get('/app', (req, res) => {
 });
 
 app.get('/test', (req, res) => {
-  res.sendFile(path.join(__dirname, 'test.html'));
-});
-
-app.get('/home', (req, res) => {
-  res.sendFile(path.join(__dirname, 'home.html'));
-});
-
-app.get('/home.html', (req, res) => {
-  res.redirect(301, '/');
-});
-
-app.get('/calculators', (req, res) => {
-  res.sendFile(path.join(__dirname, 'calculators.html'));
-});
-
-app.get('/calculators.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'calculators.html'));
-});
-
-app.get('/method', (req, res) => {
-  res.sendFile(path.join(__dirname, 'Method.html'));
-});
-
-app.get('/Method.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'Method.html'));
-});
-
-app.get('/guide', (req, res) => {
-  res.sendFile(path.join(__dirname, 'Method.html'));
+  res.redirect(301, '/test/smoke-test.html');
 });
 
 // SEO redirects for Google-expected URLs
@@ -497,43 +510,7 @@ app.get('/blog/', (req, res) => {
   res.redirect(301, '/');
 });
 
-// Pricing page
-app.get('/pricing', (req, res) => {
-  res.sendFile(path.join(__dirname, 'pricing.html'));
-});
-
-app.get('/pricing.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'pricing.html'));
-});
-
-// Legal pages
-app.get('/privacy', (req, res) => {
-  res.sendFile(path.join(__dirname, 'privacy.html'));
-});
-
-app.get('/privacy.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'privacy.html'));
-});
-
-app.get('/terms', (req, res) => {
-  res.sendFile(path.join(__dirname, 'terms.html'));
-});
-
-app.get('/terms.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'terms.html'));
-});
-
-app.get('/support', (req, res) => {
-  res.sendFile(path.join(__dirname, 'support.html'));
-});
-
-app.get('/support.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'support.html'));
-});
-
-app.get('/contact', (req, res) => {
-  res.sendFile(path.join(__dirname, 'support.html'));
-});
+// Legacy redirects (routes now handled by EJS above)
 
 // SEO files
 app.get('/sitemap.xml', (req, res) => {
@@ -547,7 +524,7 @@ app.get('/robots.txt', (req, res) => {
 });
 
 app.get('/environment', (req, res) => {
-  res.sendFile(path.join(__dirname, 'environment-switcher.html'));
+  res.sendFile(path.join(__dirname, '_archive', 'environment-switcher.html'));
 });
 
 // Specific test file routes
@@ -585,7 +562,8 @@ app.get('/auth/*', (req, res, next) => {
 app.get('/test/*', (req, res, next) => {
   // Only serve the HTML if this isn't a request for a static file
   if (!path.extname(req.path) || req.path.endsWith('.html')) {
-    res.sendFile(path.join(__dirname, 'test.html'));
+    // For /test/* routes, let static middleware handle test files first
+    next();
   } else {
     next(); // Let the static middleware or 404 handler deal with it
   }

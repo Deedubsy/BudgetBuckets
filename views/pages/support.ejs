@@ -1,0 +1,121 @@
+<%
+const layoutData = {
+  title: 'Support — Budget Buckets',
+  description: 'Get help with Budget Buckets. Contact support and find answers to frequently asked questions.',
+  active: null,
+  pageCss: 'support.css',
+  body: `
+    <div class="container">
+      <div class="support-content">
+        <h1>Support & Help</h1>
+        <p>Need help with Budget Buckets? Check out our frequently asked questions below or contact us directly.</p>
+
+        <div class="status-indicator status-operational">
+          <span>●</span>
+          <span>All systems operational</span>
+        </div>
+        
+        <div class="support-section faq-section">
+          <h2>Frequently Asked Questions</h2>
+          
+          <div class="faq-item">
+            <div class="faq-question">How do I get started with Budget Buckets?</div>
+            <div class="faq-answer">
+              Start by setting your income amount and frequency in the "Income & Settings" section. Then create expense buckets for your regular spending categories (housing, transport, groceries, etc.) and add savings buckets for your financial goals. Add specific items to each bucket with their amounts.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">Does Budget Buckets connect to my bank accounts?</div>
+            <div class="faq-answer">
+              No, Budget Buckets is a manual budgeting tool. It doesn't connect to your bank accounts or automatically import transactions. You'll need to manually enter your spending and update your progress. This gives you full control over your data and privacy.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">How do savings goals work?</div>
+            <div class="faq-answer">
+              Savings buckets let you set a goal amount and target date. The app will calculate how much you need to save each period to reach your goal on time. You can also manually set your contribution amount and track your progress toward the goal.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">Can I access my budget on multiple devices?</div>
+            <div class="faq-answer">
+              Yes! Your budget data is automatically synced to the cloud when you're signed in. You can access your budget from any device by signing in with the same account.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">How do I backup my data?</div>
+            <div class="faq-answer">
+              Use the "Export" button in the app header to download a JSON file containing all your budget data. This serves as a backup that you can import later if needed. We recommend doing this regularly.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">What happens if I delete my account?</div>
+            <div class="faq-answer">
+              If you delete your account, all your budget data will be permanently removed from our servers within 30 days. Make sure to export your data first if you want to keep a copy.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">Is my financial data secure?</div>
+            <div class="faq-answer">
+              Yes, your data is stored securely using Google Firebase with industry-standard encryption. We don't share your financial information with third parties, and you can read our full Privacy Policy for more details.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">Can I use different currencies?</div>
+            <div class="faq-answer">
+              Yes, Budget Buckets supports multiple currencies including AUD, USD, EUR, GBP, CAD, NZD, JPY, CNY, and INR. You can change your currency in the settings section.
+            </div>
+          </div>
+        </div>
+
+        <div class="support-section">
+          <h2>Contact Support</h2>
+          <p>Still need help? Get in touch with us using one of the methods below:</p>
+
+          <div class="contact-methods">
+            <div class="contact-card">
+              <h3>📧 Email Support</h3>
+              <p>For general questions, bug reports, or feature requests</p>
+              <a href="mailto:support@budgetbucket.app">support@budgetbucket.app</a>
+              <p><small>Response time: 1-2 business days</small></p>
+            </div>
+
+            <div class="contact-card">
+              <h3>🔧 Technical Issues</h3>
+              <p>For technical problems or account issues</p>
+              <a href="mailto:tech@budgetbucket.app">tech@budgetbucket.app</a>
+              <p><small>Response time: 24-48 hours</small></p>
+            </div>
+
+            <div class="contact-card">
+              <h3>💡 Feature Requests</h3>
+              <p>Have an idea to improve Budget Buckets?</p>
+              <a href="mailto:feedback@budgetbucket.app">feedback@budgetbucket.app</a>
+              <p><small>We read every suggestion!</small></p>
+            </div>
+          </div>
+
+          <h2>Before Contacting Support</h2>
+          <p>To help us assist you better, please:</p>
+          <ul>
+            <li>Check the FAQ above for common solutions</li>
+            <li>Try refreshing your browser or signing out and back in</li>
+            <li>Include details about your browser, device, and what you were trying to do</li>
+            <li>If reporting a bug, include the steps to reproduce the issue</li>
+            <li>Export your data before making major changes (as a backup)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  `
+};
+%>
+
+<%- include('../layout', layoutData) %>

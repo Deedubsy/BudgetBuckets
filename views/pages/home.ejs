@@ -1,0 +1,155 @@
+<%
+const layoutData = {
+  title: 'Budget Buckets — Simple Weekly & Fortnightly Budgeting',
+  description: 'Free budgeting app for weekly, fortnightly & monthly pay cycles. Track expenses and savings in simple buckets. Multi-currency support for USD, AUD, EUR & more.',
+  active: 'home',
+  pageCss: 'home.css',
+  body: `
+    <!-- Hero -->
+    <section class="hero container">
+      <div class="grid">
+        <div class="card pitch">
+          <span class="eyebrow">Built for flexible pay cycles</span>
+          <h1>Budgeting that fits your <em>fortnight</em>.</h1>
+          <p class="lead">Track expenses and savings in simple buckets. One global frequency (Weekly/Fortnightly/Monthly/Yearly), clean math, no spreadsheets. Free calculators included.</p>
+          <div class="actions">
+            <a class="btn primary" href="/auth/login">Login</a>
+            <a class="btn" href="/calculators">Try Calculators</a>
+          </div>
+        </div>
+        <div class="card preview" aria-label="Product preview">
+          <div class="frame">
+            <svg width="540" height="300" role="img" aria-label="App screenshot placeholder" viewBox="0 0 540 300">
+              <defs>
+                <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#00cdd6" stop-opacity=".35" />
+                  <stop offset="100%" stop-color="#5eead4" stop-opacity=".15" />
+                </linearGradient>
+              </defs>
+              <rect width="100%" height="100%" rx="16" fill="url(#g)" />
+              <g fill="#0b0f14" opacity=".85">
+                <rect x="20" y="20" width="140" height="18" rx="6" />
+                <rect x="20" y="60" width="500" height="44" rx="10" />
+                <rect x="20" y="120" width="500" height="44" rx="10" />
+                <rect x="20" y="180" width="500" height="44" rx="10" />
+              </g>
+            </svg>
+          </div>
+          <div class="tag">Preview — Replace with real screenshot for higher CTR</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Feature highlights -->
+    <section class="section container">
+      <h2>Why Budget Buckets?</h2>
+      <p class="muted">Purpose-built for real-world pay cycles with plain-English controls and multi-currency support.</p>
+      <div class="features">
+        <article class="feature">
+          <div class="kicker">Fortnight-first</div>
+          <h3>Weekly ⇄ Fortnightly ⇄ Monthly</h3>
+          <p class="muted">Switch the global income frequency and the app updates every bucket instantly. Multi-currency support with local formatting via Intl APIs.</p>
+        </article>
+        <article class="feature">
+          <div class="kicker">Buckets not chaos</div>
+          <h3>Separate Expenses & Savings</h3>
+          <p class="muted">Organise by bucket, not categories. Toggle include/exclude, add bank account labels, and keep totals visible.</p>
+        </article>
+        <article class="feature">
+          <div class="kicker">Cloud sync</div>
+          <h3>Your data, in the cloud</h3>
+          <p class="muted">Secure sign-in with Email/Google. Profiles and budgets live in Firestore under your account.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Key pages tiles -->
+    <section class="section container">
+      <h2>Get started</h2>
+      <div class="tiles">
+        <a class="tile" href="/calculators">
+          <h3>Budget Calculator</h3>
+          <p class="muted">Convert between weekly, fortnightly, monthly frequencies and see your totals instantly.</p>
+        </a>
+        <a class="tile" href="/calculators">
+          <h3>Savings Rate & Time-to-Goal</h3>
+          <p class="muted">See how long it'll take to reach a target with your current plan.</p>
+        </a>
+        <a class="tile" href="/auth/login">
+          <h3>Full Budget App</h3>
+          <p class="muted">Create and manage multiple buckets with cloud sync and advanced features.</p>
+        </a>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="section container">
+      <h2>How it works</h2>
+      <div class="steps">
+        <div class="step"><span class="num">1</span><strong>Create your buckets.</strong> Add expenses and savings with a single global frequency.</div>
+        <div class="step"><span class="num">2</span><strong>Watch totals update.</strong> The sticky header shows monthly & fortnightly totals.</div>
+        <div class="step"><span class="num">3</span><strong>Stay consistent.</strong> Use the calculators and method guide to refine your plan.</div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section container">
+      <h2>FAQ</h2>
+      <details>
+        <summary>Is this free?</summary>
+        <p class="muted">Yes, the app is free while in active development. We may add a paid Pro tier later with advanced features.</p>
+      </details>
+      <details>
+        <summary>Does it support weekly and fortnightly pay cycles?</summary>
+        <p class="muted">Yes! Weekly and fortnightly are first-class, with clean conversions to monthly and yearly when needed.</p>
+      </details>
+      <details>
+        <summary>Where is my data stored?</summary>
+        <p class="muted">In your own secure Firestore account, scoped to your login. You can export/import at any time.</p>
+      </details>
+    </section>
+
+    <!-- CTA -->
+    <section class="section container">
+      <div class="card" style="padding:24px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap">
+        <div>
+          <h3 style="margin:0 0 6px">Ready to budget the easy way?</h3>
+          <p class="muted" style="margin:0">Open the app, add your first bucket, and see your totals in minutes.</p>
+        </div>
+        <a class="btn primary" href="/auth/login">Login</a>
+      </div>
+    </section>
+
+    <!-- Structured Data: SoftwareApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Budget Buckets",
+      "applicationCategory": "FinanceApplication", 
+      "operatingSystem": "Web",
+      "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+      "url": "https://budgetbucket.app/",
+      "creator": {"@type": "Organization", "name": "Budget Buckets"},
+      "description": "A simple web app for bucket-based budgeting with weekly and fortnightly pay cycle support.",
+      "image": "https://budgetbucket.app/assets/og-image.png"
+    }
+    </script>
+
+    <!-- Structured Data: FAQPage -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {"@type": "Question", "name": "Is this free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, the app is free while in active development. We may add a paid Pro tier later with advanced features."}},
+        {"@type": "Question", "name": "Does it support weekly and fortnightly pay cycles?", "acceptedAnswer": {"@type": "Answer", "text": "Yes! Weekly and fortnightly are first-class, with clean conversions to monthly and yearly when needed."}},
+        {"@type": "Question", "name": "Where is my data stored?", "acceptedAnswer": {"@type": "Answer", "text": "In your own secure Firestore account, scoped to your login. You can export/import at any time."}}
+      ]
+    }
+    </script>
+  `
+};
+%>
+
+<%- include('../layout', layoutData) %>

@@ -1,0 +1,25 @@
+<footer>
+  <div class="container footgrid">
+    <div>
+      <div class="brand"><span class="dot" aria-hidden="true"></span><span>Budget Buckets</span></div>
+      <p class="tiny">© <span id="year"></span> Budget Buckets. All rights reserved.</p>
+    </div>
+    <nav>
+      <strong class="tiny">Product</strong><br>
+      <a href="/auth/login">Login</a><br>
+      <a href="/calculators">Calculators</a><br>
+      <a href="/guide/budget-buckets-method">Method</a>
+    </nav>
+    <nav>
+      <strong class="tiny">Company</strong><br>
+      <a href="/privacy">Privacy</a><br>
+      <a href="/terms">Terms</a><br>
+      <a href="/support">Support</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+  // Set current year
+  document.getElementById('year').textContent = new Date().getFullYear();
+</script>

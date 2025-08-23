@@ -85,7 +85,7 @@
       --card:#10161d; --border:#1c2733;
       --accent:#00cdd6; --accent2:#5eead4;
       --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.35);
-      --maxw:1100px;
+      --maxw:1200px;
     }
     
     * {
@@ -108,43 +108,16 @@
     }
     
     /* Header */
-    header {
-      position: sticky;
-      top: 0;
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
-      z-index: 100;
-    }
-    
-    .header-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem 0;
-    }
-    
-    .logo {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--accent);
-      text-decoration: none;
-    }
-    
-    nav {
-      display: flex;
-      gap: 2rem;
-    }
-    
-    nav a {
-      color: var(--text);
-      text-decoration: none;
-      font-weight: 500;
-      transition: color 0.2s;
-    }
-    
-    nav a:hover {
-      color: var(--accent);
-    }
+    header.site{position:sticky;top:0;z-index:50;background:linear-gradient(180deg, rgba(11,15,20,.95), rgba(11,15,20,.9));backdrop-filter:saturate(140%) blur(8px);border-bottom:1px solid var(--border);padding:16px 0}
+    .nav{display:flex;align-items:center;gap:32px;justify-content:space-between;padding:0 24px}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:.2px;font-size:18px;transition:opacity 0.2s ease}
+    .brand:hover{opacity:.9}
+    .brand .dot{width:16px;height:16px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 0 4px rgba(0,205,214,.15)}
+    .nav nav{display:flex;align-items:center;gap:24px}
+    .nav a{color:var(--text);opacity:.85;padding:8px 12px;border-radius:8px;transition:all 0.2s ease;font-weight:500}
+    .nav a:hover{opacity:1;background:rgba(255,255,255,.05);text-decoration:none}
+    .nav .cta{padding:12px 20px;border-radius:999px;background:var(--accent);color:#032227;box-shadow:var(--shadow);font-weight:600;border:1px solid rgba(255,255,255,.06);text-decoration:none;transition:all 0.2s ease}
+    .nav .cta:hover{transform:translateY(-1px);box-shadow:0 12px 35px rgba(0,205,214,.25)}
     
     /* Main Content */
     main {
@@ -411,10 +384,18 @@
     }
     
     /* Responsive */
+    @media (max-width: 1024px){
+      .pricing-grid{grid-template-columns:1fr}
+      .nav{padding:0 16px;gap:20px}
+      .nav nav{gap:16px}
+      .brand{font-size:16px}
+    }
     @media (max-width: 768px) {
-      nav {
-        gap: 1rem;
-      }
+      .nav{flex-direction:column;gap:16px;padding:12px 16px}
+      .nav nav{flex-wrap:wrap;justify-content:center;gap:12px}
+      .nav a{padding:6px 10px;font-size:14px}
+      .nav .cta{padding:10px 16px}
+      header.site{padding:12px 0}
       
       .hero h1 {
         font-size: 2rem;
@@ -441,17 +422,18 @@
   </style>
 </head>
 <body>
-  <header>
-    <div class="container">
-      <div class="header-content">
-        <a href="/" class="logo">Budget Buckets</a>
-        <nav>
-          <a href="/">Home</a>
-          <a href="/calculators">Calculators</a>
-          <a href="/guide">Guide</a>
-          <a href="/auth/login.html">Login</a>
-        </nav>
-      </div>
+  <header class="site">
+    <div class="container nav">
+      <a class="brand" href="/">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Budget Buckets</span>
+      </a>
+      <nav aria-label="Primary">
+        <a href="/calculators.html">Calculators</a>
+        <a href="/Method.html">Guide</a>
+        <a href="/pricing.html">Pricing</a>
+        <a class="cta" href="/auth/login">Login</a>
+      </nav>
     </div>
   </header>
 

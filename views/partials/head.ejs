@@ -1,0 +1,20 @@
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title><%= title || 'Budget Buckets — Simple Weekly & Fortnightly Budgeting' %></title>
+  <% if (description) { %>
+    <meta name="description" content="<%= description %>" />
+  <% } %>
+  
+  <!-- Favicon and PWA Assets -->
+  <link rel="icon" href="/assets/img/budget-buckets-dollar.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon-dollar.png">
+  <link rel="manifest" href="/budgetbuckets.webmanifest">
+  <meta name="theme-color" content="#0b0f14">
+
+  <!-- Shared CSS -->
+  <link rel="stylesheet" href="/assets/css/tokens.css">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <% if (pageCss) { %><link rel="stylesheet" href="/assets/css/pages/<%= pageCss %>"><% } %>
+</head>
