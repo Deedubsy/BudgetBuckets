@@ -28,10 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Initialize state from localStorage
-  bc.income.value = state.income || 0;
-  bc.freq.value = state.freq || 'fortnightly';
-  bc.curr.value = state.curr || 'AUD';
+  // Initialize state from localStorage (with safety checks)
+  if (bc.income) bc.income.value = state.income || 0;
+  if (bc.freq) bc.freq.value = state.freq || 'fortnightly';
+  if (bc.curr) bc.curr.value = state.curr || 'AUD';
 
   const FREQ = {
     weekly: { perMonth: 52/12 },
@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function addRow(data = {}) {
+    if (!bc.table) return; // Safety check
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><input type="text" placeholder="e.g. Groceries" value="${data.name || ''}" style="width:100%;border:none;background:transparent;color:inherit" /></td>
@@ -69,11 +70,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function syncFromUI() {
-    const items = $$('tr', bc.table).map(tr => {
+    const items = [...bc.table.querySelectorAll('tr')].map(tr => {
       const [nameEl, amtEl] = tr.querySelectorAll('input');
+      if (!nameEl || !amtEl) return null; // Skip if inputs not found
       const amount = parseFloat(amtEl.value || '0');
       return { name: nameEl.value.trim(), amount: isFinite(amount) && amount > 0 ? amount : 0 };
-    });
+    }).filter(item => item !== null); // Remove null items
     state = { income: parseFloat(bc.income.value || '0'), freq: bc.freq.value, curr: bc.curr.value, items };
     saveState(state);
   }
