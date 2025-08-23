@@ -8,8 +8,11 @@ let paymentElement = null;
  */
 export async function initializeStripe() {
   try {
+    console.log('🔧 Initializing Stripe...');
+    
     // Load Stripe.js library
     if (!window.Stripe) {
+      console.log('Loading Stripe.js script...');
       const script = document.createElement('script');
       script.src = 'https://js.stripe.com/v3/';
       script.async = true;
@@ -19,18 +22,28 @@ export async function initializeStripe() {
         script.onload = resolve;
         script.onerror = reject;
       });
+      console.log('Stripe.js script loaded');
     }
     
     // Get publishable key from server
+    console.log('Fetching Stripe publishable key...');
     const response = await fetch('/api/billing/stripe-key');
     if (!response.ok) {
-      throw new Error('Failed to get Stripe publishable key');
+      const errorText = await response.text();
+      console.error('Failed to get publishable key:', response.status, errorText);
+      throw new Error(`Failed to get Stripe publishable key: ${response.status}`);
     }
     
     const { publishableKey } = await response.json();
+    console.log('Publishable key obtained:', publishableKey ? 'pk_***' : 'MISSING');
+    
+    if (!publishableKey) {
+      throw new Error('No publishable key returned from server');
+    }
     
     // Initialize Stripe
     stripe = window.Stripe(publishableKey);
+    console.log('Stripe initialized successfully');
     
     return stripe;
     
@@ -49,6 +62,9 @@ export async function createPaymentElement(containerId, options = {}) {
   }
   
   try {
+    console.log('🎯 Creating payment element for container:', containerId);
+    console.log('Options:', { uid: !!options.uid, email: !!options.email, priceId: !!options.priceId });
+    
     // Get setup intent client secret from server
     const response = await fetch('/api/billing/setup-intent', {
       method: 'POST',
@@ -64,10 +80,13 @@ export async function createPaymentElement(containerId, options = {}) {
     });
     
     if (!response.ok) {
-      throw new Error('Failed to create setup intent');
+      const errorText = await response.text();
+      console.error('Setup intent failed:', response.status, errorText);
+      throw new Error(`Failed to create setup intent: ${response.status}`);
     }
     
     const { clientSecret, customerId } = await response.json();
+    console.log('Setup intent created:', { clientSecret: !!clientSecret, customerId: !!customerId });
     
     // Create elements instance
     elements = stripe.elements({

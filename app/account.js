@@ -106,11 +106,9 @@ async function handleAuthStateChange(user) {
 function showSignInPrompt() {
   const signInPrompt = document.getElementById('signInPrompt');
   const accountContent = document.getElementById('accountContent');
-  const manageAccountBtn = document.getElementById('manageAccountBtn');
   
   if (signInPrompt) signInPrompt.classList.remove('hidden');
   if (accountContent) accountContent.classList.add('hidden');
-  if (manageAccountBtn) manageAccountBtn.hidden = true;
 }
 
 /**
@@ -119,11 +117,9 @@ function showSignInPrompt() {
 function showAccountContent() {
   const signInPrompt = document.getElementById('signInPrompt');
   const accountContent = document.getElementById('accountContent');
-  const manageAccountBtn = document.getElementById('manageAccountBtn');
   
   if (signInPrompt) signInPrompt.classList.add('hidden');
   if (accountContent) accountContent.classList.remove('hidden');
-  if (manageAccountBtn) manageAccountBtn.hidden = false;
 }
 
 /**
@@ -301,11 +297,7 @@ async function initializeStripeIfNeeded() {
  * Set up all event listeners
  */
 function setupEventListeners() {
-  // Header manage billing button
-  const manageAccountBtn = document.getElementById('manageAccountBtn');
-  if (manageAccountBtn) {
-    manageAccountBtn.addEventListener('click', handleManageBilling);
-  }
+  // Event listeners setup
   
   // Resend verification
   const resendVerificationBtn = document.getElementById('resendVerificationBtn');
@@ -348,7 +340,36 @@ function setupEventListeners() {
  * Handle upgrade button click - New Stripe.js implementation
  */
 async function handleUpgrade() {
-  if (!currentUser || isLoading || !stripe) return;
+  console.log('🚀 Upgrade button clicked');
+  console.log('  Current user:', !!currentUser);
+  console.log('  Is loading:', isLoading);
+  console.log('  Stripe initialized:', !!stripe);
+  console.log('  Price ID:', PRICE_ID_MONTHLY);
+  
+  if (!currentUser) {
+    showToast('Please sign in to upgrade your account.', 'error');
+    return;
+  }
+  
+  if (isLoading) {
+    console.log('Already loading, ignoring click');
+    return;
+  }
+  
+  if (!stripe) {
+    console.log('Stripe not initialized, trying to initialize...');
+    try {
+      await initializeStripeIfNeeded();
+      if (!stripe) {
+        showToast('Unable to initialize payment system. Please try again.', 'error');
+        return;
+      }
+    } catch (error) {
+      console.error('Failed to initialize Stripe:', error);
+      showToast('Unable to initialize payment system. Please try again.', 'error');
+      return;
+    }
+  }
   
   if (!PRICE_ID_MONTHLY) {
     showToast('Billing configuration not loaded. Please try again.', 'error');
@@ -583,7 +604,6 @@ async function handleManageBilling() {
   if (!currentUser || isLoading) return;
   
   const buttons = [
-    document.getElementById('manageAccountBtn'),
     document.getElementById('manageBillingBtn'),
     document.getElementById('manageBillingBtn2')
   ].filter(Boolean);
@@ -606,7 +626,13 @@ async function handleManageBilling() {
     });
     
     if (!response.ok) {
-      throw new Error('Failed to access billing portal');
+      const errorData = await response.json();
+      if (response.status === 400 && errorData.error?.includes('No billing account found')) {
+        showToast('No billing account found. Please upgrade to Plus first.', 'error');
+      } else {
+        throw new Error(errorData.error || 'Failed to access billing portal');
+      }
+      return;
     }
     
     const data = await response.json();
@@ -620,7 +646,7 @@ async function handleManageBilling() {
   } catch (error) {
     console.error('Billing portal error:', error);
     showToast('Failed to access billing portal. Please try again.', 'error');
-    
+  } finally {
     // Re-enable buttons
     buttons.forEach(btn => {
       btn.disabled = false;
