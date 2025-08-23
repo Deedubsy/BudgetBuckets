@@ -70,6 +70,8 @@ app.use(helmet({
         "https://www.gstatic.com",
         "https://apis.google.com",
         "https://www.googleapis.com",
+        // Stripe
+        "https://js.stripe.com",
         // (optional) GTM/GA — only keep if you actually use them
         "https://www.googletagmanager.com",
         "https://www.google-analytics.com",
@@ -85,6 +87,8 @@ app.use(helmet({
         "https://identitytoolkit.googleapis.com",
         "https://securetoken.googleapis.com",
         "https://www.googleapis.com",
+        // Stripe API
+        "https://api.stripe.com",
         // dev tools / local testing
         "http://localhost:*", "ws://localhost:*"
       ],
