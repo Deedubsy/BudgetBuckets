@@ -20,11 +20,13 @@ if (process.env.NODE_ENV !== 'production' && fs.existsSync('.env')) {
 console.log('🔧 Environment check:');
 console.log('  STRIPE_SECRET_KEY:', (process.env.STRIPE_SECRET_KEY || process.env['stripe-secret-key']) ? 'SET' : 'MISSING');
 console.log('  STRIPE_WEBHOOK_SECRET:', (process.env.STRIPE_WEBHOOK_SECRET || process.env['stripe-webhook-secret']) ? 'SET' : 'MISSING');
+console.log('  STRIPE_PUBLISH_KEY:', (process.env.STRIPE_PUBLISH_KEY || process.env['stripe-publish-key']) ? 'SET' : 'MISSING');
 console.log('  PRICE_ID_MONTHLY:', process.env.PRICE_ID_MONTHLY ? 'SET' : 'MISSING');
 
 // Get Stripe configuration from either naming convention
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY || process.env['stripe-secret-key'];
 const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET || process.env['stripe-webhook-secret'];
+const stripePublishKey = process.env.STRIPE_PUBLISH_KEY || process.env['stripe-publish-key'];
 
 // Validate Stripe configuration
 if (!stripeSecretKey) {
@@ -436,6 +438,174 @@ app.get('/api/billing/config', (req, res) => {
   res.json({
     priceId: process.env.PRICE_ID_MONTHLY
   });
+});
+
+// Get Stripe publishable key for client-side integration
+app.get('/api/billing/stripe-key', (req, res) => {
+  console.log('🔑 Stripe key request received');
+  
+  if (!stripePublishKey) {
+    console.log('❌ STRIPE_PUBLISH_KEY not configured');
+    return res.status(503).json({ error: 'Stripe publishable key not available' });
+  }
+  
+  res.json({
+    publishableKey: stripePublishKey
+  });
+});
+
+// Create Setup Intent for subscription payment method
+app.post('/api/billing/setup-intent', async (req, res) => {
+  console.log('🎯 Setup Intent request received');
+  
+  // Check if Stripe is configured
+  if (!stripe) {
+    console.log('❌ Stripe not configured');
+    return res.status(503).json({ error: 'Billing service not configured' });
+  }
+  
+  try {
+    // Verify Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Missing or invalid authorization header' });
+    }
+
+    const idToken = authHeader.split('Bearer ')[1];
+    
+    // Verify Firebase ID token
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const { uid } = decodedToken;
+    
+    const { email, priceId } = req.body;
+    
+    if (!email || !priceId) {
+      return res.status(400).json({ error: 'Missing required fields: email, priceId' });
+    }
+    
+    // Create or retrieve Stripe customer
+    const customers = await stripe.customers.list({
+      email: email,
+      limit: 1
+    });
+    
+    let customer;
+    if (customers.data.length > 0) {
+      customer = customers.data[0];
+      // Update metadata if needed
+      if (customer.metadata.firebase_uid !== uid) {
+        customer = await stripe.customers.update(customer.id, {
+          metadata: { firebase_uid: uid }
+        });
+      }
+    } else {
+      customer = await stripe.customers.create({
+        email: email,
+        metadata: { firebase_uid: uid }
+      });
+    }
+    
+    // Create Setup Intent for future payments
+    const setupIntent = await stripe.setupIntents.create({
+      customer: customer.id,
+      payment_method_types: ['card'],
+      usage: 'off_session',
+      metadata: {
+        firebase_uid: uid,
+        price_id: priceId
+      }
+    });
+    
+    // Store customer ID in Firestore for reference
+    const db = admin.firestore();
+    await db.collection('users').doc(uid).set({
+      stripeCustomerId: customer.id,
+      email: email
+    }, { merge: true });
+    
+    res.json({ 
+      clientSecret: setupIntent.client_secret,
+      customerId: customer.id
+    });
+    
+  } catch (error) {
+    console.error('Setup Intent error:', error);
+    
+    if (error.code === 'auth/id-token-expired') {
+      return res.status(401).json({ error: 'Token expired' });
+    } else if (error.code === 'auth/argument-error') {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Create subscription after payment method setup
+app.post('/api/billing/create-subscription', async (req, res) => {
+  console.log('💳 Create subscription request received');
+  
+  // Check if Stripe is configured
+  if (!stripe) {
+    console.log('❌ Stripe not configured');
+    return res.status(503).json({ error: 'Billing service not configured' });
+  }
+  
+  try {
+    // Verify Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Missing or invalid authorization header' });
+    }
+
+    const idToken = authHeader.split('Bearer ')[1];
+    
+    // Verify Firebase ID token
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const { uid } = decodedToken;
+    
+    const { customerId, paymentMethodId, priceId } = req.body;
+    
+    if (!customerId || !paymentMethodId || !priceId) {
+      return res.status(400).json({ error: 'Missing required fields: customerId, paymentMethodId, priceId' });
+    }
+    
+    // Attach payment method to customer
+    await stripe.paymentMethods.attach(paymentMethodId, {
+      customer: customerId
+    });
+    
+    // Set as default payment method
+    await stripe.customers.update(customerId, {
+      invoice_settings: {
+        default_payment_method: paymentMethodId
+      }
+    });
+    
+    // Create subscription
+    const subscription = await stripe.subscriptions.create({
+      customer: customerId,
+      items: [{ price: priceId }],
+      default_payment_method: paymentMethodId,
+      expand: ['latest_invoice.payment_intent'],
+      metadata: {
+        firebase_uid: uid
+      }
+    });
+    
+    res.json(subscription);
+    
+  } catch (error) {
+    console.error('Create subscription error:', error);
+    
+    if (error.code === 'auth/id-token-expired') {
+      return res.status(401).json({ error: 'Token expired' });
+    } else if (error.code === 'auth/argument-error') {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
 });
 
 // EJS-rendered public pages

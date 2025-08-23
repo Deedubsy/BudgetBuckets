@@ -10,12 +10,22 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
 import { refreshPlan } from '/app/lib/plan.js';
+import { 
+  initializeStripe, 
+  createPaymentElement, 
+  processSubscriptionPayment,
+  showPaymentProcessing,
+  resetPaymentUI,
+  handlePaymentResult 
+} from '/assets/js/stripe-payment.js';
 
 // Price ID will be fetched from server
 let PRICE_ID_MONTHLY = null;
 
 let auth, db, currentUser = null, userDoc = null;
 let isLoading = false;
+let stripe = null;
+let paymentElementData = null;
 
 /**
  * Mount the account view and set up event listeners
@@ -26,8 +36,9 @@ export function mountAccountView(rootEl, { auth: authInstance, db: dbInstance })
   auth = authInstance;
   db = dbInstance;
   
-  // Fetch billing configuration
+  // Fetch billing configuration and initialize Stripe
   fetchBillingConfig();
+  initializeStripeIfNeeded();
   
   // Set up auth state listener
   onAuthStateChanged(auth, handleAuthStateChange);
@@ -274,6 +285,19 @@ async function fetchBillingConfig() {
 }
 
 /**
+ * Initialize Stripe.js if not already initialized
+ */
+async function initializeStripeIfNeeded() {
+  if (!stripe) {
+    try {
+      stripe = await initializeStripe();
+    } catch (error) {
+      console.error('Failed to initialize Stripe:', error);
+    }
+  }
+}
+
+/**
  * Set up all event listeners
  */
 function setupEventListeners() {
@@ -321,10 +345,10 @@ function setupEventListeners() {
 }
 
 /**
- * Handle upgrade button click
+ * Handle upgrade button click - New Stripe.js implementation
  */
 async function handleUpgrade() {
-  if (!currentUser || isLoading) return;
+  if (!currentUser || isLoading || !stripe) return;
   
   if (!PRICE_ID_MONTHLY) {
     showToast('Billing configuration not loaded. Please try again.', 'error');
@@ -332,47 +356,223 @@ async function handleUpgrade() {
   }
   
   const upgradeBtn = document.getElementById('upgradeBtn');
-  if (upgradeBtn) {
-    upgradeBtn.disabled = true;
-    upgradeBtn.innerHTML = '<span class="loading-spinner"></span>Processing...';
+  showPaymentProcessing(upgradeBtn);
+  
+  try {
+    // Check if payment element container exists, create if needed
+    let paymentContainer = document.getElementById('stripe-payment-element');
+    if (!paymentContainer) {
+      // Create payment modal/container dynamically
+      createPaymentModal();
+      paymentContainer = document.getElementById('stripe-payment-element');
+    }
+    
+    const idToken = await getIdToken(currentUser);
+    
+    // Create payment element
+    paymentElementData = await createPaymentElement('stripe-payment-element', {
+      uid: currentUser.uid,
+      email: currentUser.email,
+      priceId: PRICE_ID_MONTHLY,
+      idToken: idToken
+    });
+    
+    // Show the payment modal
+    showPaymentModal();
+    
+  } catch (error) {
+    console.error('Upgrade error:', error);
+    showToast('Failed to initialize payment. Please try again.', 'error');
+    resetPaymentUI(upgradeBtn);
   }
+}
+
+/**
+ * Create payment modal dynamically
+ */
+function createPaymentModal() {
+  // Remove existing modal if present
+  const existingModal = document.getElementById('payment-modal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+  
+  const modal = document.createElement('div');
+  modal.id = 'payment-modal';
+  modal.innerHTML = `
+    <div class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Upgrade to Budget Buckets Plus</h3>
+          <button class="modal-close" id="close-payment-modal">×</button>
+        </div>
+        <div class="modal-body">
+          <p>Complete your payment to unlock all Plus features:</p>
+          <ul style="margin: 16px 0; padding-left: 20px;">
+            <li>Unlimited budgets</li>
+            <li>Advanced analytics</li>
+            <li>Export capabilities</li>
+            <li>Priority support</li>
+          </ul>
+          <div id="stripe-payment-element" style="margin: 20px 0;"></div>
+          <div class="modal-actions">
+            <button class="btn btn-secondary" id="cancel-payment">Cancel</button>
+            <button class="btn btn-primary" id="complete-payment">Complete Payment - $3.99/mo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Add styles
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    display: none;
+  `;
+  
+  const style = document.createElement('style');
+  style.textContent = `
+    .modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 20px 0;
+    }
+    .modal-header h3 {
+      margin: 0;
+      color: var(--text);
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: var(--text);
+      cursor: pointer;
+      padding: 0;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-body {
+      padding: 20px;
+    }
+    .modal-body p {
+      color: var(--text);
+      margin: 0 0 8px 0;
+    }
+    .modal-body ul {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .modal-actions .btn {
+      flex: 1;
+    }
+  `;
+  document.head.appendChild(style);
+  
+  document.body.appendChild(modal);
+  
+  // Add event listeners
+  document.getElementById('close-payment-modal').addEventListener('click', hidePaymentModal);
+  document.getElementById('cancel-payment').addEventListener('click', hidePaymentModal);
+  document.getElementById('complete-payment').addEventListener('click', handleCompletePayment);
+}
+
+/**
+ * Show payment modal
+ */
+function showPaymentModal() {
+  const modal = document.getElementById('payment-modal');
+  if (modal) {
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+/**
+ * Hide payment modal and reset state
+ */
+function hidePaymentModal() {
+  const modal = document.getElementById('payment-modal');
+  if (modal) {
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  
+  const upgradeBtn = document.getElementById('upgradeBtn');
+  resetPaymentUI(upgradeBtn);
+  
+  // Reset payment element data
+  paymentElementData = null;
+}
+
+/**
+ * Handle complete payment button click
+ */
+async function handleCompletePayment() {
+  if (!paymentElementData || !currentUser) return;
+  
+  const completeBtn = document.getElementById('complete-payment');
+  showPaymentProcessing(completeBtn);
   
   try {
     const idToken = await getIdToken(currentUser);
     
-    const response = await fetch('/api/billing/checkout', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${idToken}`
-      },
-      body: JSON.stringify({
-        uid: currentUser.uid,
-        email: currentUser.email,
-        priceId: PRICE_ID_MONTHLY
-      })
+    const result = await processSubscriptionPayment({
+      uid: currentUser.uid,
+      customerId: paymentElementData.customerId,
+      priceId: PRICE_ID_MONTHLY,
+      idToken: idToken
     });
     
-    if (!response.ok) {
-      throw new Error('Failed to create checkout session');
-    }
-    
-    const data = await response.json();
-    
-    if (data.url) {
-      location.assign(data.url);
-    } else {
-      throw new Error('No checkout URL returned');
-    }
+    handlePaymentResult(result, {
+      onSuccess: () => {
+        hidePaymentModal();
+        showToast('Subscription activated successfully!', 'success');
+        setTimeout(() => window.location.reload(), 2000);
+      },
+      onError: (error) => {
+        showToast(error || 'Payment failed. Please try again.', 'error');
+        resetPaymentUI(completeBtn, 'Complete Payment - $3.99/mo');
+      }
+    });
     
   } catch (error) {
-    console.error('Upgrade error:', error);
-    showToast('Failed to process upgrade. Please try again.', 'error');
-    
-    if (upgradeBtn) {
-      upgradeBtn.disabled = false;
-      upgradeBtn.textContent = 'Upgrade to Plus — $3.99/mo';
-    }
+    console.error('Payment completion error:', error);
+    showToast('Payment failed. Please try again.', 'error');
+    resetPaymentUI(completeBtn, 'Complete Payment - $3.99/mo');
   }
 }
 
