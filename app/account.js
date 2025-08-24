@@ -83,6 +83,17 @@ async function handleAuthStateChange(user) {
     
     userDoc = userDocSnap.exists() ? userDocSnap.data() : {};
     
+    console.log('🔍 Account data debug:', {
+      uid: user.uid,
+      email: user.email,
+      claims: tokenResult.claims,
+      userDoc: userDoc,
+      claimsPlan: tokenResult.claims.plan,
+      subscriptionStatus: userDoc.subscriptionStatus,
+      stripeCustomerId: userDoc.stripeCustomerId,
+      planType: userDoc.planType
+    });
+    
     // Show account content and populate UI
     showAccountContent();
     populateProfileSection(user, tokenResult.claims);
@@ -161,6 +172,12 @@ function populateProfileSection(user, claims) {
   // Plan badge
   const planBadge = document.getElementById('planBadge');
   const plan = claims.plan || userDoc.subscriptionStatus === 'active' ? 'plus' : 'free';
+  console.log('🔍 Profile section plan detection:', {
+    claimsPlan: claims.plan,
+    subscriptionStatus: userDoc.subscriptionStatus,
+    finalPlan: plan,
+    planBadgeElement: !!planBadge
+  });
   if (planBadge) {
     planBadge.textContent = plan === 'plus' ? 'Plus' : 'Free';
     planBadge.className = plan === 'plus' ? 'badge badge-plan plus' : 'badge badge-plan';
@@ -726,8 +743,40 @@ async function debugBilling() {
   }
 }
 
-// Add debug function to window for console access
+// Add debug functions to window for console access
 window.debugBilling = debugBilling;
+
+// Debug function to manually refresh auth token and check claims
+window.debugAuthToken = async function() {
+  if (!currentUser) {
+    console.log('❌ No current user');
+    return;
+  }
+  
+  try {
+    console.log('🔄 Refreshing auth token...');
+    const tokenResult = await getIdTokenResult(currentUser, true); // Force refresh
+    console.log('🔍 Token result:', {
+      claims: tokenResult.claims,
+      authTime: new Date(tokenResult.authTime * 1000),
+      issuedAtTime: new Date(tokenResult.issuedAtTime * 1000),
+      expirationTime: new Date(tokenResult.expirationTime * 1000)
+    });
+    
+    // Also check Firestore user document
+    const userDocRef = doc(db, 'users', currentUser.uid);
+    const userDocSnap = await getDoc(userDocRef);
+    const userData = userDocSnap.exists() ? userDocSnap.data() : {};
+    
+    console.log('🔍 Firestore user document:', userData);
+    
+    // Trigger account view refresh
+    await handleAuthStateChange(currentUser);
+    
+  } catch (error) {
+    console.error('❌ Debug auth token failed:', error);
+  }
+};
 
 /**
  * Handle manage billing button click
