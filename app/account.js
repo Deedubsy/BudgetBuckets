@@ -175,6 +175,14 @@ function populateProfileSection(user, claims) {
  */
 function populateBillingSection(user, claims, userDoc) {
   const plan = claims.plan || (userDoc.subscriptionStatus === 'active' ? 'plus' : 'free');
+  
+  console.log('🔍 Billing section population:', {
+    claimsPlan: claims.plan,
+    subscriptionStatus: userDoc.subscriptionStatus,
+    finalPlan: plan,
+    hasStripeCustomer: !!userDoc.stripeCustomerId
+  });
+  
   const freeUserBilling = document.getElementById('freeUserBilling');
   const plusUserBilling = document.getElementById('plusUserBilling');
   const billingStatus = document.getElementById('billingStatus');
@@ -591,14 +599,26 @@ async function handleCompletePayment() {
       setTimeout(async () => {
         try {
           // Force refresh token again to get latest claims
-          const tokenResult = await getIdTokenResult(currentUser, true);
+          let tokenResult = await getIdTokenResult(currentUser, true);
           console.log('🔍 Token claims after refresh:', tokenResult.claims);
+          
+          // Check if subscription was successfully created
+          if (result.subscription && result.subscription.status === 'active') {
+            console.log('✅ Subscription is active, updating UI to Plus regardless of webhook timing');
+            // Override claims based on successful subscription
+            tokenResult = {
+              ...tokenResult,
+              claims: { ...tokenResult.claims, plan: 'plus' }
+            };
+          } else if (!tokenResult.claims.plan || tokenResult.claims.plan === 'free') {
+            console.log('⚠️ Claims not updated yet, will wait for webhook processing');
+          }
           
           // Refresh the plan data and update UI
           await refreshPlan();
           
-          // Update the account view to show new plan
-          await loadUserData();
+          // Refresh the account sections with updated plan
+          populateBillingSection(currentUser, tokenResult.claims, userDoc);
           updatePlanUI();
           
           showToast('✅ Welcome to Budget Buckets Plus!', 'success');
@@ -625,39 +645,57 @@ async function handleCompletePayment() {
 function updatePlanUI() {
   console.log('🔄 Updating plan UI elements...');
   
-  // Update plan badge
+  // Hide/show billing sections
+  const freeUserBilling = document.getElementById('freeUserBilling');
+  const plusUserBilling = document.getElementById('plusUserBilling');
+  
+  if (freeUserBilling) {
+    freeUserBilling.classList.add('hidden');
+    console.log('✅ Hidden free user billing section');
+  }
+  
+  if (plusUserBilling) {
+    plusUserBilling.classList.remove('hidden');
+    console.log('✅ Shown plus user billing section');
+  }
+  
+  // Update billing status
+  const billingStatus = document.getElementById('billingStatus');
+  if (billingStatus) {
+    billingStatus.innerHTML = `
+      <span class="status-active">●</span>
+      <span>Subscription active</span>
+    `;
+    console.log('✅ Updated billing status to active');
+  }
+  
+  // Update plan badge if it exists
   const planBadge = document.querySelector('[data-testid="plan-badge"]') || 
                    document.querySelector('.plan-badge');
   if (planBadge) {
     planBadge.textContent = 'Plus';
     planBadge.className = 'plan-badge plus';
+    console.log('✅ Updated plan badge');
   }
   
-  // Hide upgrade button, show manage billing button
-  const upgradeBtn = document.querySelector('[data-testid="upgrade-btn"]') || 
-                    document.getElementById('upgradeBtn');
-  const manageBillingBtn = document.querySelector('[data-testid="manage-billing-btn"]') || 
-                          document.getElementById('manageBillingBtn');
+  // Make sure upgrade buttons are hidden and manage billing buttons are shown
+  const allUpgradeBtns = document.querySelectorAll('[data-testid="upgrade-btn"], #upgradeBtn');
+  const allManageBtns = document.querySelectorAll('[data-testid="manage-billing-btn"], #manageBillingBtn, #manageBillingBtn2');
   
-  if (upgradeBtn) {
-    upgradeBtn.style.display = 'none';
-  }
+  allUpgradeBtns.forEach(btn => {
+    if (btn) {
+      btn.style.display = 'none';
+      console.log('✅ Hidden upgrade button');
+    }
+  });
   
-  if (manageBillingBtn) {
-    manageBillingBtn.style.display = 'inline-block';
-    manageBillingBtn.textContent = 'Manage Billing';
-  }
-  
-  // Update any plan-specific UI elements
-  const planStatus = document.querySelector('.plan-status');
-  if (planStatus) {
-    planStatus.innerHTML = `
-      <div class="plan-info">
-        <span class="plan-badge plus">Plus</span>
-        <span class="plan-features">Unlimited budgets • Priority support</span>
-      </div>
-    `;
-  }
+  allManageBtns.forEach(btn => {
+    if (btn) {
+      btn.style.display = 'inline-block';
+      btn.textContent = 'Manage Billing';
+      console.log('✅ Shown manage billing button');
+    }
+  });
   
   console.log('✅ Plan UI updated to Plus');
 }
