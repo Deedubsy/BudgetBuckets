@@ -148,6 +148,62 @@ app.use(express.static(path.join(__dirname), {
   }
 }));
 
+// DEBUG: Emergency endpoint to manually set Plus plan (for webhook troubleshooting)
+app.post('/api/billing/debug/force-plus-plan', async (req, res) => {
+  console.log('🚨 EMERGENCY: Force Plus plan request received');
+  
+  try {
+    // Verify Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Missing or invalid Authorization header' });
+    }
+    
+    const idToken = authHeader.substring(7);
+    let decodedToken;
+    
+    try {
+      decodedToken = await admin.auth().verifyIdToken(idToken);
+    } catch (error) {
+      console.error('❌ Invalid Firebase token:', error);
+      return res.status(403).json({ error: 'Invalid Firebase token' });
+    }
+    
+    const { uid } = req.body;
+    if (!uid || uid !== decodedToken.uid) {
+      return res.status(400).json({ error: 'Invalid or mismatched UID' });
+    }
+    
+    console.log('🚨 MANUALLY setting Plus plan for user:', uid);
+    
+    // Set custom claims
+    await admin.auth().setCustomUserClaims(uid, { plan: 'plus' });
+    console.log('✅ Custom claims set: plan = plus');
+    
+    // Update Firestore
+    const db = admin.firestore();
+    await db.collection('users').doc(uid).set({
+      subscriptionStatus: 'active',
+      planType: 'plus',
+      manuallySet: true,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    
+    console.log('✅ Firestore updated with Plus plan');
+    
+    res.json({ 
+      success: true, 
+      message: 'Plus plan set manually',
+      uid: uid,
+      plan: 'plus'
+    });
+    
+  } catch (error) {
+    console.error('❌ Force Plus plan error:', error);
+    res.status(500).json({ error: 'Internal server error: ' + error.message });
+  }
+});
+
 // Health check endpoint for Firebase App Hosting
 app.get('/__/health', (req, res) => {
   res.status(200).json({ status: 'healthy', service: 'budget-buckets' });

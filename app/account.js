@@ -778,6 +778,44 @@ window.debugAuthToken = async function() {
   }
 };
 
+// Emergency function to manually set Plus plan (for testing/debugging)
+window.forceSetPlusPlan = async function() {
+  if (!currentUser) {
+    console.log('❌ No current user');
+    return;
+  }
+  
+  try {
+    console.log('🚨 EMERGENCY: Manually setting Plus plan for user:', currentUser.uid);
+    
+    const idToken = await getIdToken(currentUser);
+    const response = await fetch('/api/billing/debug/force-plus-plan', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${idToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ uid: currentUser.uid })
+    });
+    
+    if (response.ok) {
+      console.log('✅ Plus plan set manually');
+      
+      // Force token refresh
+      setTimeout(async () => {
+        await debugAuthToken();
+      }, 1000);
+      
+    } else {
+      const error = await response.json();
+      console.error('❌ Failed to set Plus plan:', error);
+    }
+    
+  } catch (error) {
+    console.error('❌ Emergency Plus plan setting failed:', error);
+  }
+};
+
 /**
  * Handle manage billing button click
  */
