@@ -1901,20 +1901,6 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         }
     }
 
-    // Show main content and hide loading state
-    function showMainContent() {
-        const loadingState = document.getElementById('loadingState');
-        const mainContent = document.getElementById('mainContent');
-        
-        if (loadingState) {
-            loadingState.style.display = 'none';
-        }
-        
-        if (mainContent) {
-            mainContent.style.display = 'block';
-        }
-    }
-
     // Initialize user dropdown menu functionality
     function initializeUserDropdown() {
         const userMenu = document.getElementById('userMenu');
@@ -2023,20 +2009,13 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                 window.authGuard.showAuthLoading('Loading your budget data...');
             }
             
-            document.getElementById('userInfo').textContent = `Signed in as ${currentUser.email}`;
             
             try {
                 console.log('📊 Loading from cloud...');
                 await loadFromCloud();
                 console.log('📊 Cloud data loaded successfully');
-                
-                // Show main content after data is loaded
-                showMainContent();
             } catch (error) {
                 console.error('📊 Failed to load cloud data:', error);
-                
-                // Still show content even if loading fails
-                showMainContent();
             }
             
             // Hide loading overlay after buckets are loaded
@@ -2060,10 +2039,6 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
 
         // Initialize user dropdown menu
         initializeUserDropdown();
-        
-        // Ensure main content is shown after full initialization
-        // (covers cases where user has no data or loading was already called)
-        setTimeout(() => showMainContent(), 100);
     }
 
     // Wait for DOM to be ready before starting the app
