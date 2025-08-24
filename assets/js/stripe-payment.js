@@ -148,18 +148,9 @@ export async function processSubscriptionPayment(options = {}) {
   try {
     console.log('🔧 Starting payment confirmation...');
     
-    // Only call submit if it exists (newer Stripe.js versions)
-    if (elements.submit && typeof elements.submit === 'function') {
-      console.log('🔧 Validating form with elements.submit()...');
-      const { error: submitError } = await elements.submit();
-      if (submitError) {
-        console.error('Form validation error:', submitError);
-        throw submitError;
-      }
-      console.log('✅ Form validation passed');
-    } else {
-      console.log('⚠️ elements.submit() not available - validation will happen during confirmSetup');
-    }
+    // Skip elements.submit() entirely - it's causing hanging issues
+    // confirmSetup() will handle all validation automatically
+    console.log('⚠️ Skipping elements.submit() to avoid hanging - confirmSetup will handle validation');
     
     // Confirm setup intent with payment method
     console.log('🔧 Confirming setup intent...');
