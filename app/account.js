@@ -391,12 +391,14 @@ async function handleUpgrade() {
     const idToken = await getIdToken(currentUser);
     
     // Create payment element
+    console.log('🔧 Creating payment element...');
     paymentElementData = await createPaymentElement('stripe-payment-element', {
       uid: currentUser.uid,
       email: currentUser.email,
       priceId: PRICE_ID_MONTHLY,
       idToken: idToken
     });
+    console.log('✅ Payment element created:', !!paymentElementData);
     
     // Show the payment modal
     showPaymentModal();
@@ -563,7 +565,14 @@ function hidePaymentModal() {
  * Handle complete payment button click
  */
 async function handleCompletePayment() {
-  if (!paymentElementData || !currentUser) return;
+  console.log('🔧 handleCompletePayment called');
+  console.log('  paymentElementData:', !!paymentElementData);
+  console.log('  currentUser:', !!currentUser);
+  
+  if (!paymentElementData || !currentUser) {
+    console.error('❌ Missing required data:', { paymentElementData: !!paymentElementData, currentUser: !!currentUser });
+    return;
+  }
   
   const completeBtn = document.getElementById('complete-payment');
   showPaymentProcessing(completeBtn);

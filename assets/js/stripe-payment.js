@@ -128,13 +128,35 @@ export async function createPaymentElement(containerId, options = {}) {
  * Process subscription payment
  */
 export async function processSubscriptionPayment(options = {}) {
+  console.log('🔧 processSubscriptionPayment called with:', { 
+    hasStripe: !!stripe, 
+    hasElements: !!elements,
+    hasOptions: !!options
+  });
+  
   if (!stripe || !elements) {
-    throw new Error('Stripe or Elements not initialized');
+    const error = `Stripe or Elements not initialized - stripe: ${!!stripe}, elements: ${!!elements}`;
+    console.error(error);
+    throw new Error(error);
   }
   
   try {
+    console.log('🔧 Starting payment confirmation...');
+    
+    // First validate the form before confirming
+    const { error: submitError } = await elements.submit();
+    if (submitError) {
+      console.error('Form validation error:', submitError);
+      throw submitError;
+    }
+    
+    console.log('✅ Form validation passed');
+    
     // Confirm setup intent with payment method
-    const { error: setupError, setupIntent } = await stripe.confirmSetup({
+    console.log('🔧 Confirming setup intent...');
+    
+    // Add timeout to prevent hanging
+    const confirmSetupPromise = stripe.confirmSetup({
       elements,
       confirmParams: {
         return_url: `${window.location.origin}/app?upgrade=success`
@@ -142,9 +164,23 @@ export async function processSubscriptionPayment(options = {}) {
       redirect: 'if_required'
     });
     
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Payment confirmation timeout')), 30000)
+    );
+    
+    const { error: setupError, setupIntent } = await Promise.race([
+      confirmSetupPromise,
+      timeoutPromise
+    ]);
+    
+    console.log('Setup result:', { error: !!setupError, setupIntent: !!setupIntent });
+    
     if (setupError) {
+      console.error('Setup error:', setupError);
       throw setupError;
     }
+    
+    console.log('✅ Setup intent confirmed');
     
     // If setup successful, create subscription
     const response = await fetch('/api/billing/create-subscription', {
