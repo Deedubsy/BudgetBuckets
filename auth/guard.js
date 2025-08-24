@@ -224,7 +224,7 @@ class AuthGuard {
   }
 
   // Setup auth state listener for automatic redirects
-  setupAuthStateListener(protectedPages = ['/app/']) {
+  async setupAuthStateListener(protectedPages = ['/app/']) {
     console.log('🔐 Setting up auth state listener...');
     
     // This should be called on protected pages only

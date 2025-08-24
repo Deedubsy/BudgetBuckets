@@ -358,8 +358,7 @@ async function handleUpgrade() {
     }
   }
   
-  const billingConfig = getBillingConfig();
-  console.log('  Billing config:', billingConfig);
+  // billingConfig already declared above - just validate it
   if (!billingConfig || !billingConfig.priceId) {
     showToast('Billing configuration not loaded. Please refresh the page and try again.', 'error');
     return;
