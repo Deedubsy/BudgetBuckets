@@ -144,21 +144,40 @@ export async function createPaymentElement(containerId, userOptions = {}) {
     // Add event listeners for UX improvements
     paymentElement.on('ready', () => {
       console.log('✅ Payment element mounted and ready');
+      
+      // Initially disable the complete payment button until form is filled
+      const completePaymentBtn = document.querySelector('[data-testid="complete-payment-btn"]') || 
+                               document.getElementById('complete-payment');
+      if (completePaymentBtn) {
+        completePaymentBtn.disabled = true;
+        completePaymentBtn.textContent = 'Enter Payment Details';
+        console.log('✅ Complete payment button initialized as disabled');
+      }
     });
     
     paymentElement.on('change', (event) => {
-      console.log('Payment element changed:', { complete: event.complete, error: !!event.error });
+      console.log('🔧 Payment element changed:', { 
+        complete: event.complete, 
+        error: !!event.error,
+        errorMessage: event.error?.message 
+      });
       
-      // Update upgrade button state
-      const upgradeBtn = document.querySelector('[data-testid="upgrade-btn"]') || 
-                        document.getElementById('upgradeBtn');
-      if (upgradeBtn) {
-        upgradeBtn.disabled = !event.complete;
+      // Update complete payment button state (in the modal)
+      const completePaymentBtn = document.querySelector('[data-testid="complete-payment-btn"]') || 
+                               document.getElementById('complete-payment');
+      if (completePaymentBtn) {
+        const wasDisabled = completePaymentBtn.disabled;
+        completePaymentBtn.disabled = !event.complete;
+        
         if (event.complete) {
-          upgradeBtn.textContent = 'Complete Payment - $3.99/mo';
+          completePaymentBtn.textContent = 'Complete Payment - $3.99/mo';
         } else {
-          upgradeBtn.textContent = 'Enter Payment Details';
+          completePaymentBtn.textContent = 'Enter Payment Details';
         }
+        
+        console.log(`🔘 Button updated: ${wasDisabled ? 'disabled' : 'enabled'} → ${completePaymentBtn.disabled ? 'disabled' : 'enabled'}`);
+      } else {
+        console.warn('⚠️ Complete payment button not found!');
       }
       
       // Show/hide errors
