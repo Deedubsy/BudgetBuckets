@@ -701,6 +701,35 @@ function updatePlanUI() {
 }
 
 /**
+ * Debug function to test billing setup
+ */
+async function debugBilling() {
+  if (!currentUser) return;
+  
+  try {
+    const idToken = await getIdToken(currentUser);
+    const response = await fetch('/api/billing/debug', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${idToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const data = await response.json();
+    console.log('🔧 Debug results:', data);
+    showToast(`Debug: Firebase=${data.firebase}, Stripe=${data.stripe}`, 'info');
+    
+  } catch (error) {
+    console.error('Debug error:', error);
+    showToast(`Debug failed: ${error.message}`, 'error');
+  }
+}
+
+// Add debug function to window for console access
+window.debugBilling = debugBilling;
+
+/**
  * Handle manage billing button click
  */
 async function handleManageBilling() {

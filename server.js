@@ -366,6 +366,50 @@ app.post('/api/billing/portal', async (req, res) => {
   }
 });
 
+// Debug endpoint to test Firebase and Stripe setup
+app.post('/api/billing/debug', async (req, res) => {
+  console.log('🔧 Debug endpoint called');
+  
+  try {
+    // Test Stripe
+    if (!stripe) {
+      return res.json({ 
+        firebase: 'unknown',
+        stripe: 'not_configured',
+        error: 'Stripe not initialized'
+      });
+    }
+    
+    // Test Firebase Admin
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.json({ 
+        firebase: 'no_auth',
+        stripe: 'configured',
+        error: 'No auth header'
+      });
+    }
+
+    const idToken = authHeader.split('Bearer ')[1];
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    
+    res.json({ 
+      firebase: 'working',
+      stripe: 'configured',
+      userId: decodedToken.uid,
+      email: decodedToken.email
+    });
+    
+  } catch (error) {
+    console.error('Debug error:', error);
+    res.json({ 
+      firebase: 'error',
+      stripe: stripe ? 'configured' : 'not_configured',
+      error: error.message
+    });
+  }
+});
+
 // Stripe webhook endpoint
 app.post('/api/billing/webhook', async (req, res) => {
   console.log('🎣 Webhook received:', {
