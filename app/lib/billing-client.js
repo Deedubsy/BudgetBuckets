@@ -29,13 +29,23 @@ export async function initializeStripe() {
       hasPriceId: !!billingConfig.priceId 
     });
     
-    // Load Stripe using the official loader
+    // Load Stripe.js script if not already loaded
     if (!window.Stripe) {
-      const { loadStripe } = await import('https://js.stripe.com/v3/');
-      stripe = await loadStripe(billingConfig.publishableKey);
-    } else {
-      stripe = window.Stripe(billingConfig.publishableKey);
+      console.log('Loading Stripe.js script...');
+      const script = document.createElement('script');
+      script.src = 'https://js.stripe.com/v3/';
+      script.async = true;
+      document.head.appendChild(script);
+      
+      await new Promise((resolve, reject) => {
+        script.onload = resolve;
+        script.onerror = reject;
+      });
+      console.log('Stripe.js script loaded');
     }
+    
+    // Initialize Stripe with publishable key
+    stripe = window.Stripe(billingConfig.publishableKey);
     
     if (!stripe) {
       throw new Error('Failed to initialize Stripe');
@@ -354,5 +364,8 @@ function clearPaymentError() {
  * Get current billing config
  */
 export function getBillingConfig() {
+  if (!billingConfig) {
+    console.warn('⚠️ Billing config not loaded yet - call initializeStripe() first');
+  }
   return billingConfig;
 }

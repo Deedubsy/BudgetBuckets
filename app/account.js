@@ -329,7 +329,9 @@ async function handleUpgrade() {
   console.log('  Current user:', !!currentUser);
   console.log('  Is loading:', isLoading);
   console.log('  Stripe initialized:', !!stripe);
-  console.log('  Price ID:', PRICE_ID_MONTHLY);
+  
+  const billingConfig = getBillingConfig();
+  console.log('  Price ID:', billingConfig?.priceId);
   
   if (!currentUser) {
     showToast('Please sign in to upgrade your account.', 'error');
@@ -357,8 +359,9 @@ async function handleUpgrade() {
   }
   
   const billingConfig = getBillingConfig();
+  console.log('  Billing config:', billingConfig);
   if (!billingConfig || !billingConfig.priceId) {
-    showToast('Billing configuration not loaded. Please try again.', 'error');
+    showToast('Billing configuration not loaded. Please refresh the page and try again.', 'error');
     return;
   }
   
