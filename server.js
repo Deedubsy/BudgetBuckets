@@ -276,12 +276,16 @@ app.post('/api/billing/portal', async (req, res) => {
     const idToken = authHeader.split('Bearer ')[1];
     
     // Verify Firebase ID token
+    console.log('🔐 Verifying Firebase ID token...');
     const decodedToken = await admin.auth().verifyIdToken(idToken);
     const { uid } = decodedToken;
+    console.log('✅ Token verified for user:', uid);
     
     // Get user's Stripe customer ID from Firestore
+    console.log('📄 Fetching user document from Firestore...');
     const db = admin.firestore();
     const userDoc = await db.collection('users').doc(uid).get();
+    console.log('✅ User document fetched, exists:', userDoc.exists);
     
     if (!userDoc.exists) {
       return res.status(404).json({ error: 'User not found' });
@@ -329,15 +333,24 @@ app.post('/api/billing/portal', async (req, res) => {
     }
 
     // Create Stripe Customer Portal session
+    console.log('🏛️ Creating Stripe portal session for customer:', finalCustomerId);
+    console.log('   Return URL:', `${req.headers.origin}/app`);
+    
     const session = await stripe.billingPortal.sessions.create({
       customer: finalCustomerId,
       return_url: `${req.headers.origin}/app`,
     });
-
+    
+    console.log('✅ Portal session created:', session.id);
     res.json({ url: session.url });
     
   } catch (error) {
-    console.error('Portal error:', error);
+    console.error('❌ Portal error details:', {
+      message: error.message,
+      code: error.code,
+      type: error.type,
+      stack: error.stack
+    });
     
     if (error.code === 'auth/id-token-expired') {
       return res.status(401).json({ error: 'Token expired' });
@@ -345,7 +358,11 @@ app.post('/api/billing/portal', async (req, res) => {
       return res.status(401).json({ error: 'Invalid token' });
     }
     
-    res.status(500).json({ error: 'Internal server error' });
+    // Return more specific error information
+    res.status(500).json({ 
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
