@@ -94,11 +94,7 @@ import { authHelpers } from './firebase.js';
             const user = await authHelpers.signInWithEmail(email, password);
             
             hideLoading();
-            showSuccess('Sign in successful! Redirecting...');
-            
-            setTimeout(() => {
-                window.location.href = '/app/index.html';
-            }, 1500);
+            window.location.href = '/app/index.html';
             
         } catch (error) {
             hideLoading();
@@ -123,11 +119,7 @@ import { authHelpers } from './firebase.js';
             const user = await authHelpers.createAccount(email, password);
             
             hideLoading();
-            showSuccess('Account created successfully! Redirecting...');
-            
-            setTimeout(() => {
-                window.location.href = '/app/index.html';
-            }, 1500);
+            window.location.href = '/app/index.html';
             
         } catch (error) {
             hideLoading();
@@ -143,11 +135,7 @@ import { authHelpers } from './firebase.js';
             const user = await authHelpers.signInWithGoogle();
             
             hideLoading();
-            showSuccess('Google sign-in successful! Redirecting...');
-            
-            setTimeout(() => {
-                window.location.href = '/app/index.html';
-            }, 1500);
+            window.location.href = '/app/index.html';
             
         } catch (error) {
             hideLoading();

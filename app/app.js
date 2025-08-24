@@ -1901,6 +1901,98 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         }
     }
 
+    // Show main content and hide loading state
+    function showMainContent() {
+        const loadingState = document.getElementById('loadingState');
+        const mainContent = document.getElementById('mainContent');
+        
+        if (loadingState) {
+            loadingState.style.display = 'none';
+        }
+        
+        if (mainContent) {
+            mainContent.style.display = 'block';
+        }
+    }
+
+    // Initialize user dropdown menu functionality
+    function initializeUserDropdown() {
+        const userMenu = document.getElementById('userMenu');
+        const userAvatar = document.getElementById('userAvatar');
+        const userDropdown = document.getElementById('userDropdown');
+        const avatarInitials = document.getElementById('avatarInitials');
+        const userEmail = document.getElementById('userEmail');
+        
+        if (!userMenu || !userAvatar || !currentUser) return;
+        
+        // Show the user menu now that we have a user
+        userMenu.style.display = 'block';
+        
+        // Get user initials from display name or email
+        const displayName = currentUser.displayName || '';
+        const email = currentUser.email || '';
+        let initials = '';
+        
+        if (displayName) {
+            // Get initials from display name
+            const names = displayName.trim().split(' ');
+            initials = names.map(name => name.charAt(0)).join('').toUpperCase().slice(0, 2);
+        } else if (email) {
+            // Get initials from email
+            const emailPrefix = email.split('@')[0];
+            if (emailPrefix.length >= 2) {
+                initials = emailPrefix.slice(0, 2).toUpperCase();
+            } else {
+                initials = emailPrefix.charAt(0).toUpperCase() + 'U';
+            }
+        } else {
+            initials = 'U';
+        }
+        
+        // Set initials and email
+        if (avatarInitials) avatarInitials.textContent = initials;
+        if (userEmail) userEmail.textContent = email;
+        
+        // Handle dropdown toggle
+        userAvatar.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = userDropdown.classList.contains('show');
+            
+            if (isOpen) {
+                userDropdown.classList.remove('show');
+            } else {
+                userDropdown.classList.add('show');
+            }
+        });
+        
+        // Handle dropdown item clicks
+        const accountItem = userDropdown.querySelector('[data-action="account"]');
+        const signoutItem = userDropdown.querySelector('[data-action="signout"]');
+        
+        if (accountItem) {
+            accountItem.addEventListener('click', (e) => {
+                e.preventDefault();
+                userDropdown.classList.remove('show');
+                window.location.href = '/account.html';
+            });
+        }
+        
+        if (signoutItem) {
+            signoutItem.addEventListener('click', (e) => {
+                e.preventDefault();
+                userDropdown.classList.remove('show');
+                authHelpers.signOut();
+            });
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!userMenu.contains(e.target)) {
+                userDropdown.classList.remove('show');
+            }
+        });
+    }
+
     // Initialize the app
     async function init() {
         console.log('Starting app initialization...');
@@ -1937,8 +2029,14 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                 console.log('📊 Loading from cloud...');
                 await loadFromCloud();
                 console.log('📊 Cloud data loaded successfully');
+                
+                // Show main content after data is loaded
+                showMainContent();
             } catch (error) {
                 console.error('📊 Failed to load cloud data:', error);
+                
+                // Still show content even if loading fails
+                showMainContent();
             }
             
             // Hide loading overlay after buckets are loaded
@@ -1959,6 +2057,13 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         document.getElementById('signOutBtn')?.addEventListener('click', () => {
             authHelpers.signOut();
         });
+
+        // Initialize user dropdown menu
+        initializeUserDropdown();
+        
+        // Ensure main content is shown after full initialization
+        // (covers cases where user has no data or loading was already called)
+        setTimeout(() => showMainContent(), 100);
     }
 
     // Wait for DOM to be ready before starting the app
