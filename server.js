@@ -89,8 +89,15 @@ app.use(helmet({
         "https://www.googleapis.com",
         // Stripe API
         "https://api.stripe.com",
+        "https://r.stripe.com", // Optional Stripe radar
         // dev tools / local testing
         "http://localhost:*", "ws://localhost:*"
+      ],
+      frameSrc: [
+        "'self'",
+        // Stripe iframes for 3DS challenges
+        "https://js.stripe.com",
+        "https://hooks.stripe.com"
       ],
       frameAncestors: ["'self'"],
       baseUri: ["'self'"],
@@ -310,13 +317,23 @@ app.post('/api/billing/portal', async (req, res) => {
 
 // Stripe webhook endpoint
 app.post('/api/billing/webhook', async (req, res) => {
+  // Early check for service availability
+  if (!stripe || !stripeWebhookSecret) {
+    console.error('❌ Webhook service not configured:', { hasStripe: !!stripe, hasSecret: !!stripeWebhookSecret });
+    return res.status(503).json({ error: 'Webhook service not configured' });
+  }
+  
   const sig = req.headers['stripe-signature'];
-  const webhookSecret = stripeWebhookSecret;
+  if (!sig) {
+    console.error('❌ Missing stripe-signature header');
+    return res.status(400).json({ error: 'Missing signature header' });
+  }
 
   let event;
 
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    // Verify webhook signature BEFORE any processing
+    event = stripe.webhooks.constructEvent(req.body, sig, stripeWebhookSecret);
   } catch (err) {
     console.error('Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -430,32 +447,28 @@ app.post('/api/billing/webhook', async (req, res) => {
   }
 });
 
-// Get billing configuration
+// Unified billing configuration endpoint
 app.get('/api/billing/config', (req, res) => {
-  console.log('⚙️ Config request received');
+  console.log('⚙️ Billing config request received');
   
-  if (!process.env.PRICE_ID_MONTHLY) {
-    console.log('❌ PRICE_ID_MONTHLY not configured');
-    return res.status(503).json({ error: 'Billing configuration not available' });
+  if (!stripePublishKey || !process.env.PRICE_ID_MONTHLY) {
+    console.log('❌ Billing not configured:', { 
+      hasPublishKey: !!stripePublishKey, 
+      hasPriceId: !!process.env.PRICE_ID_MONTHLY 
+    });
+    return res.status(503).json({ error: 'Billing service not configured' });
   }
   
   res.json({
+    publishableKey: stripePublishKey,
     priceId: process.env.PRICE_ID_MONTHLY
   });
 });
 
-// Get Stripe publishable key for client-side integration
+// Legacy endpoint - redirect to unified config
 app.get('/api/billing/stripe-key', (req, res) => {
-  console.log('🔑 Stripe key request received');
-  
-  if (!stripePublishKey) {
-    console.log('❌ STRIPE_PUBLISH_KEY not configured');
-    return res.status(503).json({ error: 'Stripe publishable key not available' });
-  }
-  
-  res.json({
-    publishableKey: stripePublishKey
-  });
+  console.log('🔑 Legacy stripe-key request - redirecting to config');
+  res.redirect(301, '/api/billing/config');
 });
 
 // Create Setup Intent for subscription payment method
@@ -586,18 +599,45 @@ app.post('/api/billing/create-subscription', async (req, res) => {
       }
     });
     
-    // Create subscription
+    // Create subscription with proper SCA handling
     const subscription = await stripe.subscriptions.create({
       customer: customerId,
       items: [{ price: priceId }],
       default_payment_method: paymentMethodId,
+      collection_method: 'charge_automatically',
+      payment_behavior: 'default_incomplete',
       expand: ['latest_invoice.payment_intent'],
       metadata: {
         firebase_uid: uid
       }
     });
     
-    res.json(subscription);
+    // Handle first invoice SCA requirements
+    const invoice = subscription.latest_invoice;
+    const paymentIntent = invoice?.payment_intent;
+    
+    if (paymentIntent && paymentIntent.status === 'requires_action') {
+      // First invoice requires SCA - return client secret for confirmation
+      return res.json({
+        requiresAction: true,
+        clientSecret: paymentIntent.client_secret,
+        subscriptionId: subscription.id,
+        paymentIntentId: paymentIntent.id
+      });
+    } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+      // Payment succeeded immediately
+      return res.json({
+        requiresAction: false,
+        subscription,
+        paymentIntentId: paymentIntent.id
+      });
+    } else {
+      // Other status - return subscription info
+      return res.json({
+        requiresAction: false,
+        subscription
+      });
+    }
     
   } catch (error) {
     console.error('Create subscription error:', error);

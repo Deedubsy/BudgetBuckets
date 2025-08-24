@@ -16,11 +16,8 @@ import {
   processSubscriptionPayment,
   showPaymentProcessing,
   resetPaymentUI,
-  handlePaymentResult 
-} from '/assets/js/stripe-payment.js';
-
-// Price ID will be fetched from server
-let PRICE_ID_MONTHLY = null;
+  getBillingConfig
+} from '/app/lib/billing-client.js';
 
 let auth, db, currentUser = null, userDoc = null;
 let isLoading = false;
@@ -36,8 +33,7 @@ export function mountAccountView(rootEl, { auth: authInstance, db: dbInstance })
   auth = authInstance;
   db = dbInstance;
   
-  // Fetch billing configuration and initialize Stripe
-  fetchBillingConfig();
+  // Initialize Stripe
   initializeStripeIfNeeded();
   
   // Set up auth state listener
@@ -266,20 +262,6 @@ function populatePreferencesSection(userDoc) {
 /**
  * Fetch billing configuration from server
  */
-async function fetchBillingConfig() {
-  try {
-    const response = await fetch('/api/billing/config');
-    if (response.ok) {
-      const config = await response.json();
-      PRICE_ID_MONTHLY = config.priceId;
-    } else {
-      console.error('Failed to fetch billing config');
-    }
-  } catch (error) {
-    console.error('Error fetching billing config:', error);
-  }
-}
-
 /**
  * Initialize Stripe.js if not already initialized
  */
@@ -287,8 +269,11 @@ async function initializeStripeIfNeeded() {
   if (!stripe) {
     try {
       stripe = await initializeStripe();
+      console.log('✅ Stripe initialized in account view');
     } catch (error) {
       console.error('Failed to initialize Stripe:', error);
+      // Show user-friendly error
+      showToast('Failed to initialize payment system. Some features may not be available.', 'error');
     }
   }
 }
@@ -371,13 +356,15 @@ async function handleUpgrade() {
     }
   }
   
-  if (!PRICE_ID_MONTHLY) {
+  const billingConfig = getBillingConfig();
+  if (!billingConfig || !billingConfig.priceId) {
     showToast('Billing configuration not loaded. Please try again.', 'error');
     return;
   }
   
-  const upgradeBtn = document.getElementById('upgradeBtn');
-  showPaymentProcessing(upgradeBtn);
+  const upgradeBtn = document.querySelector('[data-testid="upgrade-btn"]') || 
+                    document.getElementById('upgradeBtn');
+  showPaymentProcessing(upgradeBtn, 'Initializing...');
   
   try {
     // Check if payment element container exists, create if needed
@@ -390,18 +377,20 @@ async function handleUpgrade() {
     
     const idToken = await getIdToken(currentUser);
     
-    // Create payment element
+    // Create payment element with modern billing client
     console.log('🔧 Creating payment element...');
     paymentElementData = await createPaymentElement('stripe-payment-element', {
       uid: currentUser.uid,
       email: currentUser.email,
-      priceId: PRICE_ID_MONTHLY,
       idToken: idToken
     });
     console.log('✅ Payment element created:', !!paymentElementData);
     
     // Show the payment modal
     showPaymentModal();
+    
+    // Reset button to show it's ready for payment
+    resetPaymentUI(upgradeBtn, 'Enter Payment Details');
     
   } catch (error) {
     console.error('Upgrade error:', error);
@@ -440,7 +429,7 @@ function createPaymentModal() {
           <div id="stripe-payment-element" style="margin: 20px 0;"></div>
           <div class="modal-actions">
             <button class="btn btn-secondary" id="cancel-payment">Cancel</button>
-            <button class="btn btn-primary" id="complete-payment">Complete Payment - $3.99/mo</button>
+            <button class="btn btn-primary" id="complete-payment" data-testid="complete-payment-btn" disabled>Enter Payment Details</button>
           </div>
         </div>
       </div>
@@ -579,25 +568,28 @@ async function handleCompletePayment() {
   
   try {
     const idToken = await getIdToken(currentUser);
+    const billingConfig = getBillingConfig();
     
     const result = await processSubscriptionPayment({
       uid: currentUser.uid,
       customerId: paymentElementData.customerId,
-      priceId: PRICE_ID_MONTHLY,
+      priceId: paymentElementData.priceId || billingConfig.priceId,
       idToken: idToken
     });
     
-    handlePaymentResult(result, {
-      onSuccess: () => {
-        hidePaymentModal();
-        showToast('Subscription activated successfully!', 'success');
-        setTimeout(() => window.location.reload(), 2000);
-      },
-      onError: (error) => {
-        showToast(error || 'Payment failed. Please try again.', 'error');
-        resetPaymentUI(completeBtn, 'Complete Payment - $3.99/mo');
-      }
-    });
+    if (result.success) {
+      hidePaymentModal();
+      showToast('Subscription activated successfully!', 'success');
+      
+      // Refresh auth token to get updated custom claims
+      await getIdTokenResult(currentUser, true);
+      
+      // Reload page after brief delay to show updated UI
+      setTimeout(() => window.location.reload(), 2000);
+    } else {
+      showToast(result.error || 'Payment failed. Please try again.', 'error');
+      resetPaymentUI(completeBtn, 'Complete Payment - $3.99/mo');
+    }
     
   } catch (error) {
     console.error('Payment completion error:', error);
