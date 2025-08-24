@@ -290,13 +290,47 @@ app.post('/api/billing/portal', async (req, res) => {
     const userData = userDoc.data();
     const stripeCustomerId = userData.stripeCustomerId;
     
+    let finalCustomerId = stripeCustomerId;
+    
     if (!stripeCustomerId) {
-      return res.status(400).json({ error: 'No billing account found. Please upgrade first.' });
+      console.log('❌ No stripeCustomerId found for user:', uid);
+      console.log('   User data:', JSON.stringify(userData, null, 2));
+      
+      // Try to find customer by email as a fallback for existing Plus users
+      const userEmail = decodedToken.email;
+      if (userEmail) {
+        console.log('🔍 Searching for Stripe customer by email:', userEmail);
+        try {
+          const customers = await stripe.customers.list({
+            email: userEmail,
+            limit: 1
+          });
+          
+          if (customers.data.length > 0) {
+            finalCustomerId = customers.data[0].id;
+            console.log('✅ Found customer by email:', finalCustomerId);
+            
+            // Update user document with the found customer ID for future use
+            await db.collection('users').doc(uid).update({
+              stripeCustomerId: finalCustomerId
+            });
+            console.log('✅ Updated user document with stripeCustomerId');
+          } else {
+            console.log('❌ No Stripe customer found for email:', userEmail);
+            return res.status(400).json({ error: 'No billing account found. Please upgrade first.' });
+          }
+        } catch (searchError) {
+          console.error('❌ Error searching for customer:', searchError);
+          return res.status(400).json({ error: 'No billing account found. Please upgrade first.' });
+        }
+      } else {
+        return res.status(400).json({ error: 'No billing account found. Please upgrade first.' });
+      }
     }
 
     // Create Stripe Customer Portal session
     const session = await stripe.billingPortal.sessions.create({
-      customer: stripeCustomerId,
+      customer: finalCustomerId,
       return_url: `${req.headers.origin}/app`,
     });
 
