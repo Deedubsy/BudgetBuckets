@@ -140,17 +140,26 @@ export async function processSubscriptionPayment(options = {}) {
     throw new Error(error);
   }
   
+  console.log('🔧 Elements object:', {
+    hasSubmit: typeof elements.submit,
+    elementsMethods: Object.getOwnPropertyNames(elements).slice(0, 10)
+  });
+  
   try {
     console.log('🔧 Starting payment confirmation...');
     
-    // First validate the form before confirming
-    const { error: submitError } = await elements.submit();
-    if (submitError) {
-      console.error('Form validation error:', submitError);
-      throw submitError;
+    // Only call submit if it exists (newer Stripe.js versions)
+    if (elements.submit && typeof elements.submit === 'function') {
+      console.log('🔧 Validating form with elements.submit()...');
+      const { error: submitError } = await elements.submit();
+      if (submitError) {
+        console.error('Form validation error:', submitError);
+        throw submitError;
+      }
+      console.log('✅ Form validation passed');
+    } else {
+      console.log('⚠️ elements.submit() not available - validation will happen during confirmSetup');
     }
-    
-    console.log('✅ Form validation passed');
     
     // Confirm setup intent with payment method
     console.log('🔧 Confirming setup intent...');
