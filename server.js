@@ -292,7 +292,9 @@ app.post('/api/billing/portal', async (req, res) => {
     }
     
     const userData = userDoc.data();
-    const stripeCustomerId = userData.stripeCustomerId;
+    console.log('📊 User data keys:', Object.keys(userData || {}));
+    const stripeCustomerId = userData?.stripeCustomerId;
+    console.log('💳 Stored stripeCustomerId:', stripeCustomerId);
     
     let finalCustomerId = stripeCustomerId;
     
@@ -315,10 +317,15 @@ app.post('/api/billing/portal', async (req, res) => {
             console.log('✅ Found customer by email:', finalCustomerId);
             
             // Update user document with the found customer ID for future use
-            await db.collection('users').doc(uid).update({
-              stripeCustomerId: finalCustomerId
-            });
-            console.log('✅ Updated user document with stripeCustomerId');
+            try {
+              await db.collection('users').doc(uid).update({
+                stripeCustomerId: finalCustomerId
+              });
+              console.log('✅ Updated user document with stripeCustomerId');
+            } catch (updateError) {
+              console.error('⚠️ Failed to update user document:', updateError.message);
+              // Continue anyway - we have the customer ID
+            }
           } else {
             console.log('❌ No Stripe customer found for email:', userEmail);
             return res.status(400).json({ error: 'No billing account found. Please upgrade first.' });
