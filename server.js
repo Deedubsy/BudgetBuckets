@@ -364,6 +364,12 @@ app.post('/api/billing/portal', async (req, res) => {
       return res.status(401).json({ error: 'Token expired' });
     } else if (error.code === 'auth/argument-error') {
       return res.status(401).json({ error: 'Invalid token' });
+    } else if (error.type === 'StripeInvalidRequestError' && error.message.includes('No configuration provided')) {
+      return res.status(503).json({ 
+        error: 'Customer portal not configured',
+        details: 'The billing portal needs to be configured in Stripe Dashboard. Please contact support.',
+        configurationRequired: true
+      });
     }
     
     // Return more specific error information
