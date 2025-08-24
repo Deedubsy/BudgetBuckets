@@ -581,13 +581,32 @@ async function handleCompletePayment() {
     
     if (result.success) {
       hidePaymentModal();
-      showToast('Subscription activated successfully!', 'success');
+      showToast('Subscription activated successfully! Updating your plan...', 'success');
       
       // Refresh auth token to get updated custom claims
+      console.log('🔄 Refreshing auth token to get updated plan...');
       await getIdTokenResult(currentUser, true);
       
-      // Reload page after brief delay to show updated UI
-      setTimeout(() => window.location.reload(), 2000);
+      // Wait a bit for webhook to process and update claims
+      setTimeout(async () => {
+        try {
+          // Force refresh token again to get latest claims
+          const tokenResult = await getIdTokenResult(currentUser, true);
+          console.log('🔍 Token claims after refresh:', tokenResult.claims);
+          
+          // Refresh the plan data and update UI
+          await refreshPlan();
+          
+          // Update the account view to show new plan
+          await loadUserData();
+          updatePlanUI();
+          
+          showToast('✅ Welcome to Budget Buckets Plus!', 'success');
+        } catch (error) {
+          console.error('Error refreshing plan data:', error);
+          showToast('Payment successful! Please refresh the page to see your Plus features.', 'info');
+        }
+      }, 3000);
     } else {
       showToast(result.error || 'Payment failed. Please try again.', 'error');
       resetPaymentUI(completeBtn, 'Complete Payment - $3.99/mo');
@@ -598,6 +617,49 @@ async function handleCompletePayment() {
     showToast('Payment failed. Please try again.', 'error');
     resetPaymentUI(completeBtn, 'Complete Payment - $3.99/mo');
   }
+}
+
+/**
+ * Update plan UI elements without page reload
+ */
+function updatePlanUI() {
+  console.log('🔄 Updating plan UI elements...');
+  
+  // Update plan badge
+  const planBadge = document.querySelector('[data-testid="plan-badge"]') || 
+                   document.querySelector('.plan-badge');
+  if (planBadge) {
+    planBadge.textContent = 'Plus';
+    planBadge.className = 'plan-badge plus';
+  }
+  
+  // Hide upgrade button, show manage billing button
+  const upgradeBtn = document.querySelector('[data-testid="upgrade-btn"]') || 
+                    document.getElementById('upgradeBtn');
+  const manageBillingBtn = document.querySelector('[data-testid="manage-billing-btn"]') || 
+                          document.getElementById('manageBillingBtn');
+  
+  if (upgradeBtn) {
+    upgradeBtn.style.display = 'none';
+  }
+  
+  if (manageBillingBtn) {
+    manageBillingBtn.style.display = 'inline-block';
+    manageBillingBtn.textContent = 'Manage Billing';
+  }
+  
+  // Update any plan-specific UI elements
+  const planStatus = document.querySelector('.plan-status');
+  if (planStatus) {
+    planStatus.innerHTML = `
+      <div class="plan-info">
+        <span class="plan-badge plus">Plus</span>
+        <span class="plan-features">Unlimited budgets • Priority support</span>
+      </div>
+    `;
+  }
+  
+  console.log('✅ Plan UI updated to Plus');
 }
 
 /**

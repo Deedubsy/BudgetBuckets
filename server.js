@@ -317,6 +317,13 @@ app.post('/api/billing/portal', async (req, res) => {
 
 // Stripe webhook endpoint
 app.post('/api/billing/webhook', async (req, res) => {
+  console.log('🎣 Webhook received:', {
+    hasStripe: !!stripe,
+    hasSecret: !!stripeWebhookSecret,
+    hasSignature: !!req.headers['stripe-signature'],
+    bodyLength: req.body ? req.body.length : 0
+  });
+  
   // Early check for service availability
   if (!stripe || !stripeWebhookSecret) {
     console.error('❌ Webhook service not configured:', { hasStripe: !!stripe, hasSecret: !!stripeWebhookSecret });
@@ -334,8 +341,9 @@ app.post('/api/billing/webhook', async (req, res) => {
   try {
     // Verify webhook signature BEFORE any processing
     event = stripe.webhooks.constructEvent(req.body, sig, stripeWebhookSecret);
+    console.log('✅ Webhook signature verified, event type:', event.type);
   } catch (err) {
-    console.error('Webhook signature verification failed:', err.message);
+    console.error('❌ Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
@@ -351,7 +359,15 @@ app.post('/api/billing/webhook', async (req, res) => {
         const status = subscription.status;
         const firebaseUid = subscription.metadata?.firebase_uid;
 
+        console.log(`📝 Processing subscription ${event.type}:`, {
+          subscriptionId: subscription.id,
+          customerId: customerId,
+          status: status,
+          firebaseUid: firebaseUid
+        });
+
         if (firebaseUid) {
+          // Update Firestore user document
           await db.collection('users').doc(firebaseUid).set({
             subscriptionId: subscription.id,
             subscriptionStatus: status,
@@ -360,14 +376,16 @@ app.post('/api/billing/webhook', async (req, res) => {
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
           }, { merge: true });
 
-          // Set custom claims for plan access
-          if (status === 'active') {
-            await admin.auth().setCustomUserClaims(firebaseUid, { plan: 'plus' });
-          } else {
-            await admin.auth().setCustomUserClaims(firebaseUid, { plan: 'free' });
-          }
+          console.log(`✅ Firestore updated for user ${firebaseUid}`);
 
-          console.log(`Updated user ${firebaseUid} subscription to ${status}`);
+          // Set custom claims for plan access
+          const newPlan = status === 'active' ? 'plus' : 'free';
+          await admin.auth().setCustomUserClaims(firebaseUid, { plan: newPlan });
+          
+          console.log(`✅ Firebase custom claims updated: ${firebaseUid} → plan: ${newPlan}`);
+          console.log(`🎉 User ${firebaseUid} subscription ${status === 'active' ? 'ACTIVATED' : 'UPDATED'} to ${newPlan}`);
+        } else {
+          console.error('❌ No firebase_uid in subscription metadata');
         }
         break;
       }
