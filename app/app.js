@@ -1959,7 +1959,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             accountItem.addEventListener('click', (e) => {
                 e.preventDefault();
                 userDropdown.classList.remove('show');
-                window.location.href = '/account.html';
+                window.location.href = '/app/account.html';
             });
         }
         
