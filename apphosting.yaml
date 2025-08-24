@@ -1,4 +1,5 @@
 # Firebase App Hosting configuration for Budget Buckets
+# Updated with STRIPE_PUBLISH_KEY secret access
 
 # Build settings
 env:
