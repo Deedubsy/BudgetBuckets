@@ -6,9 +6,9 @@ env:
   - variable: NODE_ENV
     value: production
 
-    # Public-ish value you’re happy to keep server-side only
+    # Public-ish value you're happy to keep server-side only
   - variable: PRICE_ID_MONTHLY
-    value: prod_SttjiRWLK9NWVI
+    value: price_1Ry5wPHs1YiHCsximogcJ5et
     availability:
       - RUNTIME
 
