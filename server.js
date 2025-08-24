@@ -341,11 +341,12 @@ app.post('/api/billing/portal', async (req, res) => {
 
     // Create Stripe Customer Portal session
     console.log('🏛️ Creating Stripe portal session for customer:', finalCustomerId);
-    console.log('   Return URL:', `${req.headers.origin}/app`);
+    const returnUrl = req.headers.origin ? `${req.headers.origin}/app` : 'https://budgetbucket.app/app';
+    console.log('   Return URL:', returnUrl);
     
     const session = await stripe.billingPortal.sessions.create({
       customer: finalCustomerId,
-      return_url: `${req.headers.origin}/app`,
+      return_url: returnUrl,
     });
     
     console.log('✅ Portal session created:', session.id);
@@ -368,7 +369,9 @@ app.post('/api/billing/portal', async (req, res) => {
     // Return more specific error information
     res.status(500).json({ 
       error: 'Internal server error',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: error.message,
+      code: error.code,
+      type: error.type
     });
   }
 });

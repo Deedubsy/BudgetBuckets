@@ -759,10 +759,14 @@ async function handleManageBilling() {
     
     if (!response.ok) {
       const errorData = await response.json();
+      console.log('❌ Server error details:', errorData);
+      
       if (response.status === 400 && errorData.error?.includes('No billing account found')) {
         showToast('No billing account found. Please upgrade to Plus first.', 'error');
       } else {
-        throw new Error(errorData.error || 'Failed to access billing portal');
+        const errorMsg = errorData.details || errorData.error || 'Failed to access billing portal';
+        console.error('Full error info:', errorData);
+        throw new Error(errorMsg);
       }
       return;
     }
