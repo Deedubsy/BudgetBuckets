@@ -17,6 +17,11 @@ env:
     availability:
       - RUNTIME
 
+  - variable: STRIPE_PUBLISH_KEY
+    secret: stripe-publish-key
+    availability:
+      - RUNTIME
+
   - variable: STRIPE_WEBHOOK_SECRET
     secret: stripe-webhook-secret
     availability:
