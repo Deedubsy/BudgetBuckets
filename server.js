@@ -148,6 +148,52 @@ app.use(express.static(path.join(__dirname), {
   }
 }));
 
+// DEBUG: Webhook testing and diagnostics endpoint
+app.get('/api/billing/debug/webhook-status', async (req, res) => {
+  console.log('🔍 Webhook status check requested');
+  
+  try {
+    const webhookConfig = {
+      hasStripe: !!stripe,
+      hasWebhookSecret: !!stripeWebhookSecret,
+      webhookSecretLength: stripeWebhookSecret ? stripeWebhookSecret.length : 0,
+      webhookSecretPrefix: stripeWebhookSecret ? stripeWebhookSecret.substring(0, 8) + '...' : 'MISSING',
+      environment: process.env.NODE_ENV || 'development',
+      stripeMode: stripeSecretKey ? (stripeSecretKey.startsWith('sk_live') ? 'live' : 'test') : 'unknown'
+    };
+    
+    console.log('📊 Webhook configuration:', webhookConfig);
+    
+    res.json({
+      status: 'ok',
+      webhook: webhookConfig,
+      expectedEndpoint: '/api/billing/webhook',
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('❌ Webhook status check error:', error);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
+});
+
+// DEBUG: Test webhook endpoint (accepts any payload for testing)
+app.post('/api/billing/debug/test-webhook', async (req, res) => {
+  console.log('🧪 Test webhook called');
+  console.log('  Headers:', req.headers);
+  console.log('  Body type:', typeof req.body);
+  console.log('  Body length:', req.body ? req.body.length : 0);
+  console.log('  Content-Type:', req.headers['content-type']);
+  console.log('  Stripe-Signature:', req.headers['stripe-signature'] ? 'Present' : 'Missing');
+  
+  res.json({ 
+    received: true, 
+    timestamp: new Date().toISOString(),
+    bodyType: typeof req.body,
+    hasStripeSignature: !!req.headers['stripe-signature']
+  });
+});
+
 // DEBUG: Emergency endpoint to manually set Plus plan (for webhook troubleshooting)
 app.post('/api/billing/debug/force-plus-plan', async (req, res) => {
   console.log('🚨 EMERGENCY: Force Plus plan request received');
@@ -484,11 +530,16 @@ app.post('/api/billing/debug', async (req, res) => {
 
 // Stripe webhook endpoint
 app.post('/api/billing/webhook', async (req, res) => {
-  console.log('🎣 Webhook received:', {
+  const timestamp = new Date().toISOString();
+  console.log(`🎣 [${timestamp}] Webhook received:`, {
     hasStripe: !!stripe,
     hasSecret: !!stripeWebhookSecret,
     hasSignature: !!req.headers['stripe-signature'],
-    bodyLength: req.body ? req.body.length : 0
+    bodyLength: req.body ? req.body.length : 0,
+    contentType: req.headers['content-type'],
+    userAgent: req.headers['user-agent'],
+    sourceIP: req.ip || req.connection.remoteAddress,
+    signaturePreview: req.headers['stripe-signature'] ? req.headers['stripe-signature'].substring(0, 20) + '...' : 'NONE'
   });
   
   // Early check for service availability

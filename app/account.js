@@ -746,6 +746,64 @@ async function debugBilling() {
 // Add debug functions to window for console access
 window.debugBilling = debugBilling;
 
+// Debug function to check webhook configuration
+window.debugWebhook = async function() {
+  try {
+    console.log('🔍 Checking webhook configuration...');
+    
+    const response = await fetch('/api/billing/debug/webhook-status');
+    const data = await response.json();
+    
+    console.log('📊 Webhook Status:', data);
+    
+    if (data.webhook) {
+      console.log('Webhook Configuration:');
+      console.log(`  ✅ Stripe initialized: ${data.webhook.hasStripe}`);
+      console.log(`  ✅ Webhook secret configured: ${data.webhook.hasWebhookSecret}`);
+      console.log(`  📝 Secret length: ${data.webhook.webhookSecretLength} characters`);
+      console.log(`  📝 Secret preview: ${data.webhook.webhookSecretPrefix}`);
+      console.log(`  🔧 Stripe mode: ${data.webhook.stripeMode}`);
+      console.log(`  🌍 Environment: ${data.webhook.environment}`);
+      console.log(`  🎯 Expected endpoint: ${data.expectedEndpoint}`);
+    }
+    
+    return data;
+    
+  } catch (error) {
+    console.error('❌ Webhook status check failed:', error);
+    return { error: error.message };
+  }
+};
+
+// Debug function to test webhook endpoint connectivity
+window.testWebhook = async function() {
+  try {
+    console.log('🧪 Testing webhook endpoint...');
+    
+    const response = await fetch('/api/billing/debug/test-webhook', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Test-Source': 'browser-debug'
+      },
+      body: JSON.stringify({ 
+        test: true, 
+        timestamp: new Date().toISOString(),
+        source: 'debug-function'
+      })
+    });
+    
+    const data = await response.json();
+    console.log('🎯 Test webhook response:', data);
+    
+    return data;
+    
+  } catch (error) {
+    console.error('❌ Test webhook failed:', error);
+    return { error: error.message };
+  }
+};
+
 // Debug function to manually refresh auth token and check claims
 window.debugAuthToken = async function() {
   if (!currentUser) {
