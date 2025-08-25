@@ -151,13 +151,17 @@ import { doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs
         const email = formData.get('email') || document.getElementById('signinEmail').value;
         const password = formData.get('password') || document.getElementById('signinPassword').value;
         
+        console.log('🔐 DEBUG: handleSignIn called with email:', email);
+        
         try {
             validateForm({ email, password });
             
             showLoading();
             
+            console.log('🔐 DEBUG: About to call signInWithEmailAndPassword');
             // Use Firebase Auth directly to get proper error codes
             const { user } = await signInWithEmailAndPassword(window.firebase.auth, email, password);
+            console.log('🔐 DEBUG: signInWithEmailAndPassword succeeded, user:', user.uid);
             
             // Check if this is a password provider and email is not verified
             const isPasswordProvider = user.providerData.some(p => p.providerId === 'password');
@@ -173,23 +177,30 @@ import { doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs
             
         } catch (error) {
             hideLoading();
-            console.error('Sign in error:', error);
+            console.error('🔐 DEBUG: Sign in error caught:', error);
+            console.error('🔐 DEBUG: Error code:', error.code);
+            console.error('🔐 DEBUG: Error message:', error.message);
             
             // Handle validation errors (no error.code)
             if (!error.code) {
+                console.log('🔐 DEBUG: Validation error, showing inline error');
                 showInlineError(error.message);
                 return;
             }
             
             // Handle specific Firebase error codes
             if (error.code === 'auth/user-not-found') {
+                console.log('🔐 DEBUG: User not found error, switching to create account tab');
                 showInlineError("We can't find an account for that email.");
                 switchToCreateAccountTab();
             } else if (error.code === 'auth/wrong-password') {
+                console.log('🔐 DEBUG: Wrong password error');
                 showInlineError('Incorrect password.');
             } else if (error.code === 'auth/too-many-requests') {
+                console.log('🔐 DEBUG: Too many requests error');
                 showInlineError('Too many attempts. Please wait and try again.');
             } else {
+                console.log('🔐 DEBUG: Generic sign in error, code:', error.code);
                 showInlineError('Sign in failed. Please try again.');
             }
         }
@@ -199,10 +210,14 @@ import { doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs
     async function handleCreateAccount(event) {
         event.preventDefault();
         
+        console.log('🔐 DEBUG: handleCreateAccount called');
+        
         const formData = new FormData(event.target);
         const email = formData.get('email') || document.getElementById('registerEmail').value;
         const password = formData.get('password') || document.getElementById('registerPassword').value;
         const confirmPassword = formData.get('confirmPassword') || document.getElementById('registerConfirmPassword').value;
+        
+        console.log('🔐 DEBUG: Creating account for email:', email);
         
         try {
             validateForm({ email, password, confirmPassword });
