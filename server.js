@@ -1076,8 +1076,20 @@ app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'auth', 'login.html'));
 });
 
+app.get('/auth/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'auth', 'login.html'));
+});
+
 app.get('/auth/login.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'auth', 'login.html'));
+});
+
+app.get('/auth/verify', (req, res) => {
+  res.sendFile(path.join(__dirname, 'auth', 'verify.html'));
+});
+
+app.get('/auth/choose-plan', (req, res) => {
+  res.sendFile(path.join(__dirname, 'auth', 'choose-plan.html'));
 });
 
 app.get('/app', (req, res) => {

@@ -14,13 +14,60 @@ watchPlan(updatePlanUI);
 
 // Show/hide Account nav link based on auth state
 const navAccount = document.getElementById('navAccount');
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   if (navAccount) {
     navAccount.style.display = user ? 'inline-block' : 'none';
   }
+  
+  // Enhanced auth gate - enforce the complete flow
+  await enforceAuthFlow(user);
+  
   handleEmailVerification(user);
   updateBucketCounter();
 });
+
+// Enhanced authentication gate
+async function enforceAuthFlow(user) {
+  if (!user) {
+    // No user signed in, redirect to login
+    location.assign('/auth/login');
+    return;
+  }
+
+  // Check if this is a password provider and email is not verified
+  const isPasswordProvider = user.providerData.some(p => p.providerId === 'password');
+  if (isPasswordProvider && !user.emailVerified) {
+    console.log('Email not verified, redirecting to verification');
+    await auth.signOut();
+    location.assign(`/auth/verify?email=${encodeURIComponent(user.email)}`);
+    return;
+  }
+
+  try {
+    // Check user document and plan status
+    const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js');
+    const userDocRef = doc(db, 'users', user.uid);
+    const userDocSnap = await getDoc(userDocRef);
+    
+    if (!userDocSnap.exists()) {
+      console.log('User document missing, redirecting to plan selection');
+      location.assign('/auth/choose-plan');
+      return;
+    }
+    
+    const userData = userDocSnap.data();
+    if (!userData.planType || userData.planType === 'free_pending') {
+      console.log('Plan not selected, redirecting to plan selection');
+      location.assign('/auth/choose-plan');
+      return;
+    }
+    
+    console.log('✅ Authentication flow complete, user can access app');
+  } catch (error) {
+    console.error('Error checking user status:', error);
+    // On error, allow access but log the issue
+  }
+}
 
 // Simple nav wiring
 if (navAccount) {

@@ -380,12 +380,12 @@ const authHelpers = {
   },
 
   // Send email verification
-  async sendEmailVerification(user) {
+  async sendEmailVerification(user, actionCodeSettings) {
     const { sendEmailVerification } = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js');
     try {
       console.log('📧 Sending email verification to:', user.email);
       await retryAuthOperation(
-        () => sendEmailVerification(user)
+        () => sendEmailVerification(user, actionCodeSettings)
       );
       console.log('✅ Email verification sent');
     } catch (error) {
