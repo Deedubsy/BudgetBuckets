@@ -255,26 +255,78 @@ app.post('/api/billing/debug/force-plus-plan', async (req, res) => {
     await admin.auth().setCustomUserClaims(uid, { plan: 'plus' });
     console.log('✅ Custom claims set: plan = plus');
     
-    // Update Firestore
+    // Update Firestore - FIXED: Set subscriptionStatus to 'active'
     const db = admin.firestore();
     await db.collection('users').doc(uid).set({
       subscriptionStatus: 'active',
       planType: 'plus',
       manuallySet: true,
+      manuallySetAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
     
-    console.log('✅ Firestore updated with Plus plan');
+    console.log('✅ Firestore updated with Plus plan (subscriptionStatus = active)');
     
     res.json({ 
       success: true, 
-      message: 'Plus plan set manually',
+      message: 'Plus plan set manually with active subscription status',
       uid: uid,
-      plan: 'plus'
+      plan: 'plus',
+      subscriptionStatus: 'active'
     });
     
   } catch (error) {
     console.error('❌ Force Plus plan error:', error);
+    res.status(500).json({ error: 'Internal server error: ' + error.message });
+  }
+});
+
+// DEBUG: Fix subscription status to 'active' for Plus users
+app.post('/api/billing/debug/fix-subscription-status', async (req, res) => {
+  console.log('🔧 Fix subscription status request received');
+  
+  try {
+    // Verify Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Missing or invalid Authorization header' });
+    }
+    
+    const idToken = authHeader.substring(7);
+    let decodedToken;
+    
+    try {
+      decodedToken = await admin.auth().verifyIdToken(idToken);
+    } catch (error) {
+      console.error('❌ Invalid Firebase token:', error);
+      return res.status(403).json({ error: 'Invalid Firebase token' });
+    }
+    
+    const { uid } = req.body;
+    if (!uid || uid !== decodedToken.uid) {
+      return res.status(400).json({ error: 'Invalid or mismatched UID' });
+    }
+    
+    console.log('🔧 Fixing subscription status for user:', uid);
+    
+    // Update Firestore to set subscriptionStatus to active
+    const db = admin.firestore();
+    await db.collection('users').doc(uid).update({
+      subscriptionStatus: 'active',
+      statusFixedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
+    console.log('✅ Subscription status fixed: active');
+    
+    res.json({ 
+      success: true, 
+      message: 'Subscription status updated to active',
+      uid: uid,
+      subscriptionStatus: 'active'
+    });
+    
+  } catch (error) {
+    console.error('❌ Fix subscription status error:', error);
     res.status(500).json({ error: 'Internal server error: ' + error.message });
   }
 });

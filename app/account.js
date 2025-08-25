@@ -942,11 +942,13 @@ window.forceSetPlusPlan = async function() {
     });
     
     if (response.ok) {
-      console.log('✅ Plus plan set manually');
+      const result = await response.json();
+      console.log('✅ Plus plan set manually:', result);
       
-      // Force token refresh
+      // Force token refresh and page reload
       setTimeout(async () => {
         await debugAuthToken();
+        window.location.reload();
       }, 1000);
       
     } else {
@@ -956,6 +958,45 @@ window.forceSetPlusPlan = async function() {
     
   } catch (error) {
     console.error('❌ Emergency Plus plan setting failed:', error);
+  }
+};
+
+// Function to fix subscription status for Plus users showing as "free"
+window.fixSubscriptionStatus = async function() {
+  if (!currentUser) {
+    console.log('❌ No current user');
+    return;
+  }
+  
+  try {
+    console.log('🔧 Fixing subscription status for user:', currentUser.uid);
+    
+    const idToken = await getIdToken(currentUser);
+    const response = await fetch('/api/billing/debug/fix-subscription-status', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${idToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ uid: currentUser.uid })
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      console.log('✅ Subscription status fixed:', result);
+      
+      // Refresh the account view
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
+    } else {
+      const error = await response.json();
+      console.error('❌ Failed to fix subscription status:', error);
+    }
+    
+  } catch (error) {
+    console.error('❌ Fix subscription status failed:', error);
   }
 };
 
