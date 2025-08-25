@@ -579,6 +579,7 @@ app.post('/api/billing/webhook', async (req, res) => {
   // Early check for service availability
   if (!stripe || !stripeWebhookSecret) {
     console.error('❌ Webhook service not configured:', { hasStripe: !!stripe, hasSecret: !!stripeWebhookSecret });
+    logWebhookCall('service_unavailable', { hasStripe: !!stripe, hasSecret: !!stripeWebhookSecret });
     return res.status(503).json({ error: 'Webhook service not configured' });
   }
   
@@ -595,7 +596,20 @@ app.post('/api/billing/webhook', async (req, res) => {
     event = stripe.webhooks.constructEvent(req.body, sig, stripeWebhookSecret);
     console.log('✅ Webhook signature verified, event type:', event.type);
   } catch (err) {
-    console.error('❌ Webhook signature verification failed:', err.message);
+    console.error('❌ Webhook signature verification failed:', {
+      error: err.message,
+      signatureHeader: sig ? sig.substring(0, 20) + '...' : 'MISSING',
+      webhookSecretConfigured: !!stripeWebhookSecret,
+      webhookSecretLength: stripeWebhookSecret ? stripeWebhookSecret.length : 0,
+      bodyLength: req.body ? req.body.length : 0
+    });
+    
+    logWebhookCall('signature_verification_failed', {
+      error: err.message,
+      hasSignature: !!sig,
+      hasSecret: !!stripeWebhookSecret
+    });
+    
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 

@@ -836,7 +836,11 @@ window.checkWebhookHistory = async function() {
     if (data.totalCalls === 0) {
       console.log('⚠️  NO WEBHOOK CALLS RECEIVED');
       console.log('   This suggests Stripe is not calling your webhook endpoint.');
-      console.log('   Check your Stripe Dashboard webhook configuration.');
+      console.log('   Next steps:');
+      console.log('   1. Check Stripe Dashboard → Webhooks → we_1Ry6EnHs1YiHCsxiEHLeLdQE');
+      console.log('   2. Look for failed webhook attempts');
+      console.log('   3. Test the webhook endpoint manually');
+      console.log('   4. Check webhook secret matches');
     } else {
       console.log(`✅ ${data.totalCalls} webhook calls received`);
       console.log(`   Newest: ${data.newestCall}`);
@@ -853,6 +857,36 @@ window.checkWebhookHistory = async function() {
     console.error('❌ Webhook history check failed:', error);
     return { error: error.message };
   }
+};
+
+// Function to provide specific debugging instructions
+window.debugStripeWebhook = function() {
+  console.log('🔧 Stripe Webhook Debugging Checklist:');
+  console.log('');
+  console.log('1. 🌐 WEBHOOK ENDPOINT TEST');
+  console.log('   Your webhook URL: https://budgetbucket.app/api/billing/webhook');
+  console.log('   Status: ✅ Reachable (confirmed via curl test)');
+  console.log('');
+  console.log('2. 📊 STRIPE DASHBOARD CHECKS');
+  console.log('   • Go to: https://dashboard.stripe.com/webhooks/we_1Ry6EnHs1YiHCsxiEHLeLdQE');
+  console.log('   • Check: Webhook endpoint is ENABLED');
+  console.log('   • Check: Events include customer.subscription.created/updated');
+  console.log('   • Check: Look for FAILED webhook attempts in the activity log');
+  console.log('');
+  console.log('3. 🔑 WEBHOOK SECRET CHECK');
+  console.log('   • In Stripe Dashboard, click "Reveal signing secret"');
+  console.log('   • Compare with your Firebase Secret Manager: stripe-webhook-secret');
+  console.log('');
+  console.log('4. 🧪 MANUAL TEST');
+  console.log('   • In Stripe Dashboard, click "Send test webhook"');
+  console.log('   • Send a customer.subscription.created event');
+  console.log('   • Then run checkWebhookHistory() to see if it was received');
+  console.log('');
+  console.log('Most likely issues:');
+  console.log('❌ Webhook secret mismatch');
+  console.log('❌ Webhook disabled in Stripe');
+  console.log('❌ Missing subscription.* events');
+  console.log('❌ Stripe is in test mode but webhook configured for live mode (or vice versa)');
 };
 
 // Debug function to manually refresh auth token and check claims
