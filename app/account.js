@@ -211,10 +211,9 @@ function populateBillingSection(user, claims, userDoc) {
     if (plusUserBilling) plusUserBilling.classList.remove('hidden');
     
     if (billingStatus) {
-      const status = userDoc.subscriptionStatus || 'active';
       billingStatus.innerHTML = `
         <span class="status-active">●</span>
-        <span>Subscription ${status}</span>
+        <span>Plus Plan Active</span>
       `;
     }
   } else {
