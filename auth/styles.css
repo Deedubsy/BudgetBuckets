@@ -435,6 +435,10 @@ body {
 }
 
 /* Plan selection page styles */
+.plan-selection-container {
+    max-width: 850px !important;
+}
+
 .auth-card.plan-selection {
     max-width: 800px;
     width: 100%;

@@ -6,6 +6,7 @@ import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/
 
     let currentUser = null;
     let billingClient = null;
+    let processingPlan = false;
 
     function showLoading() {
         document.getElementById('loadingOverlay').style.display = 'flex';
@@ -58,6 +59,7 @@ import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/
                 return;
             }
 
+            processingPlan = true;
             showLoading();
             
             // Update user document to set free plan
@@ -70,6 +72,7 @@ import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/
             setTimeout(() => location.assign('/app'), 1500);
         } catch (error) {
             hideLoading();
+            processingPlan = false;
             console.error('Free plan selection error:', error);
             showError('Failed to activate free plan. Please try again.');
         }
@@ -86,6 +89,7 @@ import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/
                 return;
             }
 
+            processingPlan = true;
             showLoading();
 
             // Initialize billing client if not already done
@@ -116,6 +120,7 @@ import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/
             }
         } catch (error) {
             hideLoading();
+            processingPlan = false;
             showPlanSelection();
             console.error('Plus plan selection error:', error);
             showError('Failed to start Plus subscription. Please try again.');
@@ -176,8 +181,8 @@ import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/
             console.log('Auth state change:', user ? `User ${user.uid}` : 'No user');
             currentUser = user;
             
-            if (!user && !isTestMode) {
-                // No user signed in, redirect to login (unless in test mode)
+            if (!user && !isTestMode && !processingPlan) {
+                // No user signed in, redirect to login (unless in test mode or processing plan)
                 console.log('No authenticated user, redirecting to login');
                 location.assign('/auth/login');
                 return;
@@ -191,8 +196,10 @@ import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/
                 return;
             }
 
-            // Check if user already has a plan
-            await checkUserPlanStatus();
+            // Check if user already has a plan (but not while processing)
+            if (!processingPlan) {
+                await checkUserPlanStatus();
+            }
         });
 
         console.log('✅ Plan selection page initialized');
