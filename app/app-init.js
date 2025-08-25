@@ -56,6 +56,15 @@ async function enforceAuthFlow(user) {
     }
     
     const userData = userDocSnap.data();
+    
+    // Check if plan was just selected (prevents race condition)
+    const planJustSelected = sessionStorage.getItem('planJustSelected');
+    if (planJustSelected) {
+      console.log('Plan was just selected:', planJustSelected, '- allowing access');
+      sessionStorage.removeItem('planJustSelected'); // Clear the flag
+      return;
+    }
+    
     if (!userData.planType || userData.planType === 'free_pending') {
       console.log('Plan not selected, redirecting to plan selection');
       location.assign('/auth/choose-plan');

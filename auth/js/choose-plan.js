@@ -67,6 +67,9 @@ import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/
                 planType: 'free'
             }, { merge: true });
 
+            // Store in sessionStorage to prevent race condition
+            sessionStorage.setItem('planJustSelected', 'free');
+
             hideLoading();
             showSuccess('Free plan activated! Taking you to Budget Buckets...');
             setTimeout(() => location.assign('/app'), 1500);
@@ -112,6 +115,9 @@ import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/
                 // Refresh token to get new claims
                 await currentUser.getIdToken(true);
                 
+                // Store in sessionStorage to prevent race condition
+                sessionStorage.setItem('planJustSelected', 'plus');
+                
                 showSuccess('Plus plan activated! Taking you to Budget Buckets...');
                 setTimeout(() => location.assign('/app'), 1500);
             } else {
@@ -140,6 +146,8 @@ import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/
                 // If user already has a plan (not free_pending), redirect to app
                 if (userData.planType && userData.planType !== 'free_pending') {
                     console.log('User already has plan:', userData.planType);
+                    // Set sessionStorage to prevent auth flow from redirecting back
+                    sessionStorage.setItem('planJustSelected', userData.planType);
                     location.assign('/app');
                     return;
                 }

@@ -44,6 +44,10 @@ body {
     max-width: 400px;
 }
 
+.auth-container.plan-selection-container {
+    max-width: 850px;
+}
+
 .auth-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -435,10 +439,6 @@ body {
 }
 
 /* Plan selection page styles */
-.plan-selection-container {
-    max-width: 850px !important;
-}
-
 .auth-card.plan-selection {
     max-width: 800px;
     width: 100%;
