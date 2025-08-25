@@ -804,6 +804,57 @@ window.testWebhook = async function() {
   }
 };
 
+// Function to get the correct webhook URL for Stripe configuration
+window.getWebhookURL = function() {
+  const webhookUrl = `${window.location.origin}/api/billing/webhook`;
+  console.log('🎯 Your webhook URL for Stripe Dashboard:');
+  console.log(`   ${webhookUrl}`);
+  console.log('');
+  console.log('📋 Stripe Dashboard Setup:');
+  console.log('1. Go to https://dashboard.stripe.com/webhooks');
+  console.log('2. Click "Add endpoint"');
+  console.log(`3. Enter URL: ${webhookUrl}`);
+  console.log('4. Select these events:');
+  console.log('   ✅ customer.subscription.created');
+  console.log('   ✅ customer.subscription.updated');
+  console.log('   ✅ customer.subscription.deleted');
+  console.log('5. Click "Add endpoint"');
+  
+  return webhookUrl;
+};
+
+// Function to check recent webhook activity
+window.checkWebhookHistory = async function() {
+  try {
+    console.log('📜 Checking recent webhook activity...');
+    
+    const response = await fetch('/api/billing/debug/webhook-history');
+    const data = await response.json();
+    
+    console.log('📊 Webhook History:', data);
+    
+    if (data.totalCalls === 0) {
+      console.log('⚠️  NO WEBHOOK CALLS RECEIVED');
+      console.log('   This suggests Stripe is not calling your webhook endpoint.');
+      console.log('   Check your Stripe Dashboard webhook configuration.');
+    } else {
+      console.log(`✅ ${data.totalCalls} webhook calls received`);
+      console.log(`   Newest: ${data.newestCall}`);
+      console.log(`   Oldest: ${data.oldestCall}`);
+      
+      data.recentCalls.forEach((call, index) => {
+        console.log(`   ${index + 1}. [${call.timestamp}] ${call.type}:`, call.data);
+      });
+    }
+    
+    return data;
+    
+  } catch (error) {
+    console.error('❌ Webhook history check failed:', error);
+    return { error: error.message };
+  }
+};
+
 // Debug function to manually refresh auth token and check claims
 window.debugAuthToken = async function() {
   if (!currentUser) {

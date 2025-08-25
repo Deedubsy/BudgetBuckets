@@ -194,6 +194,35 @@ app.post('/api/billing/debug/test-webhook', async (req, res) => {
   });
 });
 
+// Keep track of recent webhook calls for debugging
+let recentWebhookCalls = [];
+const MAX_WEBHOOK_HISTORY = 10;
+
+function logWebhookCall(type, data) {
+  recentWebhookCalls.unshift({
+    timestamp: new Date().toISOString(),
+    type: type,
+    data: data
+  });
+  
+  // Keep only recent calls
+  if (recentWebhookCalls.length > MAX_WEBHOOK_HISTORY) {
+    recentWebhookCalls = recentWebhookCalls.slice(0, MAX_WEBHOOK_HISTORY);
+  }
+}
+
+// DEBUG: Get recent webhook activity
+app.get('/api/billing/debug/webhook-history', (req, res) => {
+  console.log('📜 Webhook history requested');
+  
+  res.json({
+    recentCalls: recentWebhookCalls,
+    totalCalls: recentWebhookCalls.length,
+    oldestCall: recentWebhookCalls.length > 0 ? recentWebhookCalls[recentWebhookCalls.length - 1].timestamp : null,
+    newestCall: recentWebhookCalls.length > 0 ? recentWebhookCalls[0].timestamp : null
+  });
+});
+
 // DEBUG: Emergency endpoint to manually set Plus plan (for webhook troubleshooting)
 app.post('/api/billing/debug/force-plus-plan', async (req, res) => {
   console.log('🚨 EMERGENCY: Force Plus plan request received');
@@ -531,7 +560,7 @@ app.post('/api/billing/debug', async (req, res) => {
 // Stripe webhook endpoint
 app.post('/api/billing/webhook', async (req, res) => {
   const timestamp = new Date().toISOString();
-  console.log(`🎣 [${timestamp}] Webhook received:`, {
+  const webhookInfo = {
     hasStripe: !!stripe,
     hasSecret: !!stripeWebhookSecret,
     hasSignature: !!req.headers['stripe-signature'],
@@ -540,7 +569,12 @@ app.post('/api/billing/webhook', async (req, res) => {
     userAgent: req.headers['user-agent'],
     sourceIP: req.ip || req.connection.remoteAddress,
     signaturePreview: req.headers['stripe-signature'] ? req.headers['stripe-signature'].substring(0, 20) + '...' : 'NONE'
-  });
+  };
+  
+  console.log(`🎣 [${timestamp}] Webhook received:`, webhookInfo);
+  
+  // Log this webhook call for debugging
+  logWebhookCall('received', webhookInfo);
   
   // Early check for service availability
   if (!stripe || !stripeWebhookSecret) {
@@ -602,6 +636,15 @@ app.post('/api/billing/webhook', async (req, res) => {
           
           console.log(`✅ Firebase custom claims updated: ${firebaseUid} → plan: ${newPlan}`);
           console.log(`🎉 User ${firebaseUid} subscription ${status === 'active' ? 'ACTIVATED' : 'UPDATED'} to ${newPlan}`);
+          
+          // Log successful webhook processing
+          logWebhookCall('subscription_processed', {
+            eventType: event.type,
+            firebaseUid: firebaseUid,
+            subscriptionId: subscription.id,
+            status: status,
+            plan: newPlan
+          });
         } else {
           console.error('❌ No firebase_uid in subscription metadata');
         }
