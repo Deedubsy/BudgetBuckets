@@ -60,11 +60,7 @@ import {
     async function resendVerification() {
         try {
             if (!currentUser) {
-                showError('Please sign in again to resend verification email.');
-                const isTestMode = window.location.search.includes('test=true') || window.location.hostname === 'localhost';
-                if (!isTestMode) {
-                    setTimeout(() => location.assign('/auth/login'), 2000);
-                }
+                showError('To resend verification email, please sign in first using the link below.');
                 return;
             }
 
@@ -82,11 +78,7 @@ import {
     async function checkVerificationStatus() {
         try {
             if (!currentUser) {
-                showError('Please sign in again.');
-                const isTestMode = window.location.search.includes('test=true') || window.location.hostname === 'localhost';
-                if (!isTestMode) {
-                    setTimeout(() => location.assign('/auth/login'), 2000);
-                }
+                showError('To check verification status, please sign in first using the link below.');
                 return;
             }
 
@@ -141,10 +133,20 @@ import {
             console.log('Auth state change:', user ? `User ${user.uid}` : 'No user');
             currentUser = user;
             
-            if (!user && !isTestMode) {
-                // No user signed in, redirect to login (unless in test mode)
-                console.log('No authenticated user, redirecting to login');
+            // If there's no user but we have an email parameter, allow the page to show
+            // (this handles the case where user just created account and was signed out)
+            const urlParams = new URLSearchParams(location.search);
+            const targetEmail = urlParams.get('email');
+            
+            if (!user && !isTestMode && !targetEmail) {
+                // No user signed in and no email parameter, redirect to login
+                console.log('No authenticated user and no email parameter, redirecting to login');
                 location.assign('/auth/login');
+                return;
+            }
+            
+            if (!user && targetEmail) {
+                console.log('No authenticated user but email parameter present - showing verification page');
                 return;
             }
 
