@@ -78,7 +78,14 @@ import {
     async function checkVerificationStatus() {
         try {
             if (!currentUser) {
-                showError('To check verification status, please sign in first using the link below.');
+                // If no current user but we have email parameter, redirect to sign in with that email
+                const urlParams = new URLSearchParams(location.search);
+                const targetEmail = urlParams.get('email');
+                if (targetEmail) {
+                    location.assign(`/auth/login?email=${encodeURIComponent(targetEmail)}&reason=verify`);
+                } else {
+                    showError('To check verification status, please sign in first using the link below.');
+                }
                 return;
             }
 
