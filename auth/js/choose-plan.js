@@ -114,7 +114,11 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
 
             console.log('Creating payment element...');
             const idToken = await currentUser.getIdToken();
-            const paymentInfo = await createPaymentElement('payment-element', { idToken });
+            const paymentInfo = await createPaymentElement('payment-element', { 
+                idToken,
+                email: currentUser.email,
+                uid: currentUser.uid
+            });
 
             // Set up payment completion
             const submitButton = document.getElementById('payment-submit');

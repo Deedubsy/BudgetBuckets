@@ -78,11 +78,15 @@ import {
     async function checkVerificationStatus() {
         try {
             if (!currentUser) {
-                // If no current user but we have email parameter, redirect to sign in with that email
+                // If no current user but we have email parameter, show sign-in prompt
                 const urlParams = new URLSearchParams(location.search);
                 const targetEmail = urlParams.get('email');
                 if (targetEmail) {
-                    location.assign(`/auth/login?email=${encodeURIComponent(targetEmail)}&reason=verify`);
+                    // Show a more user-friendly message and redirect after a short delay
+                    showSuccess('Great! Your email has been verified. Signing you in to continue to plan selection...');
+                    setTimeout(() => {
+                        location.assign(`/auth/login?email=${encodeURIComponent(targetEmail)}&reason=verify`);
+                    }, 2000);
                 } else {
                     showError('To check verification status, please sign in first using the link below.');
                 }
@@ -99,7 +103,10 @@ import {
             
             if (currentUser.emailVerified) {
                 hideLoading();
-                location.assign('/auth/choose-plan');
+                showSuccess('Email verified successfully! Taking you to plan selection...');
+                setTimeout(() => {
+                    location.assign('/auth/choose-plan');
+                }, 1000);
             } else {
                 hideLoading();
                 showError('Email not verified yet. Please check your inbox and click the verification link.');
