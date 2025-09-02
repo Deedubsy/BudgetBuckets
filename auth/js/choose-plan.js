@@ -1,11 +1,12 @@
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
 import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+import { initializeStripe, createPaymentElement, processSubscriptionPayment } from '/app/lib/billing-client.js';
 
 (function() {
     'use strict';
 
     let currentUser = null;
-    let billingClient = null;
+    let stripeInitialized = false;
     let processingPlan = false;
 
     function showLoading() {
@@ -95,41 +96,62 @@ import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/
             processingPlan = true;
             showLoading();
 
-            // Initialize billing client if not already done
-            if (!billingClient && window.BillingClient) {
-                billingClient = new window.BillingClient();
-                await billingClient.initialize();
-            }
-
-            if (!billingClient) {
-                throw new Error('Billing system not available');
+            // Initialize Stripe if not already done
+            if (!stripeInitialized) {
+                console.log('Initializing Stripe...');
+                await initializeStripe();
+                stripeInitialized = true;
             }
 
             hideLoading();
             showPaymentSection();
 
-            // Start the upgrade flow using existing billing client
-            const success = await billingClient.startUpgradeFlow();
-            
-            if (success) {
-                // Refresh token to get new claims
-                await currentUser.getIdToken(true);
-                
-                // Store in sessionStorage to prevent race condition
-                sessionStorage.setItem('planJustSelected', 'plus');
-                
-                showSuccess('Plus plan activated! Taking you to Budget Buckets...');
-                setTimeout(() => location.assign('/app'), 1500);
-            } else {
-                showPlanSelection();
-                showError('Subscription was not completed. Please try again.');
+            // Create payment element in the payment section
+            const paymentContainer = document.getElementById('payment-element');
+            if (!paymentContainer) {
+                throw new Error('Payment container not found');
             }
+
+            console.log('Creating payment element...');
+            const idToken = await currentUser.getIdToken();
+            const paymentInfo = await createPaymentElement('payment-element', { idToken });
+
+            // Set up payment completion
+            const submitButton = document.getElementById('payment-submit');
+            if (submitButton) {
+                submitButton.onclick = async () => {
+                    try {
+                        showLoading();
+                        
+                        const success = await processSubscriptionPayment({
+                            idToken: await currentUser.getIdToken(true)
+                        });
+                        
+                        if (success) {
+                            // Store in sessionStorage to prevent race condition
+                            sessionStorage.setItem('planJustSelected', 'plus');
+                            
+                            hideLoading();
+                            showSuccess('Plus plan activated! Taking you to Budget Buckets...');
+                            setTimeout(() => location.assign('/app'), 1500);
+                        } else {
+                            hideLoading();
+                            showError('Payment was not completed. Please try again.');
+                        }
+                    } catch (paymentError) {
+                        hideLoading();
+                        console.error('Payment error:', paymentError);
+                        showError('Payment failed: ' + paymentError.message);
+                    }
+                };
+            }
+
         } catch (error) {
             hideLoading();
             processingPlan = false;
             showPlanSelection();
             console.error('Plus plan selection error:', error);
-            showError('Failed to start Plus subscription. Please try again.');
+            showError('Failed to start Plus subscription: ' + error.message);
         }
     }
 
@@ -143,14 +165,17 @@ import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/
             if (userDoc.exists()) {
                 const userData = userDoc.data();
                 
-                // If user already has a plan (not free_pending), redirect to app
-                if (userData.planType && userData.planType !== 'free_pending') {
-                    console.log('User already has plan:', userData.planType);
+                // Only redirect if user has a complete plan (free or plus), not free_pending
+                if (userData.planType === 'free' || userData.planType === 'plus') {
+                    console.log('User already has complete plan:', userData.planType);
                     // Set sessionStorage to prevent auth flow from redirecting back
                     sessionStorage.setItem('planJustSelected', userData.planType);
                     location.assign('/app');
                     return;
                 }
+                
+                // If user has free_pending or no plan, stay on plan selection page
+                console.log('User needs to select plan, current status:', userData.planType || 'none');
             }
         } catch (error) {
             console.error('Failed to check user plan status:', error);
