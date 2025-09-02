@@ -15,6 +15,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 
 ### Added
+- **Complete end-to-end account creation flow** with email verification
+- New authentication pages: `/auth/verify.html`, `/auth/choose-plan.html`
+- Enhanced authentication logic preventing auto-account creation on sign-in failures
+- Plan selection interface with Free and Plus plan options
+- Comprehensive E2E test suite for authentication flows (`tests/e2e/auth-creation.spec.ts`)
+- SessionStorage-based race condition protection for plan selections
+- Debug logging for authentication flow troubleshooting
 - Modern **Stripe.js client-side integration** replacing server-side redirects
 - Embedded Payment Element with dark theme matching app design
 - Dynamic payment modal for in-app subscription upgrades
@@ -24,6 +31,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Comprehensive error handling for billing operations
 
 ### Changed
+- **BREAKING**: Account creation now requires explicit user action - no auto-creation on sign-in failures
+- **BREAKING**: Email verification now mandatory for password-based accounts
+- Authentication flow now enforces complete user journey: sign-up → verification → plan selection → app access
+- Improved form validation with disabled HTML5 validation for better error handling
 - **BREAKING**: Migrated from Stripe Checkout sessions to modern Payment Elements
 - Upgrade flow now uses embedded payment form instead of redirects
 - Improved user experience with in-app payment processing
@@ -32,6 +43,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Updated documentation with modern Stripe.js implementation details
 
 ### Fixed
+- **Authentication redirect loops** between plan selection and login pages
+- **Email verification page flash redirect** issue after account creation
+- **Plan selection page layout** being constrained by auth-container max-width
+- **Auto-account creation** on sign-in with non-existing emails
+- **Email verification error message** - now redirects to login with email context instead of showing error
+- **Auth page styling inconsistencies** - removed conflicting base.css from verify and choose-plan pages
+- **Plan selection redirect loops** - improved logic to only redirect when user has complete plan (free/plus), not free_pending
+- Form validation error handling for client-side vs Firebase errors
+- Firestore race conditions during plan selection causing redirect loops
 - Content Security Policy violations preventing Stripe.js loading
 - Billing portal access errors for users without Stripe customers
 - Calculator input visibility and tab switching functionality

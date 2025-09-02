@@ -2,7 +2,7 @@
 title: "Budget Buckets - Troubleshooting Guide"
 owner: "engineering"
 status: "active"
-last_review: "2025-08-20"
+last_review: "2025-08-26"
 tags: ["guide", "troubleshooting", "debugging"]
 ---
 
@@ -144,6 +144,76 @@ permission-denied: You don't have permission to access this data
    - Use actual user UID from your auth
 
 **Source**: firestore.rules, app/cloud-store.js:200-220
+
+### Authentication Flow Redirect Loops (Fixed 2025-08-26, Updated 2025-09-02)
+
+**Symptoms:**
+- User gets stuck between `/auth/login` and `/auth/choose-plan` pages
+- Email verification page flashes and redirects back to login
+- Plan selection page appears "smushed" or too narrow
+- Accounts auto-created when trying to sign in with non-existing emails
+- "To check verification status, please sign in first" error after clicking email verification
+
+**Root Causes & Fixes:**
+
+1. **Auto-Account Creation Issue:**
+   - **Cause**: Old `auth.js` file conflicting with new authentication logic
+   - **Fix**: Removed conflicting `/auth/auth.js` file, ensured `/auth/js/auth.js` is loaded
+   - **Verification**: Sign in with non-existing email shows error instead of creating account
+
+2. **Plan Selection Redirect Loop:**
+   - **Cause**: Race condition between Firestore update and page navigation
+   - **Fix**: Added `sessionStorage.setItem('planJustSelected')` protection in plan selection handlers
+   - **Code**: auth/js/choose-plan.js:70-71, app/app-init.js:61-65
+
+3. **Verification Page Flash Redirect:**
+   - **Cause**: verify.js redirecting users without auth, even with email parameter
+   - **Fix**: Allow verification page to display when email parameter is present but user is signed out
+   - **Code**: auth/js/verify.js:144-159
+
+4. **Plan Selection Page Layout:**
+   - **Cause**: `.auth-container` max-width of 400px constraining plan selection layout
+   - **Fix**: Added `.auth-container.plan-selection-container { max-width: 850px; }`
+   - **Code**: auth/styles.css:47-49, auth/choose-plan.html:21
+
+5. **Email Verification Error Message (Fixed 2025-09-02):**
+   - **Cause**: "I've verified my email" button showing error when user not signed in after clicking verification link
+   - **Fix**: Now redirects to login with email context instead of showing error
+   - **Code**: auth/js/verify.js:80-90
+
+6. **Auth Pages Styling Inconsistency (Fixed 2025-09-02):**
+   - **Cause**: Conflicting `/assets/css/base.css` stylesheet causing background issues
+   - **Fix**: Removed base.css from verify.html and choose-plan.html, using only auth/styles.css
+   - **Files**: auth/verify.html:8, auth/choose-plan.html:8
+
+7. **Plan Selection Early Redirect (Fixed 2025-09-02):**
+   - **Cause**: choose-plan page redirecting users with `free_pending` status to app, causing loops
+   - **Fix**: Only redirect when user has complete plan (`free` or `plus`), not `free_pending`
+   - **Code**: auth/js/choose-plan.js:147
+
+**Verification Steps:**
+```javascript
+// Test authentication flow in browser console:
+
+// 1. Check no auto-creation
+// Try signing in with fake-email@example.com - should show error, not create account
+
+// 2. Check verification page stays
+// Visit /auth/verify?email=test@example.com - should display page, not redirect
+
+// 3. Check plan selection layout
+// Visit /auth/choose-plan - cards should display side-by-side properly
+
+// 4. Check session storage protection
+sessionStorage.getItem('planJustSelected') // Should be null when not selecting plan
+```
+
+**Updated Flow:**
+1. Sign-in with non-existing email → Shows error message (no auto-creation)
+2. Account creation → Redirects to verification (no flash)  
+3. Email verification → Displays properly with email parameter
+4. Plan selection → No redirect loops, proper layout
+5. App access → Seamless authentication gate
 
 ## Development Environment Issues
 

@@ -44,7 +44,7 @@ module.exports = defineConfig({
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
     }
   },
-
+  grepInvert: process.env.E2E_SKIP_STRIPE === '1' ? /@stripe/ : undefined,
   /* Configure projects for major browsers */
   projects: [
     {

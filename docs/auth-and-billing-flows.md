@@ -138,6 +138,85 @@ if (currentUser && !currentUser.emailVerified) {
 }
 ```
 
+### 1.4 Enhanced Sign-In Flow (No Auto-Account Creation)
+
+**Updated 2025-08-26**: Complete authentication flow with mandatory email verification and plan selection.
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant App as Client App
+    participant Firebase as Firebase Auth
+    participant Firestore as Firestore DB
+
+    U->>App: Enter email + password (sign-in)
+    App->>Firebase: signInWithEmailAndPassword()
+    
+    alt User Not Found
+        Firebase->>App: auth/user-not-found error
+        App->>U: Show "Can't find account" + switch to Create Account tab
+        Note over App: No auto-creation - user must explicitly create account
+    end
+    
+    alt User Exists, Email Unverified
+        Firebase->>App: User object (emailVerified: false)
+        App->>Firebase: signOut() immediately
+        App->>U: Redirect to /auth/verify?email=user@example.com
+    end
+    
+    alt User Exists, Email Verified, No Plan
+        Firebase->>App: User object (emailVerified: true)
+        App->>Firestore: Check user document planType
+        Firestore->>App: planType: null or 'free_pending'
+        App->>U: Redirect to /auth/choose-plan
+    end
+    
+    alt User Exists, Complete Setup
+        Firebase->>App: User object (emailVerified: true)
+        App->>Firestore: Check user document
+        Firestore->>App: planType: 'free' or 'plus'
+        App->>U: Access granted to /app
+    end
+```
+
+### 1.5 Account Creation → Verification → Plan Selection Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant App as Client App
+    participant Firebase as Firebase Auth
+    participant Email as Email Service
+    participant Firestore as Firestore DB
+
+    U->>App: Fill Create Account form
+    App->>Firebase: createUserWithEmailAndPassword()
+    Firebase->>App: User created (emailVerified: false)
+    
+    App->>Firestore: Create user document (planType: 'free_pending')
+    App->>Firebase: sendEmailVerification()
+    Firebase->>Email: Send verification email
+    App->>Firebase: signOut() - force verification first
+    App->>U: Redirect to /auth/verify?email=user@example.com
+    
+    Note over U,Email: User checks email and clicks verification link
+    
+    U->>App: Return to /auth/verify and click "I've verified"
+    App->>U: Redirect to /auth/choose-plan
+    
+    U->>App: Select Free or Plus plan
+    App->>Firestore: Update planType: 'free' or 'plus'
+    App->>U: Redirect to /app (full access granted)
+```
+
+**Key Implementation Details:**
+
+- **No Auto-Creation**: Sign-in failures with `auth/user-not-found` show error and switch tabs
+- **Mandatory Verification**: Password users must verify email before plan selection
+- **Race Condition Protection**: Uses `sessionStorage.setItem('planJustSelected')` to prevent redirect loops
+- **Complete User Journey**: sign-up → verification → plan selection → app access
+- **Form Validation**: Disabled HTML5 validation for better error handling
+
 ## 2. Plan Management Flows
 
 ### 2.1 Plan State Synchronization
