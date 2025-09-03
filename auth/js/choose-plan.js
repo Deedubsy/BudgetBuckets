@@ -128,6 +128,9 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
                         showLoading();
                         
                         const success = await processSubscriptionPayment({
+                            uid: currentUser.uid,
+                            customerId: paymentInfo.customerId,
+                            priceId: paymentInfo.priceId,
                             idToken: await currentUser.getIdToken(true)
                         });
                         
