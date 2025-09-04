@@ -2,9 +2,6 @@ import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/f
 import { doc, setDoc, getDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
 import { initializeStripe, createPaymentElement, processSubscriptionPayment } from '/app/lib/billing-client.js';
 
-// Import auth helpers for complete user data
-const authHelpers = (await import('/auth/firebase.js')).default;
-
 (function() {
     'use strict';
 
@@ -324,6 +321,10 @@ const authHelpers = (await import('/auth/firebase.js')).default;
             if (user) {
                 // Get complete user data including subscription status
                 try {
+                    // Import auth helpers dynamically
+                    const authHelpersModule = await import('/auth/firebase.js');
+                    const authHelpers = authHelpersModule.default;
+                    
                     currentUser = await authHelpers.getCompleteUserData();
                     console.log('🔍 Choose-plan currentUser loaded:', {
                         uid: currentUser.uid,
