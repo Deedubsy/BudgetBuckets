@@ -346,6 +346,19 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         
         // Update remaining card styling and icon
         updateRemainingCard(remaining);
+        
+        // Update budget health summary
+        updateBudgetHealthSummary({
+            income,
+            expenses,
+            savings,
+            debt,
+            remaining,
+            expensesPct,
+            savingsPct,
+            debtPct,
+            remainingPct
+        });
     }
 
     /**
@@ -376,6 +389,117 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         }
     }
 
+    /**
+     * Update the budget health summary card with current budget metrics
+     * @param {Object} budgetData - Budget totals and percentages
+     */
+    function updateBudgetHealthSummary(budgetData) {
+        const {
+            income,
+            expenses,
+            savings,
+            debt,
+            remaining,
+            expensesPct,
+            savingsPct,
+            debtPct,
+            remainingPct
+        } = budgetData;
+        
+        // Calculate overall status
+        const allocated = expenses + savings + debt;
+        const allocatedPct = income > 0 ? Math.round((allocated / income) * 100) : 0;
+        
+        // Count over-budget buckets
+        let overBudgetCount = 0;
+        
+        // Check expenses for over-budget items
+        state.expenses?.forEach(bucket => {
+            if (!bucket.include) return;
+            const planned = sumIncludedItems(bucket);
+            const spent = (bucket.spentThisPeriodCents || 0) / 100;
+            if (spent > planned) overBudgetCount++;
+        });
+        
+        // Check debt for over-budget items
+        state.debt?.forEach(bucket => {
+            if (!bucket.include) return;
+            const planned = sumIncludedItems(bucket);
+            const spent = (bucket.spentThisPeriodCents || 0) / 100;
+            if (spent > planned) overBudgetCount++;
+        });
+        
+        // Update UI elements
+        const healthIcon = document.getElementById('budgetHealthIcon');
+        const healthStatus = document.getElementById('budgetHealthStatus');
+        const allocatedPercentage = document.getElementById('allocatedPercentage');
+        const overBudgetCountEl = document.getElementById('overBudgetCount');
+        const healthSavingsRate = document.getElementById('healthSavingsRate');
+        
+        if (!healthStatus || !allocatedPercentage || !overBudgetCountEl || !healthSavingsRate) {
+            return; // Elements not found
+        }
+        
+        // Determine overall health status
+        let status = 'excellent';
+        let statusText = 'Excellent';
+        let statusIcon = '🎯';
+        
+        if (remaining < 0 || overBudgetCount > 0) {
+            status = 'danger';
+            statusText = 'Needs Attention';
+            statusIcon = '⚠️';
+        } else if (savingsPct < 10 || remaining < income * 0.05) {
+            status = 'warning';
+            statusText = 'Fair';
+            statusIcon = '📊';
+        } else if (savingsPct >= 20 && remaining >= income * 0.1) {
+            status = 'excellent';
+            statusText = 'Excellent';
+            statusIcon = '🎯';
+        } else {
+            status = 'good';
+            statusText = 'Good';
+            statusIcon = '✅';
+        }
+        
+        // Update elements
+        healthIcon.textContent = statusIcon;
+        healthStatus.textContent = statusText;
+        healthStatus.className = `health-value status-${status}`;
+        
+        allocatedPercentage.textContent = `${allocatedPct}%`;
+        overBudgetCountEl.textContent = overBudgetCount === 0 ? 'None' : `${overBudgetCount} bucket${overBudgetCount === 1 ? '' : 's'}`;
+        healthSavingsRate.textContent = `${savingsPct}%`;
+        
+        // Color code over-budget count
+        if (overBudgetCount > 0) {
+            overBudgetCountEl.className = 'health-value status-danger';
+        } else {
+            overBudgetCountEl.className = 'health-value status-good';
+        }
+        
+        // Color code savings rate
+        if (savingsPct >= 20) {
+            healthSavingsRate.className = 'health-value status-excellent';
+        } else if (savingsPct >= 10) {
+            healthSavingsRate.className = 'health-value status-good';
+        } else if (savingsPct >= 5) {
+            healthSavingsRate.className = 'health-value status-warning';
+        } else {
+            healthSavingsRate.className = 'health-value status-danger';
+        }
+        
+        // Color code allocated percentage
+        if (allocatedPct <= 90) {
+            allocatedPercentage.className = 'health-value status-good';
+        } else if (allocatedPct <= 100) {
+            allocatedPercentage.className = 'health-value status-warning';
+        } else {
+            allocatedPercentage.className = 'health-value status-danger';
+        }
+    }
+
     function updateBucketUI(bucket, bucketEl) {
         const bucketTotal = sumIncludedItems(bucket);
         const income = parseFloat(state.settings.incomeAmount) || 0;
@@ -385,7 +509,9 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         
         // Update percentage of income
         const pctOfIncome = monthlyIncome > 0 ? Math.round(bucketMonthly / monthlyIncome * 100) : 0;
-        bucketEl.querySelector('.pct').textContent = `${pctOfIncome}% of income`;
+        const pctEl = bucketEl.querySelector('.pct');
+        pctEl.textContent = `${pctOfIncome}% of income`;
+        pctEl.setAttribute('data-tooltip', `This represents ${pctOfIncome}% of your total monthly income (${formatCurrency(monthlyIncome)})`);
         
         // Update bank badge
         const bankBadge = bucketEl.querySelector('.bank-badge');
@@ -396,10 +522,23 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             bankBadge.style.display = 'none';
         }
         
-        
-        // Update progress bar
+        // Update warning badge for over-budget items
+        const warningBadge = bucketEl.querySelector('.warning-badge');
         const spentCents = bucket.spentThisPeriodCents || 0;
         const plannedCents = bucketTotal * 100;
+        const isOverBudget = bucket.include !== false && spentCents > plannedCents && plannedCents > 0;
+        
+        if (warningBadge) {
+            if (isOverBudget) {
+                const overAmount = (spentCents - plannedCents) / 100;
+                warningBadge.title = `Over budget by ${formatCurrency(overAmount)}`;
+                warningBadge.style.display = '';
+            } else {
+                warningBadge.style.display = 'none';
+            }
+        }
+        
+        // Update progress bar
         const ratio = plannedCents > 0 ? spentCents / plannedCents : 0;
         const progressBar = bucketEl.querySelector('.progress-bar');
         const progressWidth = Math.min(100, ratio * 100);

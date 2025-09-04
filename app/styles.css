@@ -1631,3 +1631,301 @@ input[type="number"][placeholder*="amount"],
     font-feature-settings: 'tnum' 1;
 }
 
+
+/* ===== TOOLTIPS FOR PERCENTAGES ===== */
+
+/* Tooltip container */
+[data-tooltip] {
+    position: relative;
+    cursor: help;
+}
+
+/* Tooltip content */
+[data-tooltip]::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 150%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 400;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+    
+    /* Initial state - hidden */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    transition-delay: 0s; /* No delay on hide */
+}
+
+/* Tooltip arrow */
+[data-tooltip]::after {
+    content: '';
+    position: absolute;
+    bottom: 135%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid rgba(0, 0, 0, 0.9);
+    z-index: 1000;
+    pointer-events: none;
+    
+    /* Initial state - hidden */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    transition-delay: 0s; /* No delay on hide */
+}
+
+/* Show tooltip on hover with delay */
+[data-tooltip]:hover::before,
+[data-tooltip]:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 500ms; /* 500ms delay before showing */
+}
+
+/* Percentage-specific tooltip styling */
+.pct[data-tooltip] {
+    border-bottom: 1px dotted currentColor;
+    padding-bottom: 1px;
+}
+
+/* Alternative position for tooltips that might overflow */
+[data-tooltip].tooltip-top::before {
+    top: -100%;
+    bottom: auto;
+}
+
+[data-tooltip].tooltip-top::after {
+    top: -85%;
+    bottom: auto;
+    border-top: none;
+    border-bottom: 5px solid rgba(0, 0, 0, 0.9);
+}
+
+/* Left-aligned tooltips for edge cases */
+[data-tooltip].tooltip-left::before {
+    left: 0;
+    transform: none;
+}
+
+[data-tooltip].tooltip-left::after {
+    left: 20px;
+    transform: none;
+}
+
+/* Right-aligned tooltips for edge cases */
+[data-tooltip].tooltip-right::before {
+    right: 0;
+    left: auto;
+    transform: none;
+}
+
+[data-tooltip].tooltip-right::after {
+    right: 20px;
+    left: auto;
+    transform: none;
+}
+
+/* Ensure tooltips are above other elements */
+[data-tooltip] {
+    isolation: isolate;
+}
+
+/* Mobile responsiveness - larger touch targets */
+@media (max-width: 768px) {
+    [data-tooltip] {
+        cursor: pointer; /* Touch devices */
+    }
+    
+    [data-tooltip]::before {
+        font-size: 0.875rem;
+        padding: 10px 14px;
+        max-width: 200px;
+        white-space: normal; /* Allow wrapping on mobile */
+        word-wrap: break-word;
+    }
+    
+    /* Reduce delay on mobile for better touch experience */
+    [data-tooltip]:hover::before,
+    [data-tooltip]:hover::after {
+        transition-delay: 200ms;
+    }
+}
+
+/* Dark theme optimization */
+[data-tooltip]::before {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(20, 20, 20, 0.95) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Focus accessibility for keyboard users */
+[data-tooltip]:focus::before,
+[data-tooltip]:focus::after {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 100ms; /* Shorter delay for keyboard focus */
+}
+
+/* Enhanced styling for percentage tooltips */
+.pct[data-tooltip]:hover {
+    background: rgba(74, 158, 255, 0.1);
+    border-radius: 4px;
+    padding: 2px 4px;
+}
+
+/* Budget Health Summary Card */
+.budget-health-summary {
+    margin-bottom: 2rem;
+}
+
+.health-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.health-metric {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.health-metric:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--accent);
+    transform: translateY(-1px);
+}
+
+.health-icon {
+    font-size: 20px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.health-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.health-label {
+    font-size: 12px;
+    color: var(--muted);
+    opacity: 0.7;
+    font-weight: 400;
+}
+
+.health-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Health status colors */
+.health-value.status-excellent {
+    color: var(--income-color);
+}
+
+.health-value.status-good {
+    color: var(--income-color);
+}
+
+.health-value.status-warning {
+    color: var(--expense-color);
+}
+
+.health-value.status-danger {
+    color: var(--debt-color);
+}
+
+/* Responsive health grid */
+@media (max-width: 768px) {
+    .health-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .health-metric {
+        padding: 12px;
+        gap: 10px;
+    }
+    
+    .health-icon {
+        font-size: 18px;
+        width: 28px;
+        height: 28px;
+    }
+    
+    .health-value {
+        font-size: 15px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .health-metric {
+        transition: none;
+    }
+    
+    .health-metric:hover {
+        transform: none;
+    }
+}
+
+/* Warning badges for over-budget items */
+.warning-badge {
+    background: var(--debt-color);
+    color: white;
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+    animation: warningPulse 2s ease-in-out infinite;
+}
+
+@keyframes warningPulse {
+    0%, 50%, 100% {
+        opacity: 1;
+    }
+    25%, 75% {
+        opacity: 0.7;
+    }
+}
+
+/* Enhanced warning badge visibility */
+.warning-badge {
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .warning-badge {
+        animation: none;
+    }
+}
+

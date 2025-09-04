@@ -419,6 +419,40 @@
             </div>
         </section>
 
+        <!-- Budget Health Summary Card -->
+        <section class="card budget-health-summary">
+            <h2>Budget Health</h2>
+            <div class="health-grid">
+                <div class="health-metric">
+                    <div class="health-icon" id="budgetHealthIcon">📊</div>
+                    <div class="health-info">
+                        <span class="health-label">Overall Status</span>
+                        <span class="health-value" id="budgetHealthStatus">Good</span>
+                    </div>
+                </div>
+                <div class="health-metric">
+                    <div class="health-icon">💰</div>
+                    <div class="health-info">
+                        <span class="health-label">Allocated</span>
+                        <span class="health-value" id="allocatedPercentage">85%</span>
+                    </div>
+                </div>
+                <div class="health-metric">
+                    <div class="health-icon">⚠️</div>
+                    <div class="health-info">
+                        <span class="health-label">Over Budget</span>
+                        <span class="health-value" id="overBudgetCount">0 buckets</span>
+                    </div>
+                </div>
+                <div class="health-metric">
+                    <div class="health-icon">🎯</div>
+                    <div class="health-info">
+                        <span class="health-label">Savings Rate</span>
+                        <span class="health-value" id="healthSavingsRate">20%</span>
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <section class="card sticky-totals">
             <h2>Totals (<span id="totalsFrequency">Fortnightly</span>)</h2>
@@ -1022,6 +1056,7 @@
                     <input type="text" class="bucket-name" placeholder="Bucket name" value="New bucket">
                 </button>
                 <span class="badge bank-badge" style="display:none;"></span>
+                <span class="badge warning-badge" style="display:none;" title="Over budget">⚠️</span>
                 <span class="pct">0% of income</span>
                 <span class="bucket-header-total" style="display: none; margin-left: 8px; margin-right: 8px; font-weight: 600;">$0.00</span>
                 <div class="bucket-controls">
