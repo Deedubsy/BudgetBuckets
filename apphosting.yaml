@@ -8,7 +8,7 @@ env:
 
     # Public-ish value you're happy to keep server-side only
   - variable: PRICE_ID_MONTHLY
-    value: price_1Ry5wPHs1YiHCsximogcJ5et
+    value: price_1RztbqHu7eVcaw0vqdjoEls0
     availability:
       - RUNTIME
 
