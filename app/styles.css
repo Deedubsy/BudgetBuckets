@@ -11,6 +11,18 @@
     --success: #4ade80;
     --danger: #ef4444;
     --border: #333;
+    
+    /* Color Coding System */
+    --income-color: #10b981;   /* emerald-500 */
+    --expense-color: #f59e0b;  /* amber-500 */
+    --savings-color: #3b82f6;  /* blue-500 */
+    --debt-color: #ef4444;     /* red-500 */
+    
+    /* Lighter variants for backgrounds */
+    --income-bg: rgba(16, 185, 129, 0.1);
+    --expense-bg: rgba(245, 158, 11, 0.1);
+    --savings-bg: rgba(59, 130, 246, 0.1);
+    --debt-bg: rgba(239, 68, 68, 0.1);
     --shadow: rgba(0, 0, 0, 0.5);
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;
@@ -903,4 +915,127 @@ input[type="checkbox"] {
     .items-table td:nth-child(4) {
         text-align: center;
     }
+}
+
+/* ===== COLOR CODING SYSTEM ===== */
+
+/* Income Section Styling */
+.income-settings h2,
+.income-settings .mini-label[data-income],
+.totals-section .total-label:has(~ #totalIncome),
+.income-color {
+    color: var(--income-color) !important;
+}
+
+.income-settings {
+    border-left: 4px solid var(--income-color);
+    background: linear-gradient(135deg, var(--bg-card) 0%, var(--income-bg) 100%);
+}
+
+#totalIncome {
+    color: var(--income-color);
+    font-weight: 600;
+}
+
+/* Expense Section Styling */
+.expenses-section h2,
+.expenses-section .section-header h2,
+.totals-section .total-label:has(~ #totalExpenses),
+.expense-color {
+    color: var(--expense-color) !important;
+}
+
+.expenses-section {
+    border-left: 4px solid var(--expense-color);
+    background: linear-gradient(135deg, var(--bg-card) 0%, var(--expense-bg) 100%);
+}
+
+.expenses-section .section-header {
+    background: linear-gradient(90deg, var(--expense-bg), transparent);
+    border-bottom: 1px solid var(--expense-color);
+}
+
+#totalExpenses {
+    color: var(--expense-color);
+    font-weight: 600;
+}
+
+/* Savings Section Styling */
+.savings-section h2,
+.savings-section .section-header h2,
+.totals-section .total-label:has(~ #totalSavings),
+.savings-color {
+    color: var(--savings-color) !important;
+}
+
+.savings-section {
+    border-left: 4px solid var(--savings-color);
+    background: linear-gradient(135deg, var(--bg-card) 0%, var(--savings-bg) 100%);
+}
+
+.savings-section .section-header {
+    background: linear-gradient(90deg, var(--savings-bg), transparent);
+    border-bottom: 1px solid var(--savings-color);
+}
+
+#totalSavings {
+    color: var(--savings-color);
+    font-weight: 600;
+}
+
+/* Debt Section Styling */
+.debt-section h2,
+.debt-section .section-header h2,
+.totals-section .total-label:has(~ #totalDebt),
+.debt-color {
+    color: var(--debt-color) !important;
+}
+
+.debt-section {
+    border-left: 4px solid var(--debt-color);
+    background: linear-gradient(135deg, var(--bg-card) 0%, var(--debt-bg) 100%);
+}
+
+.debt-section .section-header {
+    background: linear-gradient(90deg, var(--debt-bg), transparent);
+    border-bottom: 1px solid var(--debt-color);
+}
+
+#totalDebt {
+    color: var(--debt-color);
+    font-weight: 600;
+}
+
+/* Add Bucket Button Colors */
+.expenses-section .add-bucket-btn {
+    background: var(--expense-bg);
+    border: 1px solid var(--expense-color);
+    color: var(--expense-color);
+}
+
+.expenses-section .add-bucket-btn:hover {
+    background: var(--expense-color);
+    color: var(--bg-card);
+}
+
+.savings-section .add-bucket-btn {
+    background: var(--savings-bg);
+    border: 1px solid var(--savings-color);
+    color: var(--savings-color);
+}
+
+.savings-section .add-bucket-btn:hover {
+    background: var(--savings-color);
+    color: var(--bg-card);
+}
+
+.debt-section .add-bucket-btn {
+    background: var(--debt-bg);
+    border: 1px solid var(--debt-color);
+    color: var(--debt-color);
+}
+
+.debt-section .add-bucket-btn:hover {
+    background: var(--debt-color);
+    color: var(--bg-card);
 }
