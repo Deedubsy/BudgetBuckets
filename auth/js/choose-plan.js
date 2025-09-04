@@ -1,5 +1,5 @@
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
-import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+import { doc, setDoc, getDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
 import { initializeStripe, createPaymentElement, processSubscriptionPayment } from '/app/lib/billing-client.js';
 
 (function() {
@@ -10,11 +10,25 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
     let processingPlan = false;
 
     function showLoading() {
-        document.getElementById('loadingOverlay').style.display = 'flex';
+        console.log('🔄 showLoading() called');
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) {
+            overlay.style.display = 'flex';
+            console.log('✅ Loading overlay shown');
+        } else {
+            console.error('❌ Loading overlay element not found!');
+        }
     }
 
     function hideLoading() {
-        document.getElementById('loadingOverlay').style.display = 'none';
+        console.log('⚪ hideLoading() called');
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+            console.log('✅ Loading overlay hidden');
+        } else {
+            console.error('❌ Loading overlay element not found!');
+        }
     }
 
     function showError(message) {
@@ -145,18 +159,29 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
             
             const idToken = await currentUser.getIdToken();
             
-            // Create payment element and wait for it to be ready
-            const paymentInfo = await createPaymentElement('payment-element', { 
-                idToken,
-                email: currentUser.email,
-                uid: currentUser.uid
-            });
+            console.log('🔧 About to call createPaymentElement...');
             
-            console.log('✅ Payment element created and ready, hiding loader');
-            hideLoading();
+            try {
+                // Create payment element and wait for it to be ready with timeout
+                console.log('⏰ Starting payment element creation with timeout...');
+                
+                const paymentInfo = await Promise.race([
+                    createPaymentElement('payment-element', { 
+                        idToken,
+                        email: currentUser.email,
+                        uid: currentUser.uid
+                    }),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Payment element creation timed out after 15 seconds')), 15000)
+                    )
+                ]);
+                
+                console.log('✅ Payment element created and ready, hiding loader');
+                console.log('Payment info:', { hasCustomerId: !!paymentInfo.customerId, hasPriceId: !!paymentInfo.priceId });
+                hideLoading();
 
-            // Set up payment completion
-            const submitButton = document.getElementById('payment-submit');
+                // Set up payment completion
+                const submitButton = document.getElementById('payment-submit');
             if (submitButton) {
                 submitButton.onclick = async () => {
                     try {
@@ -173,6 +198,27 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
                             // Store in sessionStorage to prevent race condition
                             sessionStorage.setItem('planJustSelected', 'plus');
                             
+                            // MANUAL FIRESTORE UPDATE - Ensure subscription status is saved immediately
+                            console.log('🔧 Manually updating user subscription status in Firestore...');
+                            try {
+                                await setDoc(doc(window.firebase.db, 'users', currentUser.uid), {
+                                    planType: 'plus',
+                                    subscriptionStatus: 'active',
+                                    stripeCustomerId: paymentInfo.customerId,
+                                    updatedAt: serverTimestamp(),
+                                    paymentCompletedAt: serverTimestamp()
+                                }, { merge: true });
+                                console.log('✅ Manual subscription status update completed');
+                                
+                                // Force token refresh to get updated custom claims
+                                console.log('🔧 Forcing token refresh for updated claims...');
+                                await currentUser.getIdToken(true);
+                                console.log('✅ Token refreshed with updated claims');
+                                
+                            } catch (firestoreError) {
+                                console.error('⚠️ Manual Firestore update failed (server-side update should handle):', firestoreError);
+                            }
+                            
                             hideLoading();
                             showSuccess('Plus plan activated! Taking you to Budget Buckets...');
                             setTimeout(() => location.assign('/app'), 1500);
@@ -186,6 +232,15 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
                         showError('Payment failed: ' + paymentError.message);
                     }
                 };
+            }
+            
+            } catch (paymentElementError) {
+                console.error('❌ Failed to create payment element:', paymentElementError);
+                hideLoading();
+                showError('Failed to load payment form: ' + paymentElementError.message);
+                processingPlan = false;
+                showPlanSelection();
+                return;
             }
 
         } catch (error) {
