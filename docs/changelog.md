@@ -15,6 +15,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 
 ### Added
+- **Professional tooltip system** using Tippy.js library for enhanced user guidance
+- Informative tooltips for budget health metrics with expert financial recommendations
+- Dynamic tooltip re-initialization when UI elements are updated
 - **Complete end-to-end account creation flow** with email verification
 - New authentication pages: `/auth/verify.html`, `/auth/choose-plan.html`
 - Enhanced authentication logic preventing auto-account creation on sign-in failures
@@ -31,6 +34,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Comprehensive error handling for billing operations
 
 ### Changed
+- **Enhanced Content Security Policy** to allow unpkg.com for third-party tooltip libraries
+- Replaced native browser tooltips with professional Tippy.js tooltips
 - **BREAKING**: Account creation now requires explicit user action - no auto-creation on sign-in failures
 - **BREAKING**: Email verification now mandatory for password-based accounts
 - Authentication flow now enforces complete user journey: sign-up → verification → plan selection → app access
