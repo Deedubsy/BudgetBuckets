@@ -338,14 +338,35 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         const debtPct = income > 0 ? Math.round((debt / income) * 100) : 0;
         const remainingPct = income > 0 ? Math.round((remaining / income) * 100) : 0;
         
-        document.getElementById('totalIncome').textContent = formatCurrency(income) + ' (100%)';
-        document.getElementById('totalExpenses').textContent = formatCurrency(expenses) + ` (${expensesPct}%)`;
-        document.getElementById('totalSavings').textContent = formatCurrency(savings) + ` (${savingsPct}%)`;
-        document.getElementById('totalDebt').textContent = formatCurrency(debt) + ` (${debtPct}%)`;
-        document.getElementById('totalRemaining').textContent = formatCurrency(remaining) + ` (${remainingPct}%)`;
+        // Update new totals grid structure
+        document.getElementById('totalIncome').textContent = formatCurrency(income);
+        document.getElementById('totalExpenses').textContent = formatCurrency(expenses);
+        document.getElementById('totalSavings').textContent = formatCurrency(savings);
+        document.getElementById('totalDebt').textContent = formatCurrency(debt);
+        document.getElementById('totalRemaining').textContent = formatCurrency(remaining);
+        
+        // Update percentage displays
+        document.getElementById('incomePercentage').textContent = '(100%)';
+        document.getElementById('expensePercentage').textContent = `(${expensesPct}%)`;
+        document.getElementById('savingPercentage').textContent = `(${savingsPct}%)`;
+        document.getElementById('debtPercentage').textContent = `(${debtPct}%)`;
+        
+        // Update tooltips for totals cells
+        updateTotalsTooltips({
+            income,
+            expenses,
+            savings,
+            debt,
+            expensesPct,
+            savingsPct,
+            debtPct
+        });
         
         // Update remaining card styling and icon
-        updateRemainingCard(remaining);
+        updateRemainingBalanceCard(remaining);
+        
+        // Add animation classes to totals
+        addTotalsAnimations();
         
         // Update budget health summary
         updateBudgetHealthSummary({
@@ -362,31 +383,75 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
     }
 
     /**
-     * Update the remaining card styling and icon based on the remaining amount
+     * Update the remaining balance card styling and icon based on the remaining amount
      * @param {number} remaining - The remaining budget amount
      */
-    function updateRemainingCard(remaining) {
-        const remainingCard = document.querySelector('.remaining-card');
+    function updateRemainingBalanceCard(remaining) {
+        const remainingCard = document.querySelector('.remaining-balance-card');
         const remainingIcon = document.getElementById('remainingIcon');
         
         if (!remainingCard || !remainingIcon) return;
         
         // Remove existing classes
-        remainingCard.classList.remove('positive', 'negative', 'zero');
+        remainingCard.classList.remove('positive', 'negative', 'zero', 'pulse');
         
         if (remaining > 0) {
             // Positive remaining - budget is balanced with leftover
-            remainingCard.classList.add('positive');
+            remainingCard.classList.add('positive', 'animate-in', 'animate-delay-5');
             remainingIcon.textContent = '✓';
         } else if (remaining < 0) {
             // Negative remaining - over budget
-            remainingCard.classList.add('negative');
+            remainingCard.classList.add('negative', 'pulse', 'animate-in', 'animate-delay-5');
             remainingIcon.textContent = '⚠';
         } else {
             // Exactly zero remaining - perfectly balanced
-            remainingCard.classList.add('zero');
+            remainingCard.classList.add('zero', 'animate-in', 'animate-delay-5');
             remainingIcon.textContent = '✓';
         }
+    }
+    
+    /**
+     * Update tooltips for totals cells with informative content
+     * @param {Object} totalsData - Budget totals data
+     */
+    function updateTotalsTooltips(totalsData) {
+        const {
+            income,
+            expenses,
+            savings,
+            debt,
+            expensesPct,
+            savingsPct,
+            debtPct
+        } = totalsData;
+        
+        // Update tooltips
+        const expenseCell = document.querySelector('.expense-cell');
+        const savingCell = document.querySelector('.saving-cell');
+        const debtCell = document.querySelector('.debt-cell');
+        
+        if (expenseCell) {
+            expenseCell.setAttribute('data-tooltip', `${expensesPct}% of total income allocated to expenses`);
+        }
+        
+        if (savingCell) {
+            savingCell.setAttribute('data-tooltip', `${savingsPct}% of total income allocated to savings`);
+        }
+        
+        if (debtCell) {
+            debtCell.setAttribute('data-tooltip', `${debtPct}% of total income allocated to debt payments`);
+        }
+    }
+    
+    /**
+     * Add animation classes to totals cells for staggered loading
+     */
+    function addTotalsAnimations() {
+        const totalCells = document.querySelectorAll('.total-cell');
+        
+        totalCells.forEach((cell, index) => {
+            cell.classList.add('animate-in', `animate-delay-${index + 1}`);
+        });
     }
 
     /**
@@ -463,7 +528,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             statusIcon = '✅';
         }
         
-        // Update elements
+        // Update elements with enhanced styling
         healthIcon.textContent = statusIcon;
         healthStatus.textContent = statusText;
         healthStatus.className = `health-value status-${status}`;
@@ -472,32 +537,108 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         overBudgetCountEl.textContent = overBudgetCount === 0 ? 'None' : `${overBudgetCount} bucket${overBudgetCount === 1 ? '' : 's'}`;
         healthSavingsRate.textContent = `${savingsPct}%`;
         
-        // Color code over-budget count
-        if (overBudgetCount > 0) {
-            overBudgetCountEl.className = 'health-value status-danger';
-        } else {
-            overBudgetCountEl.className = 'health-value status-good';
+        // Apply metric background styling based on individual metric status
+        const metrics = document.querySelectorAll('.health-metric');
+        
+        // Overall status metric
+        if (metrics[0]) {
+            metrics[0].className = `health-metric status-${status} animate-in`;
         }
         
-        // Color code savings rate
-        if (savingsPct >= 20) {
-            healthSavingsRate.className = 'health-value status-excellent';
-        } else if (savingsPct >= 10) {
-            healthSavingsRate.className = 'health-value status-good';
-        } else if (savingsPct >= 5) {
-            healthSavingsRate.className = 'health-value status-warning';
-        } else {
-            healthSavingsRate.className = 'health-value status-danger';
+        // Allocated percentage metric
+        let allocatedStatus = 'good';
+        if (allocatedPct > 100) allocatedStatus = 'danger';
+        else if (allocatedPct > 90) allocatedStatus = 'warning';
+        
+        if (metrics[1]) {
+            metrics[1].className = `health-metric status-${allocatedStatus} animate-in animate-delay-1`;
+        }
+        allocatedPercentage.className = `health-value status-${allocatedStatus}`;
+        
+        // Over-budget count metric
+        const overBudgetStatus = overBudgetCount > 0 ? 'danger' : 'good';
+        if (metrics[2]) {
+            metrics[2].className = `health-metric status-${overBudgetStatus} animate-in animate-delay-2`;
+        }
+        overBudgetCountEl.className = `health-value status-${overBudgetStatus}`;
+        
+        // Savings rate metric
+        let savingsStatus = 'danger';
+        if (savingsPct >= 20) savingsStatus = 'excellent';
+        else if (savingsPct >= 10) savingsStatus = 'good';
+        else if (savingsPct >= 5) savingsStatus = 'warning';
+        
+        if (metrics[3]) {
+            metrics[3].className = `health-metric status-${savingsStatus} animate-in animate-delay-3`;
+        }
+        healthSavingsRate.className = `health-value status-${savingsStatus}`;
+        
+        // Update health indicator bar
+        updateHealthIndicatorBar({
+            overallStatus: status,
+            allocatedStatus,
+            overBudgetStatus,
+            savingsStatus
+        });
+    }
+
+    /**
+     * Update the visual health indicator bar with colored segments
+     * @param {Object} statusData - Status data for each metric
+     */
+    function updateHealthIndicatorBar(statusData) {
+        const {
+            overallStatus,
+            allocatedStatus,
+            overBudgetStatus,
+            savingsStatus
+        } = statusData;
+        
+        const healthSegments = document.getElementById('healthSegments');
+        if (!healthSegments) return;
+        
+        // Calculate segment widths based on importance and status
+        const statusWeights = {
+            excellent: 100,
+            good: 75,
+            warning: 50,
+            danger: 25
+        };
+        
+        const segments = [
+            { status: overallStatus, weight: 40 },
+            { status: allocatedStatus, weight: 25 },
+            { status: overBudgetStatus, weight: 20 },
+            { status: savingsStatus, weight: 15 }
+        ];
+        
+        // Calculate total score out of 100
+        const totalScore = segments.reduce((sum, segment) => {
+            return sum + (statusWeights[segment.status] * segment.weight / 100);
+        }, 0);
+        
+        // Create segments HTML
+        const segmentsHTML = segments.map((segment, index) => {
+            const width = segment.weight;
+            const statusClass = segment.status;
+            return `<div class="health-segment ${statusClass}" style="width: ${width}%"></div>`;
+        }).join('');
+        
+        healthSegments.innerHTML = segmentsHTML;
+        
+        // Update tooltip with overall health score
+        const healthBar = document.querySelector('.health-indicator-bar');
+        if (healthBar) {
+            healthBar.title = `Overall Budget Health: ${Math.round(totalScore)}/100`;
         }
         
-        // Color code allocated percentage
-        if (allocatedPct <= 90) {
-            allocatedPercentage.className = 'health-value status-good';
-        } else if (allocatedPct <= 100) {
-            allocatedPercentage.className = 'health-value status-warning';
-        } else {
-            allocatedPercentage.className = 'health-value status-danger';
-        }
+        // Animate segments
+        setTimeout(() => {
+            const segmentElements = healthSegments.querySelectorAll('.health-segment');
+            segmentElements.forEach((segment, index) => {
+                segment.style.transform = 'scaleX(1)';
+            });
+        }, 100);
     }
 
     function updateBucketUI(bucket, bucketEl) {

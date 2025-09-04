@@ -452,36 +452,61 @@
                     </div>
                 </div>
             </div>
+            <!-- Visual Health Indicator Bar -->
+            <div class="health-indicator-bar" title="Overall Budget Health">
+                <div class="health-indicator-segments" id="healthSegments">
+                    <!-- Segments will be populated by JavaScript -->
+                </div>
+            </div>
         </section>
 
         <section class="card sticky-totals">
-            <h2>Totals (<span id="totalsFrequency">Fortnightly</span>)</h2>
-            <div class="totals-horizontal">
-                <span class="total-item-inline income-total">
-                    <span class="total-label income-color">Income:</span>
-                    <span class="total-value" id="totalIncome">$0.00</span>
-                </span>
-                <span class="total-item-inline expense-total">
-                    <span class="total-label expense-color">Expenses:</span>
-                    <span class="total-value" id="totalExpenses">$0.00</span>
-                </span>
-                <span class="total-item-inline savings-total">
-                    <span class="total-label savings-color">Savings:</span>
-                    <span class="total-value" id="totalSavings">$0.00</span>
-                </span>
-                <span class="total-item-inline debt-total">
-                    <span class="total-label debt-color">Debt:</span>
-                    <span class="total-value" id="totalDebt">$0.00</span>
-                </span>
-                <span class="total-item-inline remaining-highlight">
-                    <span class="remaining-card">
-                        <span class="remaining-icon" id="remainingIcon">✓</span>
-                        <div class="remaining-content">
-                            <span class="total-label remaining-label">Remaining:</span>
-                            <span class="total-value remaining-value" id="totalRemaining">$0.00</span>
-                        </div>
-                    </span>
-                </span>
+            <h2>Budget Overview (<span id="totalsFrequency">Fortnightly</span>)</h2>
+            <div class="totals-grid">
+                <div class="total-cell income-cell" data-tooltip="Total monthly income allocation">
+                    <div class="total-icon">💰</div>
+                    <div class="total-info">
+                        <span class="total-label section-label">Income</span>
+                        <span class="total-value monetary-value" id="totalIncome">$0.00</span>
+                        <span class="total-percentage percentage-indicator" id="incomePercentage">(100%)</span>
+                    </div>
+                </div>
+                <div class="total-cell expense-cell" data-tooltip-id="expensesTooltip">
+                    <div class="total-icon">🛒</div>
+                    <div class="total-info">
+                        <span class="total-label section-label">Expenses</span>
+                        <span class="total-value monetary-value" id="totalExpenses">$0.00</span>
+                        <span class="total-percentage percentage-indicator" id="expensePercentage">(0%)</span>
+                    </div>
+                </div>
+                <div class="total-cell saving-cell" data-tooltip-id="savingsTooltip">
+                    <div class="total-icon">🎯</div>
+                    <div class="total-info">
+                        <span class="total-label section-label">Savings</span>
+                        <span class="total-value monetary-value" id="totalSavings">$0.00</span>
+                        <span class="total-percentage percentage-indicator" id="savingPercentage">(0%)</span>
+                    </div>
+                </div>
+                <div class="total-cell debt-cell" data-tooltip-id="debtTooltip">
+                    <div class="total-icon">💳</div>
+                    <div class="total-info">
+                        <span class="total-label section-label">Debt</span>
+                        <span class="total-value monetary-value" id="totalDebt">$0.00</span>
+                        <span class="total-percentage percentage-indicator" id="debtPercentage">(0%)</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Premium Remaining Balance Card -->
+            <div class="remaining-balance-card">
+                <div class="remaining-icon-wrapper">
+                    <span class="remaining-icon" id="remainingIcon">✓</span>
+                </div>
+                <div class="remaining-content">
+                    <span class="remaining-title">Remaining</span>
+                    <span class="remaining-subtitle">Budget Balance</span>
+                    <span class="remaining-value monetary-value" id="totalRemaining">$0.00</span>
+                </div>
             </div>
             <!-- Allocation donut chart (hidden) -->
             <div class="alloc-chart-container" style="display: none;">
