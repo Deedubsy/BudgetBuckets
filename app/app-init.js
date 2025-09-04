@@ -22,6 +22,25 @@ onAuthStateChanged(auth, async (user) => {
   // Enhanced auth gate - enforce the complete flow
   await enforceAuthFlow(user);
   
+  // Handle upgrade success - refresh token to get updated plan claims
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('upgrade') === 'success' && user) {
+    console.log('🎉 Upgrade successful! Refreshing user token to get updated plan...');
+    try {
+      // Force token refresh to get updated custom claims from webhook
+      await user.getIdToken(true);
+      
+      // Clean up URL
+      urlParams.delete('upgrade');
+      const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+      history.replaceState(null, '', newUrl);
+      
+      console.log('✅ Token refreshed after upgrade success');
+    } catch (error) {
+      console.error('❌ Failed to refresh token after upgrade:', error);
+    }
+  }
+  
   handleEmailVerification(user);
   updateBucketCounter();
 });
