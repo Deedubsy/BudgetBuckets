@@ -2539,6 +2539,102 @@ input[type="number"][placeholder*="amount"],
 }
 
 /* =====================================================
+   PERFORMANCE OPTIMIZATION & FINAL POLISH
+   ===================================================== */
+
+/* App loaded state - final polish */
+body.app-loaded {
+    --loading-complete: 1;
+}
+
+body.app-loaded .card {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+body.app-loaded .interactive-hover:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Performance optimizations */
+.bucket-card,
+.health-metric,
+.total-cell,
+.remaining-balance-card {
+    will-change: transform;
+    backface-visibility: hidden;
+    transform-style: preserve-3d;
+}
+
+.bucket-card:not(:hover),
+.health-metric:not(:hover),
+.total-cell:not(:hover),
+.remaining-balance-card:not(:hover) {
+    will-change: auto;
+}
+
+/* Smooth scrolling for the entire page */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Enhanced focus states for accessibility */
+*:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* Loading states */
+.loading-skeleton {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    :root {
+        --border: #ffffff;
+        --text: #ffffff;
+        --muted: #cccccc;
+    }
+    
+    .card {
+        border: 2px solid var(--border);
+    }
+}
+
+/* Print styles */
+@media print {
+    .health-indicator-bar,
+    .warning-badge,
+    .add-bucket-btn,
+    .button-hover,
+    .interactive-hover {
+        display: none !important;
+    }
+    
+    .card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+    
+    .monetary-value {
+        font-weight: bold;
+    }
+}
+
+/* =====================================================
    TOTALS SECTION RESTRUCTURE
    ===================================================== */
 

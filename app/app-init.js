@@ -352,3 +352,161 @@ function handleEmailVerification(user) {
 
 // Expose updateBucketCounter globally for app.js to call
 window.updateBucketCounter = updateBucketCounter;
+
+// =====================================================
+// MICRO-INTERACTIONS & ANIMATIONS
+// =====================================================
+
+/**
+ * Animate numerical values with smooth counting effect
+ * @param {HTMLElement} element - Element containing the number to animate
+ * @param {number} targetValue - Final value to animate to
+ * @param {string} prefix - Text prefix (e.g., '$', '')
+ * @param {string} suffix - Text suffix (e.g., '%', '')
+ * @param {number} duration - Animation duration in milliseconds
+ */
+function animateNumber(element, targetValue, prefix = '', suffix = '', duration = 1000) {
+    if (!element || typeof targetValue !== 'number') return;
+    
+    const startValue = 0;
+    const startTime = performance.now();
+    
+    // Add animation class for visual effect
+    element.classList.add('animate-count-up');
+    
+    function updateNumber(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Use cubic-bezier easing function
+        const easedProgress = progress < 0.5 
+            ? 4 * progress * progress * progress
+            : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+        
+        const currentValue = startValue + (targetValue - startValue) * easedProgress;
+        
+        // Format the number appropriately
+        const formattedValue = prefix + Math.round(currentValue) + suffix;
+        element.textContent = formattedValue;
+        
+        if (progress < 1) {
+            requestAnimationFrame(updateNumber);
+        } else {
+            // Ensure final value is exact
+            element.textContent = prefix + targetValue + suffix;
+            element.classList.remove('animate-count-up');
+        }
+    }
+    
+    requestAnimationFrame(updateNumber);
+}
+
+/**
+ * Implement page load sequence with staggered animations
+ */
+function initializePageLoadSequence() {
+    const sequence = [
+        { selector: 'header', delay: 0, duration: 300, animation: 'fadeIn' },
+        { selector: '.budget-health-summary', delay: 100, duration: 300, animation: 'fadeInUp' },
+        { selector: '.sticky-totals', delay: 400, duration: 300, animation: 'fadeInUp' },
+        { selector: '.expenses-section', delay: 600, duration: 300, animation: 'fadeInUp' },
+        { selector: '.savings-section', delay: 700, duration: 300, animation: 'fadeInUp' },
+        { selector: '.debt-section', delay: 800, duration: 300, animation: 'fadeInUp' }
+    ];
+    
+    sequence.forEach(({ selector, delay, animation }) => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach((element, index) => {
+            element.style.opacity = '0';
+            element.style.transform = animation === 'fadeInUp' ? 'translateY(20px)' : 'none';
+            
+            setTimeout(() => {
+                element.classList.add(`animate-${animation.toLowerCase().replace('up', '-up')}`);
+            }, delay + (index * 50));
+        });
+    });
+}
+
+/**
+ * Add enhanced hover interactions to interactive elements
+ */
+function enhanceInteractiveElements() {
+    // Add hover effects to cards and buttons
+    const interactiveElements = document.querySelectorAll('.card, .btn, .add-bucket-btn, .bucket-card');
+    
+    interactiveElements.forEach(element => {
+        if (!element.classList.contains('interactive-hover')) {
+            element.classList.add('interactive-hover');
+        }
+    });
+    
+    // Add button hover effects to specific buttons
+    const buttons = document.querySelectorAll('button:not(.bucket-toggle)');
+    buttons.forEach(button => {
+        if (!button.classList.contains('button-hover')) {
+            button.classList.add('button-hover');
+        }
+    });
+    
+    // Add special focus effects
+    const focusableElements = document.querySelectorAll('input, button, select, textarea, [tabindex]:not([tabindex="-1"])');
+    focusableElements.forEach(element => {
+        element.addEventListener('focus', function() {
+            this.style.outline = '2px solid var(--accent)';
+            this.style.outlineOffset = '2px';
+            this.style.borderRadius = '4px';
+        });
+        
+        element.addEventListener('blur', function() {
+            this.style.outline = '';
+            this.style.outlineOffset = '';
+        });
+    });
+}
+
+/**
+ * Add smooth transitions to all elements that change
+ */
+function addSmoothTransitions() {
+    // Add transitions to monetary values
+    const monetaryElements = document.querySelectorAll('.monetary-value, .total-value, .health-value');
+    monetaryElements.forEach(element => {
+        element.style.transition = 'color 300ms ease, transform 300ms ease';
+    });
+    
+    // Add transitions to progress bars
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach(bar => {
+        bar.style.transition = 'width 500ms cubic-bezier(0.4, 0, 0.2, 1), background 300ms ease';
+    });
+    
+    // Add transitions to badges
+    const badges = document.querySelectorAll('.badge, .warning-badge');
+    badges.forEach(badge => {
+        badge.style.transition = 'all 200ms ease-out';
+    });
+}
+
+// Initialize page load sequence when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(initializePageLoadSequence, 100);
+        enhanceInteractiveElements();
+        addSmoothTransitions();
+    });
+} else {
+    setTimeout(initializePageLoadSequence, 100);
+    enhanceInteractiveElements();
+    addSmoothTransitions();
+}
+
+// Enhanced app initialization
+window.addEventListener('load', () => {
+    // Add final polish animations
+    setTimeout(() => {
+        document.body.classList.add('app-loaded');
+    }, 1000);
+});
+
+// Expose animation functions globally
+window.animateNumber = animateNumber;
