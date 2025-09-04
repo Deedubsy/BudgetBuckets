@@ -641,6 +641,73 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         }, 100);
     }
 
+    /**
+     * Update the enhanced warning system for bucket progress
+     * @param {Object} bucket - The bucket object
+     * @param {HTMLElement} bucketEl - The bucket DOM element
+     * @param {Object} progressData - Progress calculation data
+     */
+    function updateBucketWarningSystem(bucket, bucketEl, progressData) {
+        const { spentCents, plannedCents, bucketTotal } = progressData;
+        const warningBadge = bucketEl.querySelector('.warning-badge');
+        
+        if (!warningBadge || !bucket.include || plannedCents <= 0) {
+            if (warningBadge) {
+                warningBadge.style.display = 'none';
+            }
+            bucketEl.removeAttribute('data-progress');
+            return;
+        }
+        
+        const spentAmount = spentCents / 100;
+        const plannedAmount = plannedCents / 100;
+        const progressRatio = spentCents / plannedCents;
+        
+        // Clear existing warning classes
+        warningBadge.classList.remove('over-budget', 'near-limit', 'warning-level-critical', 'warning-level-high', 'warning-level-medium');
+        
+        let warningLevel = null;
+        let warningIcon = '';
+        let tooltipText = '';
+        
+        if (progressRatio > 1.0) {
+            // Over budget - critical warning
+            warningLevel = 'critical';
+            warningIcon = '!';
+            const overAmount = spentAmount - plannedAmount;
+            tooltipText = `Over budget by ${formatCurrency(overAmount)} (${Math.round((progressRatio - 1) * 100)}% over)`;
+            warningBadge.classList.add('over-budget', 'warning-level-critical');
+            bucketEl.setAttribute('data-progress', 'over-budget');
+            
+        } else if (progressRatio >= 0.8) {
+            // Near limit - high warning
+            warningLevel = 'high';
+            warningIcon = '⚠';
+            const remainingAmount = plannedAmount - spentAmount;
+            tooltipText = `Near budget limit - ${formatCurrency(remainingAmount)} remaining (${Math.round(progressRatio * 100)}% used)`;
+            warningBadge.classList.add('near-limit', 'warning-level-high');
+            bucketEl.setAttribute('data-progress', 'near-limit');
+            
+        } else if (progressRatio >= 0.6) {
+            // Moderate usage - medium warning
+            warningLevel = 'medium';
+            warningIcon = '○';
+            tooltipText = `${Math.round(progressRatio * 100)}% of budget used`;
+            warningBadge.classList.add('warning-level-medium');
+            bucketEl.setAttribute('data-progress', 'moderate');
+        }
+        
+        if (warningLevel) {
+            warningBadge.innerHTML = `<span class="warning-icon">${warningIcon}</span>`;
+            warningBadge.setAttribute('data-tooltip', tooltipText);
+            warningBadge.title = tooltipText;
+            warningBadge.style.display = '';
+        } else {
+            warningBadge.style.display = 'none';
+            bucketEl.removeAttribute('data-progress');
+        }
+    }
+
     function updateBucketUI(bucket, bucketEl) {
         const bucketTotal = sumIncludedItems(bucket);
         const income = parseFloat(state.settings.incomeAmount) || 0;
@@ -663,21 +730,12 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             bankBadge.style.display = 'none';
         }
         
-        // Update warning badge for over-budget items
-        const warningBadge = bucketEl.querySelector('.warning-badge');
-        const spentCents = bucket.spentThisPeriodCents || 0;
-        const plannedCents = bucketTotal * 100;
-        const isOverBudget = bucket.include !== false && spentCents > plannedCents && plannedCents > 0;
-        
-        if (warningBadge) {
-            if (isOverBudget) {
-                const overAmount = (spentCents - plannedCents) / 100;
-                warningBadge.title = `Over budget by ${formatCurrency(overAmount)}`;
-                warningBadge.style.display = '';
-            } else {
-                warningBadge.style.display = 'none';
-            }
-        }
+        // Update enhanced warning system
+        updateBucketWarningSystem(bucket, bucketEl, {
+            spentCents,
+            plannedCents,
+            bucketTotal
+        });
         
         // Update progress bar
         const ratio = plannedCents > 0 ? spentCents / plannedCents : 0;

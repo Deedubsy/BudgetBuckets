@@ -2020,35 +2020,310 @@ input[type="number"][placeholder*="amount"],
     }
 }
 
-/* Warning badges for over-budget items */
+/* =====================================================
+   WARNING SYSTEM STANDARDIZATION
+   ===================================================== */
+
+/* Base warning badge styling */
 .warning-badge {
-    background: var(--debt-color);
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 200ms ease-out;
+    z-index: 10;
+}
+
+/* Over budget warning (critical) */
+.warning-badge.over-budget {
+    background: var(--status-danger);
     color: white;
+    animation: criticalPulse 2s ease-in-out infinite;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Near limit warning (80%+) */
+.warning-badge.near-limit {
+    background: var(--status-warning);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Warning badge hover effects */
+.warning-badge:hover {
+    transform: scale(1.1);
+    z-index: 20;
+}
+
+/* Enhanced animations */
+@keyframes criticalPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 0 0 var(--status-danger-shadow);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4), 0 0 0 4px var(--status-danger-shadow);
+    }
+}
+
+@keyframes warningGlow {
+    0%, 100% {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 0 0 var(--status-warning-shadow);
+    }
+    50% {
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4), 0 0 0 2px var(--status-warning-shadow);
+    }
+}
+
+/* Bucket-specific positioning */
+.bucket-card {
+    position: relative;
+}
+
+.bucket-header .warning-badge {
+    position: static;
+    margin-left: 8px;
+    margin-right: 4px;
+}
+
+/* Enhanced tooltip content for warnings */
+.warning-badge[data-tooltip] {
+    cursor: help;
+}
+
+/* Different warning levels */
+.warning-level-critical {
+    background: var(--status-danger);
+    animation: criticalPulse 2s ease-in-out infinite;
+}
+
+.warning-level-high {
+    background: var(--status-warning);
+    animation: warningGlow 3s ease-in-out infinite;
+}
+
+.warning-level-medium {
+    background: var(--status-warning);
+    opacity: 0.8;
+}
+
+/* Warning badge icons */
+.warning-badge .warning-icon {
     font-size: 12px;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-weight: 500;
-    animation: warningPulse 2s ease-in-out infinite;
+    line-height: 1;
 }
 
-@keyframes warningPulse {
-    0%, 50%, 100% {
-        opacity: 1;
-    }
-    25%, 75% {
-        opacity: 0.7;
-    }
+/* Progress-based warning styling */
+.bucket-card[data-progress="over-budget"] .progress-bar {
+    background: linear-gradient(90deg, var(--status-danger), #dc2626);
+    box-shadow: 0 0 8px var(--status-danger-shadow);
 }
 
-/* Enhanced warning badge visibility */
-.warning-badge {
-    box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+.bucket-card[data-progress="near-limit"] .progress-bar {
+    background: linear-gradient(90deg, var(--status-warning), #f59e0b);
+    box-shadow: 0 0 6px var(--status-warning-shadow);
 }
 
-@media (prefers-reduced-motion: reduce) {
+/* Mobile optimizations */
+@media (max-width: 768px) {
     .warning-badge {
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+        top: 6px;
+        right: 6px;
+    }
+    
+    .bucket-header .warning-badge {
+        width: 18px;
+        height: 18px;
+        font-size: 10px;
+        margin-left: 6px;
+        margin-right: 2px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .warning-badge,
+    .warning-level-critical,
+    .warning-level-high {
         animation: none;
+    }
+    
+    .warning-badge:hover {
+        transform: none;
+    }
+}
+
+/* =====================================================
+   SECTION COLOR THEMING
+   ===================================================== */
+
+/* Expenses Section Theming */
+.expenses-section {
+    background: var(--expenses-bg);
+    border-left: 4px solid var(--expenses-color);
+    border-radius: 0 8px 8px 0;
+    margin-left: -1rem;
+    padding-left: 1rem;
+    margin-right: -1rem;
+    padding-right: 1rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    transition: all 300ms ease;
+}
+
+.expenses-section .section-header h2 {
+    color: var(--expenses-color);
+    border-bottom: 2px solid rgba(245, 158, 11, 0.3);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.expenses-section:hover {
+    background: rgba(245, 158, 11, 0.03);
+    transform: translateX(4px);
+}
+
+/* Savings Section Theming */
+.savings-section {
+    background: var(--savings-bg);
+    border-left: 4px solid var(--savings-color);
+    border-radius: 0 8px 8px 0;
+    margin-left: -1rem;
+    padding-left: 1rem;
+    margin-right: -1rem;
+    padding-right: 1rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    transition: all 300ms ease;
+}
+
+.savings-section .section-header h2 {
+    color: var(--savings-color);
+    border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.savings-section:hover {
+    background: rgba(59, 130, 246, 0.03);
+    transform: translateX(4px);
+}
+
+/* Debt Section Theming */
+.debt-section {
+    background: var(--debt-bg);
+    border-left: 4px solid var(--debt-color);
+    border-radius: 0 8px 8px 0;
+    margin-left: -1rem;
+    padding-left: 1rem;
+    margin-right: -1rem;
+    padding-right: 1rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    transition: all 300ms ease;
+}
+
+.debt-section .section-header h2 {
+    color: var(--debt-color);
+    border-bottom: 2px solid rgba(239, 68, 68, 0.3);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.debt-section:hover {
+    background: rgba(239, 68, 68, 0.03);
+    transform: translateX(4px);
+}
+
+/* Section spacing improvements */
+.section {
+    margin-bottom: 2rem;
+    transition: all 300ms ease;
+}
+
+/* Add button theming within sections */
+.expenses-section .add-bucket-btn {
+    background: linear-gradient(135deg, var(--expenses-color), #f59e0b);
+    border: none;
+    color: white;
+}
+
+.expenses-section .add-bucket-btn:hover {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    transform: scale(1.05);
+}
+
+.savings-section .add-bucket-btn {
+    background: linear-gradient(135deg, var(--savings-color), #3b82f6);
+    border: none;
+    color: white;
+}
+
+.savings-section .add-bucket-btn:hover {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    transform: scale(1.05);
+}
+
+.debt-section .add-bucket-btn {
+    background: linear-gradient(135deg, var(--debt-color), #ef4444);
+    border: none;
+    color: white;
+}
+
+.debt-section .add-bucket-btn:hover {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    transform: scale(1.05);
+}
+
+/* Mobile section theming adjustments */
+@media (max-width: 768px) {
+    .expenses-section,
+    .savings-section,
+    .debt-section {
+        margin-left: -0.5rem;
+        padding-left: 0.5rem;
+        margin-right: -0.5rem;
+        padding-right: 0.5rem;
+        border-left-width: 3px;
+    }
+    
+    .section:hover {
+        transform: translateX(2px);
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .expenses-section,
+    .savings-section,
+    .debt-section,
+    .section {
+        transition: none;
+    }
+    
+    .expenses-section:hover,
+    .savings-section:hover,
+    .debt-section:hover {
+        transform: none;
+    }
+    
+    .add-bucket-btn:hover {
+        transform: none;
     }
 }
 
