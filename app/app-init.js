@@ -84,11 +84,15 @@ async function enforceAuthFlow(user) {
       return;
     }
     
+    // Only redirect if plan is not selected or still pending
     if (!userData.planType || userData.planType === 'free_pending') {
-      console.log('Plan not selected, redirecting to plan selection');
+      console.log('Plan not selected (planType:', userData.planType, '), redirecting to plan selection');
       location.assign('/auth/choose-plan');
       return;
     }
+    
+    // Valid plan types: 'free' and 'plus' - both allow access to app
+    console.log('✅ User has valid plan:', userData.planType);
     
     console.log('✅ Authentication flow complete, user can access app');
   } catch (error) {
