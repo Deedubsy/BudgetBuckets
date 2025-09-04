@@ -123,7 +123,7 @@ function validateBudgetData(data) {
         return {
             name: 'My Budget',
             settings: {
-                incomeAmount: 0,
+                incomeAmount: 500,
                 incomeFrequency: 'Fortnightly',
                 currency: 'AUD'
             },

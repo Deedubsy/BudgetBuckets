@@ -20,7 +20,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
     
     let state = {
         settings: {
-            incomeAmount: 0,
+            incomeAmount: 500,
             incomeFrequency: 'Fortnightly',
             currency: 'AUD'
         },
@@ -2051,7 +2051,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         resetBtn?.addEventListener('click', () => {
             if (confirm('Reset all data? This cannot be undone.')) {
                 state.settings = {
-                    incomeAmount: 0,
+                    incomeAmount: 500,
                     incomeFrequency: 'Fortnightly',
                     currency: 'AUD'
                 };

@@ -141,60 +141,77 @@ export async function createPaymentElement(containerId, userOptions = {}) {
     
     paymentElement.mount(`#${containerId}`);
     
-    // Add event listeners for UX improvements
-    paymentElement.on('ready', () => {
-      console.log('✅ Payment element mounted and ready');
+    // Return a promise that resolves when the payment element is ready
+    return new Promise((resolve, reject) => {
+      // Set up timeout to prevent infinite waiting
+      const timeout = setTimeout(() => {
+        console.warn('⚠️ Payment element ready timeout, resolving anyway');
+        resolve({
+          elements, 
+          paymentElement, 
+          clientSecret, 
+          customerId,
+          priceId: billingConfig.priceId
+        });
+      }, 10000); // 10 second timeout
       
-      // Initially disable the complete payment button until form is filled
-      const completePaymentBtn = document.querySelector('[data-testid="complete-payment-btn"]') || 
-                               document.getElementById('complete-payment');
-      if (completePaymentBtn) {
-        completePaymentBtn.disabled = true;
-        completePaymentBtn.textContent = 'Enter Payment Details';
-        console.log('✅ Complete payment button initialized as disabled');
-      }
-    });
-    
-    paymentElement.on('change', (event) => {
-      console.log('🔧 Payment element changed:', { 
-        complete: event.complete, 
-        error: !!event.error,
-        errorMessage: event.error?.message 
-      });
-      
-      // Update complete payment button state (in the modal)
-      const completePaymentBtn = document.querySelector('[data-testid="complete-payment-btn"]') || 
-                               document.getElementById('complete-payment');
-      if (completePaymentBtn) {
-        const wasDisabled = completePaymentBtn.disabled;
-        completePaymentBtn.disabled = !event.complete;
+      // Add event listeners for UX improvements
+      paymentElement.on('ready', () => {
+        console.log('✅ Payment element mounted and ready');
+        clearTimeout(timeout); // Clear the timeout
         
-        if (event.complete) {
-          completePaymentBtn.textContent = 'Complete Payment - $3.99/mo';
-        } else {
+        // Initially disable the complete payment button until form is filled
+        const completePaymentBtn = document.querySelector('[data-testid="complete-payment-btn"]') || 
+                                 document.getElementById('complete-payment');
+        if (completePaymentBtn) {
+          completePaymentBtn.disabled = true;
           completePaymentBtn.textContent = 'Enter Payment Details';
+          console.log('✅ Complete payment button initialized as disabled');
         }
         
-        console.log(`🔘 Button updated: ${wasDisabled ? 'disabled' : 'enabled'} → ${completePaymentBtn.disabled ? 'disabled' : 'enabled'}`);
-      } else {
-        console.warn('⚠️ Complete payment button not found!');
-      }
+        // Resolve the promise now that element is ready
+        resolve({
+          elements, 
+          paymentElement, 
+          clientSecret, 
+          customerId,
+          priceId: billingConfig.priceId
+        });
+      });
       
-      // Show/hide errors
-      if (event.error) {
-        showPaymentError(event.error.message);
-      } else {
-        clearPaymentError();
-      }
+      paymentElement.on('change', (event) => {
+        console.log('🔧 Payment element changed:', { 
+          complete: event.complete, 
+          error: !!event.error,
+          errorMessage: event.error?.message 
+        });
+        
+        // Update complete payment button state (in the modal)
+        const completePaymentBtn = document.querySelector('[data-testid="complete-payment-btn"]') || 
+                                 document.getElementById('complete-payment');
+        if (completePaymentBtn) {
+          const wasDisabled = completePaymentBtn.disabled;
+          completePaymentBtn.disabled = !event.complete;
+          
+          if (event.complete) {
+            completePaymentBtn.textContent = 'Complete Payment - $3.99/mo';
+          } else {
+            completePaymentBtn.textContent = 'Enter Payment Details';
+          }
+          
+          console.log(`🔘 Button updated: ${wasDisabled ? 'disabled' : 'enabled'} → ${completePaymentBtn.disabled ? 'disabled' : 'enabled'}`);
+        } else {
+          console.warn('⚠️ Complete payment button not found!');
+        }
+        
+        // Show/hide errors
+        if (event.error) {
+          showPaymentError(event.error.message);
+        } else {
+          clearPaymentError();
+        }
+      });
     });
-    
-    return { 
-      elements, 
-      paymentElement, 
-      clientSecret, 
-      customerId,
-      priceId: billingConfig.priceId
-    };
     
   } catch (error) {
     console.error('Error creating payment element:', error);

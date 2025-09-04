@@ -959,6 +959,28 @@ app.post('/api/billing/create-subscription', async (req, res) => {
       }
     });
     
+    // Immediately update user's plan in database (don't wait for webhooks)
+    console.log('🔧 Updating user plan in database immediately...');
+    try {
+      const db = admin.firestore();
+      const planType = subscription.status === 'active' ? 'plus' : 'free';
+      
+      await db.collection('users').doc(uid).set({
+        subscriptionId: subscription.id,
+        subscriptionStatus: subscription.status,
+        stripeCustomerId: customerId,
+        planType: planType,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      // Set custom claims for immediate access
+      await admin.auth().setCustomUserClaims(uid, { plan: planType });
+      
+      console.log(`✅ User ${uid} plan immediately updated to: ${planType}`);
+    } catch (dbError) {
+      console.error('⚠️ Failed to update user plan immediately (webhook will handle):', dbError);
+    }
+    
     // Handle first invoice SCA requirements
     const invoice = subscription.latest_invoice;
     const paymentIntent = invoice?.payment_intent;

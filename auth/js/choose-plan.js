@@ -103,7 +103,7 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
                 stripeInitialized = true;
             }
 
-            hideLoading();
+            // Don't hide loading yet - keep it visible during payment element creation
             showPaymentSection();
 
             // Create payment element in the payment section
@@ -113,12 +113,47 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
             }
 
             console.log('Creating payment element...');
+            
+            // Add loading message to payment container with spinner
+            paymentContainer.innerHTML = `
+                <div style="
+                    text-align: center; 
+                    padding: 40px 20px; 
+                    color: var(--text-secondary);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 16px;
+                ">
+                    <div style="
+                        border: 2px solid var(--border);
+                        border-top: 2px solid var(--accent);
+                        border-radius: 50%;
+                        width: 32px;
+                        height: 32px;
+                        animation: spin 1s linear infinite;
+                    "></div>
+                    <div>Loading secure payment form...</div>
+                </div>
+                <style>
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                </style>
+            `;
+            
             const idToken = await currentUser.getIdToken();
+            
+            // Create payment element and wait for it to be ready
             const paymentInfo = await createPaymentElement('payment-element', { 
                 idToken,
                 email: currentUser.email,
                 uid: currentUser.uid
             });
+            
+            console.log('✅ Payment element created and ready, hiding loader');
+            hideLoading();
 
             // Set up payment completion
             const submitButton = document.getElementById('payment-submit');
