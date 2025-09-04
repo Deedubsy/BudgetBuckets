@@ -715,6 +715,10 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         const monthlyIncome = convertFrequency(income, freq, 'Monthly');
         const bucketMonthly = convertFrequency(bucketTotal, freq, 'Monthly');
         
+        // Define progress variables early for warning system
+        const spentCents = bucket.spentThisPeriodCents || 0;
+        const plannedCents = bucketTotal * 100;
+        
         // Update percentage of income
         const pctOfIncome = monthlyIncome > 0 ? Math.round(bucketMonthly / monthlyIncome * 100) : 0;
         const pctEl = bucketEl.querySelector('.pct');
