@@ -21,8 +21,14 @@
     /* Lighter variants for backgrounds */
     --income-bg: rgba(16, 185, 129, 0.1);
     --expense-bg: rgba(245, 158, 11, 0.1);
+    --expense-hover-bg: rgba(245, 158, 11, 0.15);
+    --expense-border: rgba(245, 158, 11, 0.3);
     --savings-bg: rgba(59, 130, 246, 0.1);
+    --savings-hover-bg: rgba(59, 130, 246, 0.15);
+    --savings-border: rgba(59, 130, 246, 0.3);
     --debt-bg: rgba(239, 68, 68, 0.1);
+    --debt-hover-bg: rgba(239, 68, 68, 0.15);
+    --debt-border: rgba(239, 68, 68, 0.3);
     --shadow: rgba(0, 0, 0, 0.5);
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;
@@ -549,6 +555,30 @@ input[type="checkbox"] {
 .bucket-content {
     padding: var(--spacing-md);
     display: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.bucket-card:not([data-bucket-color]) .bucket-content {
+    border-top: 1px solid var(--border);
+}
+
+/* Color-coded remaining amounts */
+.remaining-amount.positive {
+    color: var(--success);
+    font-weight: 600;
+}
+
+.remaining-amount.negative {
+    color: var(--danger);
+    font-weight: 600;
+}
+
+.bucket-card[data-bucket-color] .remaining-amount.positive {
+    color: rgba(74, 222, 128, 0.9); /* green-400 with opacity */
+}
+
+.bucket-card[data-bucket-color] .remaining-amount.negative {
+    color: rgba(248, 113, 113, 0.9); /* red-400 with opacity */
 }
 
 .bucket-toggle[aria-expanded="true"] ~ .bucket-controls + .bucket-content,
@@ -574,6 +604,129 @@ input[type="checkbox"] {
 .items-table td {
     padding: var(--spacing-xs);
 }
+
+/* Interactive hover states for line items */
+.item-row {
+    transition: all 0.2s ease;
+    border-radius: 4px;
+}
+
+.item-row:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateX(2px);
+}
+
+.bucket-card:not([data-bucket-color]) .item-row:hover {
+    background: var(--bg-hover);
+}
+
+.bucket-card[data-bucket-color] .item-row:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Enhanced Savings Progress Components */
+.progress-milestones {
+    position: absolute;
+    top: -8px;
+    left: 0;
+    right: 0;
+    height: 100%;
+    pointer-events: none;
+}
+
+.milestone {
+    position: absolute;
+    transform: translateX(-50%);
+}
+
+.milestone-marker {
+    width: 2px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.6);
+    margin: 0 auto;
+    border-radius: 1px;
+}
+
+.milestone-label {
+    position: absolute;
+    top: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* Milestone markers get highlighted when progress passes them */
+.milestone[data-percent="25"] .milestone-marker {
+    background: rgba(34, 197, 94, 0.8);
+}
+
+.milestone[data-percent="50"] .milestone-marker {
+    background: rgba(59, 130, 246, 0.8);
+}
+
+.milestone[data-percent="75"] .milestone-marker {
+    background: rgba(168, 85, 247, 0.8);
+}
+
+/* Savings motivation section */
+.savings-motivation {
+    transition: all 0.2s ease;
+}
+
+.countdown-message {
+    display: flex;
+    align-items: center;
+}
+
+.periods-countdown {
+    font-variant-numeric: tabular-nums;
+}
+
+.completion-date {
+    opacity: 0.8;
+}
+
+.projected-date {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Contribution optimizer styling */
+.contribution-optimizer {
+    transition: all 0.2s ease;
+}
+
+.contribution-optimizer:hover {
+    background: rgba(59, 130, 246, 0.15);
+    transform: translateY(-1px);
+}
+
+.optimizer-title {
+    display: flex;
+    align-items: center;
+}
+
+.suggested-amount,
+.time-saved {
+    color: var(--savings-color);
+}
+
+/* Responsive adjustments for savings components */
+@media (max-width: 768px) {
+    .milestone-label {
+        font-size: 9px;
+    }
+    
+    .savings-motivation,
+    .contribution-optimizer {
+        margin-left: -4px;
+        margin-right: -4px;
+    }
+}
+
 
 .item-row input[type="text"],
 .item-row input[type="number"] {
@@ -915,7 +1068,7 @@ input[type="checkbox"] {
     .items-table td:nth-child(4) {
         text-align: center;
     }
-}
+
 
 /* ===== COLOR CODING SYSTEM ===== */
 
@@ -951,7 +1104,6 @@ input[type="checkbox"] {
 }
 
 .expenses-section .section-header {
-    background: linear-gradient(90deg, var(--expense-bg), transparent);
     border-bottom: 1px solid var(--expense-color);
 }
 
@@ -974,7 +1126,6 @@ input[type="checkbox"] {
 }
 
 .savings-section .section-header {
-    background: linear-gradient(90deg, var(--savings-bg), transparent);
     border-bottom: 1px solid var(--savings-color);
 }
 
@@ -997,7 +1148,6 @@ input[type="checkbox"] {
 }
 
 .debt-section .section-header {
-    background: linear-gradient(90deg, var(--debt-bg), transparent);
     border-bottom: 1px solid var(--debt-color);
 }
 
@@ -1038,6 +1188,37 @@ input[type="checkbox"] {
 .debt-section .add-bucket-btn:hover {
     background: var(--debt-color);
     color: var(--bg-card);
+}
+
+/* Default Bucket Card Colors by Section */
+.expenses-section .bucket-card:not([data-bucket-color]) {
+    background: var(--expense-bg);
+    border: 1px solid var(--expense-border);
+}
+
+.expenses-section .bucket-card:not([data-bucket-color]):hover {
+    background: var(--expense-hover-bg);
+    border-color: var(--expense-color);
+}
+
+.savings-section .bucket-card:not([data-bucket-color]) {
+    background: var(--savings-bg);
+    border: 1px solid var(--savings-border);
+}
+
+.savings-section .bucket-card:not([data-bucket-color]):hover {
+    background: var(--savings-hover-bg);
+    border-color: var(--savings-color);
+}
+
+.debt-section .bucket-card:not([data-bucket-color]) {
+    background: var(--debt-bg);
+    border: 1px solid var(--debt-border);
+}
+
+.debt-section .bucket-card:not([data-bucket-color]):hover {
+    background: var(--debt-hover-bg);
+    border-color: var(--debt-color);
 }
 
 /* ===== PROMINENT REMAINING FIELD ===== */
@@ -1127,7 +1308,7 @@ input[type="checkbox"] {
 }
 
 .remaining-value {
-    font-size: 1.875rem !important; /* 50% larger than default 1.25rem */
+    font-size: 1.5rem !important; /* 50% larger than default 1.25rem */
     font-weight: 700;
     font-family: var(--font-mono);
     line-height: 1;
@@ -1574,6 +1755,11 @@ input[type="number"][placeholder*="amount"],
     text-align: right;
 }
 
+/* Override right-alignment for contribution amount input */
+.contribution-amount {
+    text-align: left !important;
+}
+
 /* Special handling for currency symbols to maintain alignment */
 .total-value::before,
 .mini-value::before,
@@ -1812,7 +1998,7 @@ input[type="number"][placeholder*="amount"],
     border-radius: 12px;
     transition: all 200ms ease-out;
     position: relative;
-    overflow: hidden;
+    cursor: pointer;
 }
 
 /* Enhanced metric styling based on status */
@@ -2168,23 +2354,24 @@ input[type="number"][placeholder*="amount"],
     width: 32px;
     height: 32px;
     border-radius: 6px;
-    border: 1px solid var(--border);
-    background: var(--card);
+    border: none;
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 200ms ease-out;
-    color: var(--text);
+    transition: all 0.2s ease;
+    color: var(--bucket-text-color, var(--text-secondary));
     font-size: 14px;
     position: relative;
+    padding: var(--spacing-xs);
 }
 
 .bucket-color-btn:hover {
-    background: var(--accent);
-    color: white;
+    background: var(--bg-hover);
     transform: scale(1.1);
-    box-shadow: 0 2px 8px rgba(0, 205, 214, 0.3);
+    border-radius: var(--radius);
+    color: var(--text-primary);
 }
 
 .bucket-color-btn i {
@@ -2253,7 +2440,6 @@ input[type="number"][placeholder*="amount"],
 
 .expenses-section .section-header h2 {
     color: var(--expenses-color);
-    border-bottom: 2px solid rgba(245, 158, 11, 0.3);
     padding-bottom: 0.5rem;
     margin-bottom: 1rem;
     font-weight: 700;
@@ -2280,7 +2466,6 @@ input[type="number"][placeholder*="amount"],
 
 .savings-section .section-header h2 {
     color: var(--savings-color);
-    border-bottom: 2px solid rgba(59, 130, 246, 0.3);
     padding-bottom: 0.5rem;
     margin-bottom: 1rem;
     font-weight: 700;
@@ -2307,7 +2492,6 @@ input[type="number"][placeholder*="amount"],
 
 .debt-section .section-header h2 {
     color: var(--debt-color);
-    border-bottom: 2px solid rgba(239, 68, 68, 0.3);
     padding-bottom: 0.5rem;
     margin-bottom: 1rem;
     font-weight: 700;
@@ -2424,16 +2608,19 @@ input[type="number"][placeholder*="amount"],
     
     /* Section theme colors */
     --expenses-color: #f59e0b;
-    --expenses-bg: rgba(245, 158, 11, 0.02);
+    --expenses-bg: rgba(245, 158, 11, 0.1);
     --expenses-border: rgba(245, 158, 11, 0.3);
+    --expenses-hover-bg: rgba(245, 158, 11, 0.15);
     
     --savings-color: #3b82f6;
-    --savings-bg: rgba(59, 130, 246, 0.02);
+    --savings-bg: rgba(59, 130, 246, 0.1);
     --savings-border: rgba(59, 130, 246, 0.3);
+    --savings-hover-bg: rgba(59, 130, 246, 0.15);
     
     --debt-color: #ef4444;
-    --debt-bg: rgba(239, 68, 68, 0.02);
+    --debt-bg: rgba(239, 68, 68, 0.1);
     --debt-border: rgba(239, 68, 68, 0.3);
+    --debt-hover-bg: rgba(239, 68, 68, 0.15);
     
     --income-color: #10b981;
     --income-bg: rgba(16, 185, 129, 0.02);
@@ -2714,7 +2901,7 @@ html {
     background: var(--bg);
     border-bottom: 1px solid var(--border);
     padding: 1rem;
-    margin: -1rem -1rem 2rem -1rem;
+  
     transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -2726,59 +2913,110 @@ html {
     transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Compact state when scrolled */
+/* Compact single-row state when scrolled */
 .sticky-totals.scrolled {
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 1rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .sticky-totals.scrolled h2 {
-    font-size: 1.125rem;
-    margin-bottom: 1rem;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .sticky-totals.scrolled .totals-grid {
-    gap: 0.75rem;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 0;
+    align-items: center;
 }
 
 .sticky-totals.scrolled .total-cell {
-    padding: 12px;
-    gap: 8px;
+    padding: 8px;
+    gap: 6px;
+    min-height: auto;
 }
 
 .sticky-totals.scrolled .total-icon {
-    width: 32px;
-    height: 32px;
-    font-size: 16px;
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+}
+
+.sticky-totals.scrolled .total-info .total-label {
+    font-size: 11px;
+    margin-bottom: 2px;
 }
 
 .sticky-totals.scrolled .total-info .total-value {
-    font-size: 1rem;
+    font-size: 14px;
+    font-weight: 600;
 }
 
 .sticky-totals.scrolled .remaining-balance-card {
-    padding: 16px;
-    gap: 12px;
+    padding: 8px 12px;
+    gap: 8px;
+    margin-top: 0;
+    min-height: auto;
+    height: 79.58px;
 }
 
 .sticky-totals.scrolled .remaining-icon-wrapper {
-    width: 40px;
-    height: 40px;
+    width: 24px;
+    height: 24px;
 }
 
 .sticky-totals.scrolled .remaining-icon {
-    font-size: 20px;
+    font-size: 12px;
+}
+
+.sticky-totals.scrolled .remaining-content {
+    gap: 2px;
+}
+
+.sticky-totals.scrolled .remaining-title {
+    font-size: 11px;
+}
+
+.sticky-totals.scrolled .remaining-subtitle {
+    display: none;
 }
 
 .sticky-totals.scrolled .remaining-value {
-    font-size: 1.5rem;
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 0;
+}
+
+.sticky-totals.scrolled .remaining-metric {
+    font-size: 10px;
+    margin-top: 2px;
+    padding: 2px 4px;
+}
+
+/* Responsive adjustments for scrolled state */
+@media (max-width: 1024px) {
+    .sticky-totals.scrolled .totals-grid {
+        grid-template-columns: repeat(3, 1fr) 2fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .sticky-totals.scrolled .totals-grid {
+        grid-template-columns: 1fr 1fr 2fr;
+    }
+    
+    .sticky-totals.scrolled .total-cell:nth-child(4) {
+        display: none; /* Hide debt on mobile when scrolled */
+    }
 }
 
 .totals-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 1rem;
     margin-bottom: 2rem;
+    align-items: center;
 }
 
 .total-cell {
@@ -2889,14 +3127,36 @@ html {
 .remaining-balance-card {
     display: flex;
     align-items: center;
-    gap: 20px;
-    padding: 24px;
-    border-radius: 16px;
+    gap: 16px;
+    padding: 20px;
+    border-radius: 12px;
     border: 2px solid transparent;
     transition: all 200ms ease-out;
-    margin-top: 1rem;
+    margin-top: 0;
     position: relative;
     overflow: hidden;
+    min-height: auto;
+}
+
+/* Subtle gradient shine effect */
+.remaining-balance-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+    );
+    transition: left 0.5s ease;
+}
+
+.remaining-balance-card:hover::before {
+    left: 100%;
 }
 
 /* Dynamic styling based on remaining amount */
@@ -2936,13 +3196,13 @@ html {
 }
 
 .remaining-icon-wrapper {
-    width: 56px;
-    height: 56px;
+    width: 48px;
+    height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
+    border-radius: 12px;
     flex-shrink: 0;
     transition: transform 200ms ease-out;
 }
@@ -2952,7 +3212,7 @@ html {
 }
 
 .remaining-icon {
-    font-size: 28px;
+    font-size: 24px;
     transition: transform 300ms ease-out;
 }
 
@@ -2987,6 +3247,38 @@ html {
     margin-top: 4px;
 }
 
+.remaining-metric {
+    font-size: 0.875rem;
+    font-weight: 500;
+    opacity: 0.8;
+    margin-top: 4px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    display: inline-block;
+    transition: all 200ms ease-out;
+}
+
+.remaining-balance-card.positive .remaining-metric {
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.remaining-balance-card.negative .remaining-metric {
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.remaining-balance-card.zero .remaining-metric {
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.remaining-balance-card:hover .remaining-metric {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.2);
+}
+
 /* Animation classes for totals */
 .total-cell.animate-in {
     animation: fadeInUp 300ms ease-out forwards;
@@ -3018,18 +3310,29 @@ html {
 }
 
 /* Responsive totals grid */
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
     .totals-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 0.75rem;
+    }
+    
+    .remaining-balance-card {
+        grid-column: 1 / -1; /* Span full width */
+        margin-top: 1rem;
     }
 }
 
 @media (max-width: 768px) {
     .totals-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
         gap: 0.75rem;
     }
+    
+    .remaining-balance-card {
+        grid-column: 1 / -1; /* Span full width */
+        margin-top: 1rem;
+    }
+}
     
     .total-cell {
         padding: 16px;
@@ -3061,7 +3364,7 @@ html {
     }
     
     .remaining-value {
-        font-size: 1.75rem;
+        font-size: 1.5rem;
     }
 }
 

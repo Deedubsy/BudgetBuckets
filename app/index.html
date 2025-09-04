@@ -16,6 +16,10 @@
     
     <!-- External libraries for new features -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Tippy.js for advanced tooltips -->
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/autosize@6.0.1/dist/autosize.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tinycolor2@1.6.0/dist/tinycolor-min.js"></script>
@@ -354,7 +358,7 @@
     <!-- Email Verification Banner -->
     <div id="verifyBanner" hidden class="verify-banner">
         <div class="verify-content">
-            <span class="verify-icon">⚠️</span>
+            <span class="verify-icon"><i class="fas fa-exclamation-triangle"></i></span>
             <span class="verify-text">Verify your email to secure your account.</span>
             <button id="resendVerification" class="btn-link">Resend verification email</button>
             <button id="iveVerified" class="btn-link">I've verified</button>
@@ -365,7 +369,7 @@
         <section class="card income-settings">
             <header class="settings-header" style="margin-bottom: 10px;">
                 <button type="button" class="settings-toggle" aria-expanded="false">
-                    <span class="toggle-icon">▶</span>
+                    <span class="toggle-icon"><i class="fas fa-chevron-right"></i></span>
                     <h2>Income & Settings</h2>
                 </button>
             </header>
@@ -424,29 +428,29 @@
         <section class="card budget-health-summary">
             <h2>Budget Health</h2>
             <div class="health-grid">
-                <div class="health-metric">
-                    <div class="health-icon" id="budgetHealthIcon">📊</div>
+                <div class="health-metric" title="Your overall budget health based on remaining balance, savings rate, and spending patterns. Excellent = 20%+ savings & positive balance, Good = 10-20% savings, Fair = <10% savings, Needs Attention = negative balance or over budget buckets.">
+                    <div class="health-icon" id="budgetHealthIcon"><i class="fas fa-chart-line"></i></div>
                     <div class="health-info">
                         <span class="health-label">Overall Status</span>
                         <span class="health-value" id="budgetHealthStatus">Good</span>
                     </div>
                 </div>
-                <div class="health-metric">
-                    <div class="health-icon">💰</div>
+                <div class="health-metric" title="Percentage of your income currently allocated to buckets. Shows how much of your budget is actively planned. Aim for 80-95% to ensure most income has a purpose while leaving room for flexibility.">
+                    <div class="health-icon"><i class="fas fa-wallet"></i></div>
                     <div class="health-info">
                         <span class="health-label">Allocated</span>
                         <span class="health-value" id="allocatedPercentage">85%</span>
                     </div>
                 </div>
-                <div class="health-metric">
-                    <div class="health-icon">⚠️</div>
+                <div class="health-metric" title="Number of buckets where you've spent more than allocated for this period. Ideally this should be 0. If buckets are consistently over budget, consider increasing their allocation or reviewing spending habits.">
+                    <div class="health-icon"><i class="fas fa-exclamation-triangle"></i></div>
                     <div class="health-info">
                         <span class="health-label">Over Budget</span>
                         <span class="health-value" id="overBudgetCount">0 buckets</span>
                     </div>
                 </div>
-                <div class="health-metric">
-                    <div class="health-icon">🎯</div>
+                <div class="health-metric" title="Percentage of your income allocated to savings and investments. Financial experts recommend 20% or higher for excellent financial health. This includes emergency funds, retirement, and goal-based savings.">
+                    <div class="health-icon"><i class="fas fa-bullseye"></i></div>
                     <div class="health-info">
                         <span class="health-label">Savings Rate</span>
                         <span class="health-value" id="healthSavingsRate">20%</span>
@@ -465,7 +469,7 @@
             <h2>Budget Overview (<span id="totalsFrequency">Fortnightly</span>)</h2>
             <div class="totals-grid">
                 <div class="total-cell income-cell" data-tooltip="Total monthly income allocation">
-                    <div class="total-icon">💰</div>
+                    <div class="total-icon"><i class="fas fa-dollar-sign"></i></div>
                     <div class="total-info">
                         <span class="total-label section-label">Income</span>
                         <span class="total-value monetary-value" id="totalIncome">$0.00</span>
@@ -473,7 +477,7 @@
                     </div>
                 </div>
                 <div class="total-cell expense-cell" data-tooltip-id="expensesTooltip">
-                    <div class="total-icon">🛒</div>
+                    <div class="total-icon"><i class="fas fa-shopping-cart"></i></div>
                     <div class="total-info">
                         <span class="total-label section-label">Expenses</span>
                         <span class="total-value monetary-value" id="totalExpenses">$0.00</span>
@@ -481,7 +485,7 @@
                     </div>
                 </div>
                 <div class="total-cell saving-cell" data-tooltip-id="savingsTooltip">
-                    <div class="total-icon">🎯</div>
+                    <div class="total-icon"><i class="fas fa-piggy-bank"></i></div>
                     <div class="total-info">
                         <span class="total-label section-label">Savings</span>
                         <span class="total-value monetary-value" id="totalSavings">$0.00</span>
@@ -489,24 +493,23 @@
                     </div>
                 </div>
                 <div class="total-cell debt-cell" data-tooltip-id="debtTooltip">
-                    <div class="total-icon">💳</div>
+                    <div class="total-icon"><i class="fas fa-credit-card"></i></div>
                     <div class="total-info">
                         <span class="total-label section-label">Debt</span>
                         <span class="total-value monetary-value" id="totalDebt">$0.00</span>
                         <span class="total-percentage percentage-indicator" id="debtPercentage">(0%)</span>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Premium Remaining Balance Card -->
-            <div class="remaining-balance-card">
-                <div class="remaining-icon-wrapper">
-                    <span class="remaining-icon" id="remainingIcon">✓</span>
-                </div>
-                <div class="remaining-content">
-                    <span class="remaining-title">Remaining</span>
-                    <span class="remaining-subtitle">Budget Balance</span>
-                    <span class="remaining-value monetary-value" id="totalRemaining">$0.00</span>
+                
+                <!-- Premium Remaining Balance Card as 5th grid item -->
+                <div class="remaining-balance-card">
+                    <div class="remaining-icon-wrapper">
+                        <span class="remaining-icon" id="remainingIcon"><i class="fas fa-check"></i></span>
+                    </div>
+                    <div class="remaining-content">
+                        <span class="remaining-title">Remaining</span>
+                        <span class="remaining-value monetary-value" id="totalRemaining">$0.00</span>
+                    </div>
                 </div>
             </div>
             <!-- Allocation donut chart (hidden) -->
@@ -1076,13 +1079,13 @@
     <template id="bucketTemplate">
         <article class="bucket-card" data-bucket-id="" data-bucket-name="" data-bank-account="" data-notes="">
             <header class="bucket-header">
-                <span class="drag-handle">☰</span>
+                <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
                 <button type="button" class="bucket-toggle" aria-expanded="false">
-                    <span class="toggle-icon">▶</span>
+                    <span class="toggle-icon"><i class="fas fa-chevron-right"></i></span>
                     <input type="text" class="bucket-name" placeholder="Bucket name" value="New bucket">
                 </button>
                 <span class="badge bank-badge" style="display:none;"></span>
-                <span class="badge warning-badge" style="display:none;" title="Over budget">⚠️</span>
+                <span class="badge warning-badge" style="display:none;" title="Over budget"><i class="fas fa-exclamation"></i></span>
                 <span class="pct">0% of income</span>
                 <span class="bucket-header-total" style="display: none; margin-left: 8px; margin-right: 8px; font-weight: 600;">$0.00</span>
                 <div class="bucket-controls">
@@ -1095,9 +1098,7 @@
                         <input type="color" class="bucket-color" style="display: none;" aria-label="Bucket color">
                     </button>
                     <button type="button" class="delete-btn" aria-label="Delete bucket">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M6 2V1C6 0.448 6.448 0 7 0H9C9.552 0 10 0.448 10 1V2H14C14.552 2 15 2.448 15 3C15 3.552 14.552 4 14 4H13V14C13 15.105 12.105 16 11 16H5C3.895 16 3 15.105 3 14V4H2C1.448 4 1 3.552 1 3C1 2.448 1.448 2 2 2H6ZM5 4V14H11V4H5ZM7 6V12H9V6H7Z" fill="currentColor"/>
-                        </svg>
+                        <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
             </header>
@@ -1182,8 +1183,44 @@
                                 <span class="progress-percentage">0%</span>
                                 <span class="progress-target">of $0</span>
                             </div>
-                            <div class="progress-bar-container" style="height: 12px; background: #0f1720; border: 1px solid var(--border); border-radius: 6px; overflow: hidden;">
+                            <div class="progress-bar-container" style="height: 12px; background: #0f1720; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; position: relative;">
                                 <div class="progress-bar-fill" style="height: 100%; background: linear-gradient(90deg, #00cdd6, #5eead4); width: 0%; transition: width 0.3s ease; box-shadow: inset 0 1px 2px rgba(0,205,214,0.3);"></div>
+                                <div class="progress-milestones">
+                                    <div class="milestone" data-percent="25" style="left: 25%">
+                                        <div class="milestone-marker"></div>
+                                        <div class="milestone-label">3m</div>
+                                    </div>
+                                    <div class="milestone" data-percent="50" style="left: 50%">
+                                        <div class="milestone-marker"></div>
+                                        <div class="milestone-label">6m</div>
+                                    </div>
+                                    <div class="milestone" data-percent="75" style="left: 75%">
+                                        <div class="milestone-marker"></div>
+                                        <div class="milestone-label">12m</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Enhanced motivational messaging -->
+                            <div class="savings-motivation" style="margin-top: 12px;">
+                                <div class="countdown-message" style="font-size: 13px; color: var(--success); font-weight: 600;">
+                                    <i class="fas fa-bullseye" style="margin-right: 4px;"></i>
+                                    <span class="periods-countdown">50 fortnights to goal!</span>
+                                </div>
+                                <div class="completion-date" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                                    Projected completion: <span class="projected-date">Dec 2025</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Contribution optimizer -->
+                            <div class="contribution-optimizer" style="margin-top: 12px; padding: 12px; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                                <div class="optimizer-title" style="font-size: 13px; color: var(--savings-color); font-weight: 600; margin-bottom: 6px;">
+                                    <i class="fas fa-calculator" style="margin-right: 4px;"></i>
+                                    Smart Calculator
+                                </div>
+                                <div class="optimizer-suggestion" style="font-size: 12px; color: var(--text-primary);">
+                                    Increase to <strong class="suggested-amount">A$250/fortnight</strong> to reach goal <strong class="time-saved">6 months faster</strong>
+                                </div>
                             </div>
                         </div>
                         
@@ -1243,9 +1280,7 @@
             </td>
             <td>
                 <button type="button" class="delete-btn" aria-label="Delete item">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M6 2V1C6 0.448 6.448 0 7 0H9C9.552 0 10 0.448 10 1V2H14C14.552 2 15 2.448 15 3C15 3.552 14.552 4 14 4H13V14C13 15.105 12.105 16 11 16H5C3.895 16 3 15.105 3 14V4H2C1.448 4 1 3.552 1 3C1 2.448 1.448 2 2 2H6ZM5 4V14H11V4H5ZM7 6V12H9V6H7Z" fill="currentColor"/>
-                    </svg>
+                    <i class="fas fa-trash-alt"></i>
                 </button>
             </td>
         </tr>

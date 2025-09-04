@@ -398,15 +398,15 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         if (remaining > 0) {
             // Positive remaining - budget is balanced with leftover
             remainingCard.classList.add('positive', 'animate-in', 'animate-delay-5');
-            remainingIcon.textContent = '✓';
+            remainingIcon.innerHTML = '<i class="fas fa-check"></i>';
         } else if (remaining < 0) {
             // Negative remaining - over budget
             remainingCard.classList.add('negative', 'pulse', 'animate-in', 'animate-delay-5');
-            remainingIcon.textContent = '⚠';
+            remainingIcon.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
         } else {
             // Exactly zero remaining - perfectly balanced
             remainingCard.classList.add('zero', 'animate-in', 'animate-delay-5');
-            remainingIcon.textContent = '✓';
+            remainingIcon.innerHTML = '<i class="fas fa-check"></i>';
         }
     }
     
@@ -508,28 +508,28 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         // Determine overall health status
         let status = 'excellent';
         let statusText = 'Excellent';
-        let statusIcon = '🎯';
+        let statusIcon = '<i class="fas fa-bullseye"></i>';
         
         if (remaining < 0 || overBudgetCount > 0) {
             status = 'danger';
             statusText = 'Needs Attention';
-            statusIcon = '⚠️';
+            statusIcon = '<i class="fas fa-exclamation-triangle"></i>';
         } else if (savingsPct < 10 || remaining < income * 0.05) {
             status = 'warning';
             statusText = 'Fair';
-            statusIcon = '📊';
+            statusIcon = '<i class="fas fa-chart-line"></i>';
         } else if (savingsPct >= 20 && remaining >= income * 0.1) {
             status = 'excellent';
             statusText = 'Excellent';
-            statusIcon = '🎯';
+            statusIcon = '<i class="fas fa-bullseye"></i>';
         } else {
             status = 'good';
             statusText = 'Good';
-            statusIcon = '✅';
+            statusIcon = '<i class="fas fa-check-circle"></i>';
         }
         
         // Update elements with enhanced styling
-        healthIcon.textContent = statusIcon;
+        healthIcon.innerHTML = statusIcon;
         healthStatus.textContent = statusText;
         healthStatus.className = `health-value status-${status}`;
         
@@ -580,6 +580,31 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             overBudgetStatus,
             savingsStatus
         });
+        
+        // Re-initialize tooltips after health metrics are updated
+        if (typeof tippy !== 'undefined') {
+            // Find elements that have title attributes (newly added)
+            const elementsWithTitles = document.querySelectorAll('[title]');
+            if (elementsWithTitles.length > 0) {
+                tippy(elementsWithTitles, {
+                    content: (reference) => {
+                        const title = reference.getAttribute('title');
+                        reference.removeAttribute('title'); // Remove title to prevent native tooltip
+                        return title;
+                    },
+                    placement: 'top',
+                    animation: 'fade',
+                    theme: 'dark',
+                    arrow: true,
+                    delay: [300, 0],
+                    duration: [200, 150],
+                    maxWidth: 300,
+                    allowHTML: false,
+                    hideOnClick: true,
+                    trigger: 'mouseenter focus'
+                });
+            }
+        }
     }
 
     /**
@@ -673,7 +698,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         if (progressRatio > 1.0) {
             // Over budget - critical warning
             warningLevel = 'critical';
-            warningIcon = '!';
+            warningIcon = '<i class="fas fa-exclamation"></i>';
             const overAmount = spentAmount - plannedAmount;
             tooltipText = `Over budget by ${formatCurrency(overAmount)} (${Math.round((progressRatio - 1) * 100)}% over)`;
             warningBadge.classList.add('over-budget', 'warning-level-critical');
@@ -682,7 +707,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         } else if (progressRatio >= 0.8) {
             // Near limit - high warning
             warningLevel = 'high';
-            warningIcon = '⚠';
+            warningIcon = '<i class="fas fa-exclamation-triangle"></i>';
             const remainingAmount = plannedAmount - spentAmount;
             tooltipText = `Near budget limit - ${formatCurrency(remainingAmount)} remaining (${Math.round(progressRatio * 100)}% used)`;
             warningBadge.classList.add('near-limit', 'warning-level-high');
@@ -691,7 +716,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         } else if (progressRatio >= 0.6) {
             // Moderate usage - medium warning
             warningLevel = 'medium';
-            warningIcon = '○';
+            warningIcon = '<i class="fas fa-circle"></i>';
             tooltipText = `${Math.round(progressRatio * 100)}% of budget used`;
             warningBadge.classList.add('warning-level-medium');
             bucketEl.setAttribute('data-progress', 'moderate');
@@ -758,14 +783,23 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             const remaining = Math.max(0, contributionAmount - (spentCents / 100));
             spentLabel.textContent = `Contributed so far (this ${period}):`;
             remainingEl.textContent = `Still to contribute this ${period}: ${formatCurrency(remaining)}`;
+            // Color-code for savings - always positive
+            remainingEl.classList.remove('negative', 'positive');
+            remainingEl.classList.add('positive');
         } else if (bucket.type === 'debt') {
             const remaining = (plannedCents - spentCents) / 100;
             spentLabel.textContent = `Paid this ${period}:`;
             remainingEl.textContent = `Still to pay this ${period}: ${formatCurrency(remaining)}`;
+            // Color-code based on remaining amount
+            remainingEl.classList.remove('negative', 'positive');
+            remainingEl.classList.add(remaining >= 0 ? 'positive' : 'negative');
         } else {
             const remaining = (plannedCents - spentCents) / 100;
             spentLabel.textContent = `Spent this ${period}:`;
             remainingEl.textContent = `Remaining: ${formatCurrency(remaining)}`;
+            // Color-code based on remaining amount
+            remainingEl.classList.remove('negative', 'positive');
+            remainingEl.classList.add(remaining >= 0 ? 'positive' : 'negative');
         }
         
         
@@ -920,59 +954,88 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         if (progressTarget) progressTarget.textContent = `of ${formatCurrency(goalAmount)}`;
         if (progressBarFill) progressBarFill.style.width = `${percentage}%`;
         
-        // Calculate time to goal - use the same logic as "Stay On Track"
+        // Enhanced savings calculations and display updates
+        const contribution = goal.contributionPerPeriodCents / 100;
+        
+        // Update motivational countdown and completion date
+        const periodsCountdownEl = bucketEl.querySelector('.periods-countdown');
+        const projectedDateEl = bucketEl.querySelector('.projected-date');
+        const suggestedAmountEl = bucketEl.querySelector('.suggested-amount');
+        const timeSavedEl = bucketEl.querySelector('.time-saved');
         const timeEstimateEl = bucketEl.querySelector('.time-estimate');
         
         if (remaining <= 0) {
-            if (timeEstimateEl) timeEstimateEl.innerHTML = `<span style="color: #5eead4">Goal achieved! 🎉</span>`;
-        } else if (goal.targetDate && goalAmount > 0) {
-            // If target date is set, use the same calculation as "Stay On Track"
-            const targetDate = new Date(goal.targetDate);
-            const now = new Date();
-            const msPerDay = 24 * 60 * 60 * 1000;
-            const daysRemaining = Math.max(1, Math.ceil((targetDate - now) / msPerDay));
+            // Goal achieved
+            if (timeEstimateEl) timeEstimateEl.innerHTML = `<span style="color: #5eead4">Goal achieved! <i class="fas fa-trophy"></i></span>`;
+            if (periodsCountdownEl) periodsCountdownEl.textContent = 'Goal completed!';
+            if (projectedDateEl) projectedDateEl.textContent = 'Achieved!';
+        } else if (contribution > 0) {
+            const periodsNeeded = Math.ceil(remaining / contribution);
+            let freqText = freq.toLowerCase();
+            if (periodsNeeded === 1) freqText = freqText.slice(0, -1); // Remove 's' for singular
             
-            // Calculate periods remaining based on frequency
-            let periodsRemaining;
-            switch (freq) {
-                case 'weekly': periodsRemaining = Math.max(1, Math.ceil(daysRemaining / 7)); break;
-                case 'fortnightly': periodsRemaining = Math.max(1, Math.ceil(daysRemaining / 14)); break;
-                case 'monthly': periodsRemaining = Math.max(1, Math.ceil(daysRemaining / 30)); break;
-                case 'yearly': periodsRemaining = Math.max(1, Math.ceil(daysRemaining / 365)); break;
-                default: periodsRemaining = 1;
+            // Update countdown message
+            if (periodsCountdownEl) {
+                periodsCountdownEl.textContent = `${periodsNeeded} ${freqText} to goal!`;
             }
             
-            const neededPerPeriod = remaining / periodsRemaining;
-            const currentContribution = goal.contributionPerPeriodCents / 100;
+            // Calculate projected completion date
+            const daysPerPeriod = {
+                'Weekly': 7,
+                'Fortnightly': 14,
+                'Monthly': 30,
+                'Quarterly': 90,
+                'Annually': 365
+            }[state.settings.incomeFrequency] || 14;
             
-            let timeText = `${periodsRemaining} ${freq}`;
-            if (periodsRemaining === 1) {
-                timeText = timeText.slice(0, -1); // Remove 's' for singular
+            const completionDate = new Date();
+            completionDate.setDate(completionDate.getDate() + (periodsNeeded * daysPerPeriod));
+            
+            if (projectedDateEl) {
+                projectedDateEl.textContent = format(completionDate, 'MMM yyyy');
             }
             
-            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            const estDateText = `${monthNames[targetDate.getMonth()]} ${targetDate.getFullYear()}`;
+            // Calculate optimization suggestion (20% faster goal)
+            const targetPeriods = Math.ceil(periodsNeeded * 0.8); // 20% faster
+            const suggestedContribution = remaining / targetPeriods;
+            const timeSaved = periodsNeeded - targetPeriods;
+            const currency = state.settings.currency || 'AUD';
             
-            // Compare current contribution to needed amount (within $2 tolerance)
-            const onTrack = currentContribution >= (neededPerPeriod - 2);
-            let displayText = `Time to goal: ${timeText} • Target: ${estDateText}`;
-            displayText += ` <span style="color: ${onTrack ? '#5eead4' : '#ff6b6b'}">(${onTrack ? 'on track' : 'behind'})</span>`;
+            if (suggestedAmountEl && suggestedContribution > contribution) {
+                suggestedAmountEl.textContent = `${currency === 'AUD' ? 'A' : ''}$${Math.ceil(suggestedContribution)}/${freqText.slice(0, -1)}`;
+            }
             
-            if (timeEstimateEl) timeEstimateEl.innerHTML = displayText;
-        } else {
-            // No target date set, use current contribution rate
-            const contribution = goal.contributionPerPeriodCents / 100;
-            if (contribution > 0) {
-                const periodsNeeded = Math.ceil(remaining / contribution);
-                let timeText = `${periodsNeeded} ${freq}`;
-                if (periodsNeeded === 1) {
-                    timeText = timeText.slice(0, -1); // Remove 's' for singular
+            if (timeSavedEl && timeSaved > 0) {
+                let timeSavedText = timeSaved === 1 ? `1 ${freqText.slice(0, -1)}` : `${timeSaved} ${freqText}`;
+                // Convert to months if it's a large number of periods
+                if (state.settings.incomeFrequency === 'Fortnightly' && timeSaved >= 4) {
+                    const months = Math.round(timeSaved / 2.17); // Approximate fortnights to months
+                    timeSavedText = months === 1 ? '1 month' : `${months} months`;
+                } else if (state.settings.incomeFrequency === 'Weekly' && timeSaved >= 8) {
+                    const months = Math.round(timeSaved / 4.33); // Approximate weeks to months
+                    timeSavedText = months === 1 ? '1 month' : `${months} months`;
                 }
-                
-                if (timeEstimateEl) timeEstimateEl.textContent = `Time to goal: ${timeText}`;
-            } else {
-                if (timeEstimateEl) timeEstimateEl.textContent = 'Time to goal: Set contribution amount';
+                timeSavedEl.textContent = timeSavedText;
             }
+            
+            // Update time estimate
+            if (timeEstimateEl) {
+                if (goal.targetDate) {
+                    const targetDate = new Date(goal.targetDate);
+                    const onTrack = contribution >= (remaining / Math.ceil((targetDate - new Date()) / (daysPerPeriod * 24 * 60 * 60 * 1000)));
+                    const estDateText = format(targetDate, 'MMM dd, yyyy');
+                    let displayText = `Target: ${estDateText}`;
+                    displayText += ` <span style="color: ${onTrack ? '#5eead4' : '#ff6b6b'}">(${onTrack ? 'on track' : 'behind'})</span>`;
+                    timeEstimateEl.innerHTML = displayText;
+                } else {
+                    timeEstimateEl.textContent = `Time to goal: ${periodsNeeded} ${freqText}`;
+                }
+            }
+        } else {
+            // No contribution set
+            if (periodsCountdownEl) periodsCountdownEl.textContent = 'Set contribution to see timeline';
+            if (projectedDateEl) projectedDateEl.textContent = 'TBD';
+            if (timeEstimateEl) timeEstimateEl.textContent = 'Time to goal: Set contribution amount';
         }
     }
 
@@ -1141,8 +1204,13 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             colorBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                // Trigger the hidden color input
-                colorInput.click();
+                // Find the nested color input and trigger it
+                const nestedColorInput = colorBtn.querySelector('.bucket-color');
+                if (nestedColorInput) {
+                    nestedColorInput.click();
+                } else {
+                    colorInput.click(); // Fallback to the original selector
+                }
             });
             
             // Update the color indicator on the button
@@ -1184,7 +1252,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
             
             content.style.display = isExpanded ? 'none' : 'block';
-            toggleIcon.textContent = isExpanded ? '▶' : '▼';
+            toggleIcon.innerHTML = isExpanded ? '<i class="fas fa-chevron-right"></i>' : '<i class="fas fa-chevron-down"></i>';
             toggleBtn.setAttribute('aria-expanded', !isExpanded);
             
             // Show/hide header total
@@ -1557,7 +1625,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                 
                 if (toggleBtn && content) {
                     content.style.display = 'block';
-                    if (toggleIcon) toggleIcon.textContent = '▼';
+                    if (toggleIcon) toggleIcon.innerHTML = '<i class="fas fa-chevron-down"></i>';
                     toggleBtn.setAttribute('aria-expanded', 'true');
                     if (headerTotal) headerTotal.style.display = 'none';
                 }
@@ -1646,7 +1714,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                 
                 if (toggleBtn && content) {
                     content.style.display = 'block';
-                    if (toggleIcon) toggleIcon.textContent = '▼';
+                    if (toggleIcon) toggleIcon.innerHTML = '<i class="fas fa-chevron-down"></i>';
                     toggleBtn.setAttribute('aria-expanded', 'true');
                     if (headerTotal) headerTotal.style.display = 'none';
                 }
@@ -2362,6 +2430,41 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         });
     }
 
+    // Initialize Tippy.js tooltips
+    function initializeTooltips() {
+        // Check if Tippy is available
+        if (typeof tippy === 'undefined') {
+            console.warn('Tippy.js not available, skipping tooltip initialization');
+            return;
+        }
+        
+        console.log('Initializing Tippy.js tooltips...');
+        
+        // Initialize tooltips for all elements with title attributes
+        // Use a slight delay to ensure DOM is fully ready
+        setTimeout(() => {
+            const elementsWithTitles = document.querySelectorAll('[title]');
+            tippy(elementsWithTitles, {
+                content: (reference) => {
+                    const title = reference.getAttribute('title');
+                    reference.removeAttribute('title'); // Remove title to prevent native tooltip
+                    return title;
+                },
+                placement: 'top',
+                animation: 'fade',
+                theme: 'dark',
+                arrow: true,
+                delay: [300, 0], // Show after 300ms, hide immediately
+                duration: [200, 150], // Animation durations
+                maxWidth: 300,
+                allowHTML: false, // Security: don't allow HTML in tooltips
+                hideOnClick: true,
+                trigger: 'mouseenter focus'
+            });
+            console.log('Tippy.js tooltips initialized for', elementsWithTitles.length, 'elements');
+        }, 100);
+    }
+
     // Initialize the app
     async function init() {
         console.log('Starting app initialization...');
@@ -2422,6 +2525,9 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
 
         // Initialize user dropdown menu
         initializeUserDropdown();
+        
+        // Initialize Tippy.js tooltips
+        initializeTooltips();
     }
 
     // Wait for DOM to be ready before starting the app
