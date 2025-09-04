@@ -405,25 +405,14 @@ function animateNumber(element, targetValue, prefix = '', suffix = '', duration 
  * Implement page load sequence with staggered animations
  */
 function initializePageLoadSequence() {
-    const sequence = [
-        { selector: 'header', delay: 0, duration: 300, animation: 'fadeIn' },
-        { selector: '.budget-health-summary', delay: 100, duration: 300, animation: 'fadeInUp' },
-        { selector: '.sticky-totals', delay: 400, duration: 300, animation: 'fadeInUp' },
-        { selector: '.expenses-section', delay: 600, duration: 300, animation: 'fadeInUp' },
-        { selector: '.savings-section', delay: 700, duration: 300, animation: 'fadeInUp' },
-        { selector: '.debt-section', delay: 800, duration: 300, animation: 'fadeInUp' }
-    ];
+    // Simple approach - just ensure everything is visible and add subtle effects
+    const elementsToAnimate = document.querySelectorAll('.health-metric, .total-cell, .remaining-balance-card');
     
-    sequence.forEach(({ selector, delay, animation }) => {
-        const elements = document.querySelectorAll(selector);
-        elements.forEach((element, index) => {
-            element.style.opacity = '0';
-            element.style.transform = animation === 'fadeInUp' ? 'translateY(20px)' : 'none';
-            
-            setTimeout(() => {
-                element.classList.add(`animate-${animation.toLowerCase().replace('up', '-up')}`);
-            }, delay + (index * 50));
-        });
+    elementsToAnimate.forEach((element, index) => {
+        // Add staggered animation classes
+        setTimeout(() => {
+            element.classList.add('animate-fade-in');
+        }, index * 100);
     });
 }
 
@@ -487,26 +476,25 @@ function addSmoothTransitions() {
     });
 }
 
-// Initialize page load sequence when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(initializePageLoadSequence, 100);
-        enhanceInteractiveElements();
-        addSmoothTransitions();
-    });
-} else {
-    setTimeout(initializePageLoadSequence, 100);
+// Initialize animations when DOM is ready
+function initializeAnimations() {
+    console.log('Initializing animations...');
     enhanceInteractiveElements();
     addSmoothTransitions();
+    
+    // Wait a bit for elements to be rendered, then add animations
+    setTimeout(() => {
+        initializePageLoadSequence();
+        document.body.classList.add('app-loaded');
+    }, 500);
 }
 
-// Enhanced app initialization
-window.addEventListener('load', () => {
-    // Add final polish animations
-    setTimeout(() => {
-        document.body.classList.add('app-loaded');
-    }, 1000);
-});
+// Initialize based on document state
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeAnimations);
+} else {
+    initializeAnimations();
+}
 
 // Expose animation functions globally
 window.animateNumber = animateNumber;
