@@ -231,7 +231,8 @@ import { doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs
             await setDoc(doc(window.firebase.db, 'users', user.uid), {
                 email,
                 createdAt: serverTimestamp(),
-                planType: 'free_pending'
+                planType: 'free_pending',
+                subscriptionStatus: 'free'
             }, { merge: true });
             
             // Send email verification
@@ -275,7 +276,8 @@ import { doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs
                 await setDoc(doc(window.firebase.db, 'users', user.uid), {
                     email: user.email,
                     createdAt: serverTimestamp(),
-                    planType: 'free_pending'
+                    planType: 'free_pending',
+                    subscriptionStatus: 'free'
                 }, { merge: true });
                 
                 hideLoading();

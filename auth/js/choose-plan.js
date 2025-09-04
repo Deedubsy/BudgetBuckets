@@ -79,7 +79,8 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
             
             // Update user document to set free plan
             await setDoc(doc(window.firebase.db, 'users', currentUser.uid), {
-                planType: 'free'
+                planType: 'free',
+                subscriptionStatus: 'free'
             }, { merge: true });
 
             // Store in sessionStorage to prevent race condition

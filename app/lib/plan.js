@@ -66,15 +66,50 @@ export async function refreshPlan(user = null) {
   }
   
   try {
+    // First try ID token claims
     const tokenResult = await currentUser.getIdTokenResult(true); // Force refresh
-    const newPlan = tokenResult.claims.plan || 'free';
+    let newPlan = tokenResult.claims.plan;
+    
+    // If no claims or claims show free, check Firestore as fallback
+    if (!newPlan || newPlan === 'free') {
+      try {
+        const { doc, getDoc, getFirestore } = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js');
+        const db = getFirestore();
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          // Check subscription status to determine plan
+          if (userData.subscriptionStatus === 'active' || userData.planType === 'plus') {
+            newPlan = 'plus';
+          } else {
+            newPlan = userData.planType || 'free';
+          }
+          console.log('📋 Plan loaded from Firestore:', newPlan, 'subscription:', userData.subscriptionStatus);
+        } else {
+          newPlan = 'free';
+        }
+      } catch (firestoreError) {
+        console.warn('Failed to load plan from Firestore:', firestoreError);
+        newPlan = 'free';
+      }
+    } else {
+      console.log('📋 Plan loaded from ID token claims:', newPlan);
+    }
     
     if (newPlan !== currentPlan) {
       currentPlan = newPlan;
+      console.log('📋 Plan updated:', currentPlan);
       notifyWatchers();
     }
   } catch (error) {
     console.error('Failed to refresh plan:', error);
+    // Fallback to free plan
+    if (currentPlan !== 'free') {
+      currentPlan = 'free';
+      notifyWatchers();
+    }
   }
 }
 
