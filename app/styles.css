@@ -1366,3 +1366,156 @@ input[type="checkbox"]:hover {
     }
 }
 
+
+/* ===== LABEL/VALUE CONTRAST IMPROVEMENTS ===== */
+
+/* Reduce label opacity to 60-70% */
+.total-label,
+.mini-label,
+label,
+.items-table th,
+.remaining-label {
+    opacity: 0.7;
+    font-weight: 400;
+}
+
+/* Keep values at full opacity with enhanced font weight */
+.total-value,
+.mini-value,
+.remaining-value,
+.bucket-total-value {
+    opacity: 1;
+    font-weight: 600; /* Semi-bold */
+}
+
+/* All monetary values should be bold and full opacity */
+#totalIncome,
+#totalExpenses,
+#totalSavings, 
+#totalDebt,
+#totalRemaining,
+#incomeMonthly,
+#incomeFortnightly,
+#leftoverAfterSavings {
+    font-weight: 700; /* Bold */
+    opacity: 1;
+    font-family: var(--font-mono);
+}
+
+/* Progress and savings values */
+.progress-current,
+.progress-goal,
+.bucket-total .bucket-total-value {
+    font-weight: 600;
+    opacity: 1;
+    font-family: var(--font-mono);
+}
+
+/* Form labels with reduced opacity */
+.form-group label,
+.goal-checkbox-label,
+.include-label span {
+    opacity: 0.65;
+    font-size: 0.875rem;
+}
+
+/* Table data (values) vs headers (labels) */
+.items-table th {
+    opacity: 0.6; /* Labels dimmer */
+    font-weight: 400;
+}
+
+.items-table td {
+    opacity: 1; /* Values full opacity */
+    font-weight: 500;
+}
+
+/* Input values should be full opacity and medium weight */
+input[type="text"],
+input[type="number"] {
+    opacity: 1;
+    font-weight: 500;
+}
+
+/* Bucket names are values, not labels */
+.bucket-name {
+    opacity: 1;
+    font-weight: 600;
+}
+
+/* Percentage displays are values */
+.pct,
+.progress-percent {
+    opacity: 1;
+    font-weight: 600;
+    font-family: var(--font-mono);
+}
+
+/* Currency formatting consistency */
+[id*="total"],
+[class*="amount"],
+[class*="value"],
+.bucket-total-value,
+.progress-current,
+.progress-goal {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Special handling for colored sections */
+.income-color,
+.expense-color,
+.savings-color, 
+.debt-color {
+    opacity: 0.8; /* Slightly dimmed but still visible */
+    font-weight: 500;
+}
+
+/* Section headers are titles, not labels */
+.section h2,
+.card h2 {
+    opacity: 1;
+    font-weight: 600;
+}
+
+/* Mini card labels vs values */
+.mini-card .mini-label {
+    opacity: 0.65;
+    font-weight: 400;
+    font-size: 0.75rem;
+}
+
+.mini-card .mini-value {
+    opacity: 1;
+    font-weight: 700;
+    font-family: var(--font-mono);
+}
+
+/* Goal and progress labels */
+.savings-info label,
+.debt-info label,
+.sinking-fund-panel label {
+    opacity: 0.65;
+    font-weight: 400;
+}
+
+/* Ensure tooltips and help text are subtle */
+.legend,
+.empty-state {
+    opacity: 0.6;
+    font-weight: 400;
+}
+
+/* Button text should be full opacity */
+button {
+    opacity: 1;
+    font-weight: 500;
+}
+
+/* Maintain accessibility for interactive elements */
+button:hover,
+button:focus,
+input:focus,
+select:focus {
+    opacity: 1;
+}
+
