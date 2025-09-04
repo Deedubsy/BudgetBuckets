@@ -8,6 +8,22 @@ import Sortable from "https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/modular/sor
 import { differenceInMonths, addMonths, format } from "https://cdn.jsdelivr.net/npm/date-fns@3.6.0/+esm";
 import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
 
+// Default bucket color palette - cycles through these colors for new buckets
+const DEFAULT_BUCKET_COLORS = [
+    '#5ea8ff',  // Blue
+    '#5eead4',  // Teal  
+    '#a78bfa',  // Purple
+    '#f97316',  // Orange
+    '#10b981',  // Green
+    '#f59e0b',  // Amber
+    '#ec4899',  // Pink
+    '#6366f1',  // Indigo
+    '#8b5cf6',  // Violet
+    '#14b8a6',  // Teal
+    '#ef4444',  // Red
+    '#84cc16',  // Lime
+];
+
 (function() {
     'use strict';
 
@@ -573,13 +589,6 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         }
         healthSavingsRate.className = `health-value status-${savingsStatus}`;
         
-        // Update health indicator bar
-        updateHealthIndicatorBar({
-            overallStatus: status,
-            allocatedStatus,
-            overBudgetStatus,
-            savingsStatus
-        });
         
         // Re-initialize tooltips after health metrics are updated
         if (typeof tippy !== 'undefined') {
@@ -607,64 +616,6 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         }
     }
 
-    /**
-     * Update the visual health indicator bar with colored segments
-     * @param {Object} statusData - Status data for each metric
-     */
-    function updateHealthIndicatorBar(statusData) {
-        const {
-            overallStatus,
-            allocatedStatus,
-            overBudgetStatus,
-            savingsStatus
-        } = statusData;
-        
-        const healthSegments = document.getElementById('healthSegments');
-        if (!healthSegments) return;
-        
-        // Calculate segment widths based on importance and status
-        const statusWeights = {
-            excellent: 100,
-            good: 75,
-            warning: 50,
-            danger: 25
-        };
-        
-        const segments = [
-            { status: overallStatus, weight: 40 },
-            { status: allocatedStatus, weight: 25 },
-            { status: overBudgetStatus, weight: 20 },
-            { status: savingsStatus, weight: 15 }
-        ];
-        
-        // Calculate total score out of 100
-        const totalScore = segments.reduce((sum, segment) => {
-            return sum + (statusWeights[segment.status] * segment.weight / 100);
-        }, 0);
-        
-        // Create segments HTML
-        const segmentsHTML = segments.map((segment, index) => {
-            const width = segment.weight;
-            const statusClass = segment.status;
-            return `<div class="health-segment ${statusClass}" style="width: ${width}%"></div>`;
-        }).join('');
-        
-        healthSegments.innerHTML = segmentsHTML;
-        
-        // Update tooltip with overall health score
-        const healthBar = document.querySelector('.health-indicator-bar');
-        if (healthBar) {
-            healthBar.title = `Overall Budget Health: ${Math.round(totalScore)}/100`;
-        }
-        
-        // Animate segments
-        setTimeout(() => {
-            const segmentElements = healthSegments.querySelectorAll('.health-segment');
-            segmentElements.forEach((segment, index) => {
-                segment.style.transform = 'scaleX(1)';
-            });
-        }, 100);
-    }
 
     /**
      * Update the enhanced warning system for bucket progress
@@ -1106,7 +1057,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         nameInput.value = bucket.name || '';
         bankInput.value = bucket.bankAccount || '';
         includeInput.checked = bucket.include !== false;
-        colorInput.value = bucket.color || '#00cdd6';
+        colorInput.value = bucket.color || getNextBucketColor();
         notesTextarea.value = bucket.notes || '';
         spentInput.value = bucket.spentThisPeriodCents ? Math.round(bucket.spentThisPeriodCents / 100) : '0';
         
@@ -1215,7 +1166,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             
             // Update the color indicator on the button
             const updateColorIndicator = () => {
-                colorBtn.style.setProperty('--bucket-color', bucket.color || '#00cdd6');
+                colorBtn.style.setProperty('--bucket-color', bucket.color || getNextBucketColor());
             };
             updateColorIndicator();
             
@@ -1536,6 +1487,12 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         return (state.expenses?.length || 0) + (state.savings?.length || 0) + (state.debt?.length || 0);
     };
     
+    // Get next color for new bucket based on existing bucket count
+    function getNextBucketColor() {
+        const currentCount = window.getBucketCountForUI();
+        return DEFAULT_BUCKET_COLORS[currentCount % DEFAULT_BUCKET_COLORS.length];
+    }
+    
     function showUpgradePrompt() {
         if (confirm('Free plan allows up to 5 buckets. Upgrade to Plus for unlimited buckets?')) {
             // Navigate to account page for upgrade
@@ -1555,7 +1512,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             id: generateId(),
             name: '',
             include: true,
-            color: '#00cdd6',
+            color: getNextBucketColor(),
             bankAccount: '',
             type: section === 'expenses' ? 'expense' : section === 'savings' ? 'saving' : 'debt',
             orderIndex: 0,
@@ -1753,7 +1710,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                     { id: generateId(), name: 'Internet', amount: 0, include: true }
                 ],
                 include: true,
-                color: '#00cdd6',
+                color: DEFAULT_BUCKET_COLORS[0], // Blue
                 bankAccount: '',
                 type: 'expense',
                 orderIndex: 0,
@@ -1770,7 +1727,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                     { id: generateId(), name: 'Registration', amount: 0, include: true }
                 ],
                 include: true,
-                color: '#00cdd6',
+                color: DEFAULT_BUCKET_COLORS[1], // Teal
                 bankAccount: '',
                 type: 'expense',
                 orderIndex: 1,
@@ -1785,7 +1742,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                     { id: generateId(), name: 'Weekly Shop', amount: 0, include: true }
                 ],
                 include: true,
-                color: '#00cdd6',
+                color: DEFAULT_BUCKET_COLORS[2], // Purple
                 bankAccount: '',
                 type: 'expense',
                 orderIndex: 2,
@@ -1802,7 +1759,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                     { id: generateId(), name: 'Entertainment', amount: 0, include: true }
                 ],
                 include: true,
-                color: '#00cdd6',
+                color: DEFAULT_BUCKET_COLORS[3], // Orange
                 bankAccount: '',
                 type: 'expense',
                 orderIndex: 3,
@@ -1817,7 +1774,7 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
                 id: generateId(),
                 name: 'Emergency Fund',
                 include: true,
-                color: '#00cdd6',
+                color: DEFAULT_BUCKET_COLORS[4], // Green
                 bankAccount: '',
                 type: 'saving',
                 orderIndex: 0,
