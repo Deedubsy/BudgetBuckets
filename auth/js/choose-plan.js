@@ -322,8 +322,7 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
                 // Get complete user data including subscription status
                 try {
                     // Import auth helpers dynamically
-                    const authHelpersModule = await import('/auth/firebase.js');
-                    const authHelpers = authHelpersModule.default;
+                    const { authHelpers } = await import('/auth/firebase.js');
                     
                     currentUser = await authHelpers.getCompleteUserData();
                     console.log('🔍 Choose-plan currentUser loaded:', {
