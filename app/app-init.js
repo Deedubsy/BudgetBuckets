@@ -508,7 +508,7 @@ function initializeScrollEffects() {
     
     function updateStickyTotals() {
         const scrollY = window.scrollY;
-        const scrollThreshold = 100; // Start shrinking after 100px scroll
+        const scrollThreshold = 300; // Start shrinking after 100px scroll
         
         if (scrollY > scrollThreshold) {
             stickyTotals.classList.add('scrolled');
