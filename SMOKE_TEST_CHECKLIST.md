@@ -105,7 +105,7 @@
 - [ ] **New user gets user document with correct data**
   - Create new account
   - Check `/users/{uid}` document exists
-  - Contains: `email`, `createdAt`, `subscriptionStatus: 'free'`
+  - Contains: `email`, `createdAt`, `plan: 'Free'`, `planSelected: false`
 
 - [ ] **New user gets bucket counter document**
   - Check `/users/{uid}/meta/bucketCounts` document exists  

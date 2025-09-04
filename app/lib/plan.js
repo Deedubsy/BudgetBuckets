@@ -80,13 +80,13 @@ export async function refreshPlan(user = null) {
         
         if (userDocSnap.exists()) {
           const userData = userDocSnap.data();
-          // Check subscription status to determine plan
-          if (userData.subscriptionStatus === 'active' || userData.planType === 'plus') {
+          // Check plan status
+          if (userData.plan === 'Plus') {
             newPlan = 'plus';
           } else {
-            newPlan = userData.planType || 'free';
+            newPlan = 'free';
           }
-          console.log('📋 Plan loaded from Firestore:', newPlan, 'subscription:', userData.subscriptionStatus);
+          console.log('📋 Plan loaded from Firestore:', newPlan, 'plan:', userData.plan);
         } else {
           newPlan = 'free';
         }

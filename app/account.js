@@ -87,8 +87,8 @@ async function handleAuthStateChange(user) {
     // Set userDoc from the complete user data for compatibility
     userDoc = {
       email: currentUser.email,
-      subscriptionStatus: currentUser.subscriptionStatus,
-      planType: currentUser.planType,
+      plan: currentUser.plan,
+      planSelected: currentUser.planSelected,
       subscriptionId: currentUser.subscriptionId,
       stripeCustomerId: currentUser.stripeCustomerId,
       createdAt: currentUser.createdAt,
@@ -100,10 +100,10 @@ async function handleAuthStateChange(user) {
       email: currentUser.email,
       claims: tokenResult.claims,
       claimsPlan: tokenResult.claims.plan,
-      subscriptionStatus: currentUser.subscriptionStatus,
+      plan: currentUser.plan,
+      planSelected: currentUser.planSelected,
       stripeCustomerId: currentUser.stripeCustomerId,
-      planType: currentUser.planType,
-      userDocStatus: userDoc.subscriptionStatus
+      userDocPlan: userDoc.plan
     });
     
     // Show account content and populate UI
@@ -183,10 +183,10 @@ function populateProfileSection(user, claims) {
   
   // Plan badge
   const planBadge = document.getElementById('planBadge');
-  const plan = claims.plan || userDoc.subscriptionStatus === 'active' ? 'plus' : 'free';
+  const plan = claims.plan || (userDoc.plan === 'Plus' ? 'plus' : 'free');
   console.log('🔍 Profile section plan detection:', {
     claimsPlan: claims.plan,
-    subscriptionStatus: userDoc.subscriptionStatus,
+    userDocPlan: userDoc.plan,
     finalPlan: plan,
     planBadgeElement: !!planBadge
   });
@@ -203,11 +203,11 @@ function populateProfileSection(user, claims) {
  * @param {Object} userDoc - User document from Firestore
  */
 function populateBillingSection(user, claims, userDoc) {
-  const plan = claims.plan || (userDoc.subscriptionStatus === 'active' ? 'plus' : 'free');
+  const plan = claims.plan || (userDoc.plan === 'Plus' ? 'plus' : 'free');
   
   console.log('🔍 Billing section population:', {
     claimsPlan: claims.plan,
-    subscriptionStatus: userDoc.subscriptionStatus,
+    userDocPlan: userDoc.plan,
     finalPlan: plan,
     hasStripeCustomer: !!userDoc.stripeCustomerId
   });
@@ -246,7 +246,7 @@ function populateBillingSection(user, claims, userDoc) {
     const maskedCustomerId = maskCustomerId(userDoc.stripeCustomerId);
     billingDetails.innerHTML = `
       <div>Customer ID: <code>${maskedCustomerId}</code></div>
-      ${userDoc.subscriptionStatus ? `<div>Status: ${userDoc.subscriptionStatus}</div>` : ''}
+      <div>Plan: ${userDoc.plan || 'Free'}</div>
     `;
   }
 }

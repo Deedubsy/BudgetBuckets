@@ -79,8 +79,8 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
             
             // Update user document to set free plan
             await setDoc(doc(window.firebase.db, 'users', currentUser.uid), {
-                planType: 'free',
-                subscriptionStatus: 'free'
+                plan: 'Free',
+                planSelected: true
             }, { merge: true });
 
             // Store in sessionStorage to prevent race condition
@@ -203,8 +203,8 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
                             console.log('🔧 Manually updating user subscription status in Firestore...');
                             try {
                                 await setDoc(doc(window.firebase.db, 'users', currentUser.uid), {
-                                    planType: 'plus',
-                                    subscriptionStatus: 'active',
+                                    plan: 'Plus',
+                                    planSelected: true,
                                     stripeCustomerId: paymentInfo.customerId,
                                     updatedAt: serverTimestamp(),
                                     paymentCompletedAt: serverTimestamp()
@@ -258,30 +258,22 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
             if (!currentUser || processingPlan) return;
 
             console.log('🔍 Choose-plan validation debug:', {
-                planType: currentUser.planType,
-                subscriptionStatus: currentUser.subscriptionStatus,
+                plan: currentUser.plan,
+                planSelected: currentUser.planSelected,
                 subscriptionId: currentUser.subscriptionId,
                 stripeCustomerId: currentUser.stripeCustomerId
             });
             
-            // Check if user has active subscription (should redirect even if planType is outdated)
-            if (currentUser.subscriptionStatus === 'active' || currentUser.planType === 'plus') {
-                console.log('✅ User has active subscription/plus plan, redirecting to main app');
-                sessionStorage.setItem('planJustSelected', 'plus');
+            // Check if user has completed plan selection
+            if (currentUser.planSelected === true) {
+                console.log('✅ User has selected plan:', currentUser.plan, '- redirecting to main app');
+                sessionStorage.setItem('planJustSelected', currentUser.plan?.toLowerCase() || 'free');
                 location.assign('/app');
                 return;
             }
             
-            // Check if user has completed free plan selection
-            if (currentUser.planType === 'free') {
-                console.log('✅ User has completed free plan selection, redirecting to main app');
-                sessionStorage.setItem('planJustSelected', 'free');
-                location.assign('/app');
-                return;
-            }
-            
-            // If user has free_pending or no plan, stay on plan selection page
-            console.log('📋 User needs to select plan, current status:', currentUser.planType || 'none');
+            // If user has not selected a plan, stay on plan selection page
+            console.log('📋 User needs to select plan, current status:', currentUser.plan || 'Free', 'selected:', currentUser.planSelected);
         } catch (error) {
             console.error('❌ Failed to check user plan status:', error);
         }
@@ -327,8 +319,8 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
                     currentUser = await authHelpers.getCompleteUserData();
                     console.log('🔍 Choose-plan currentUser loaded:', {
                         uid: currentUser.uid,
-                        planType: currentUser.planType,
-                        subscriptionStatus: currentUser.subscriptionStatus
+                        plan: currentUser.plan,
+                        planSelected: currentUser.planSelected
                     });
                 } catch (error) {
                     console.error('Failed to load complete user data, falling back to auth user:', error);

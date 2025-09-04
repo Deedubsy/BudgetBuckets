@@ -79,8 +79,8 @@ export async function bootstrapUser(uid, email) {
   batch.set(userRef, {
     email,
     createdAt: serverTimestamp(),
-    subscriptionStatus: 'free',
-    planType: 'free_pending'
+    plan: 'Free',
+    planSelected: false
   }, { merge: true });
   
   // Initialize bucket counter

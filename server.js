@@ -257,24 +257,24 @@ app.post('/api/billing/debug/force-plus-plan', async (req, res) => {
     await admin.auth().setCustomUserClaims(uid, { plan: 'plus' });
     console.log('✅ Custom claims set: plan = plus');
     
-    // Update Firestore - FIXED: Set subscriptionStatus to 'active'
+    // Update Firestore - Set plan to Plus
     const db = admin.firestore();
     await db.collection('users').doc(uid).set({
-      subscriptionStatus: 'active',
-      planType: 'plus',
+      plan: 'Plus',
+      planSelected: true,
       manuallySet: true,
       manuallySetAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
     
-    console.log('✅ Firestore updated with Plus plan (subscriptionStatus = active)');
+    console.log('✅ Firestore updated with Plus plan');
     
     res.json({ 
       success: true, 
       message: 'Plus plan set manually with active subscription status',
       uid: uid,
-      plan: 'plus',
-      subscriptionStatus: 'active'
+      plan: 'Plus',
+      planSelected: true
     });
     
   } catch (error) {
@@ -311,20 +311,21 @@ app.post('/api/billing/debug/fix-subscription-status', async (req, res) => {
     
     console.log('🔧 Fixing subscription status for user:', uid);
     
-    // Update Firestore to set subscriptionStatus to active
+    // Update Firestore to set plan to Plus
     const db = admin.firestore();
     await db.collection('users').doc(uid).update({
-      subscriptionStatus: 'active',
+      plan: 'Plus',
+      planSelected: true,
       statusFixedAt: admin.firestore.FieldValue.serverTimestamp()
     });
     
-    console.log('✅ Subscription status fixed: active');
+    console.log('✅ Plan fixed: Plus');
     
     res.json({ 
       success: true, 
-      message: 'Subscription status updated to active',
+      message: 'Plan updated to Plus',
       uid: uid,
-      subscriptionStatus: 'active'
+      plan: 'Plus'
     });
     
   } catch (error) {
@@ -688,19 +689,19 @@ app.post('/api/billing/webhook', async (req, res) => {
 
         if (firebaseUid) {
           // Update Firestore user document
+          const newPlan = status === 'active' ? 'Plus' : 'Free';
           await db.collection('users').doc(firebaseUid).set({
             subscriptionId: subscription.id,
-            subscriptionStatus: status,
             stripeCustomerId: customerId,
-            planType: status === 'active' ? 'plus' : 'free',
+            plan: newPlan,
+            planSelected: true,
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
           }, { merge: true });
 
           console.log(`✅ Firestore updated for user ${firebaseUid}`);
 
           // Set custom claims for plan access
-          const newPlan = status === 'active' ? 'plus' : 'free';
-          await admin.auth().setCustomUserClaims(firebaseUid, { plan: newPlan });
+          await admin.auth().setCustomUserClaims(firebaseUid, { plan: newPlan.toLowerCase() });
           
           console.log(`✅ Firebase custom claims updated: ${firebaseUid} → plan: ${newPlan}`);
           console.log(`🎉 User ${firebaseUid} subscription ${status === 'active' ? 'ACTIVATED' : 'UPDATED'} to ${newPlan}`);
@@ -725,8 +726,8 @@ app.post('/api/billing/webhook', async (req, res) => {
 
         if (firebaseUid) {
           await db.collection('users').doc(firebaseUid).set({
-            subscriptionStatus: 'canceled',
-            planType: 'free',
+            plan: 'Free',
+            planSelected: true,
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
           }, { merge: true });
 
@@ -963,20 +964,20 @@ app.post('/api/billing/create-subscription', async (req, res) => {
     console.log('🔧 Updating user plan in database immediately...');
     try {
       const db = admin.firestore();
-      const planType = subscription.status === 'active' ? 'plus' : 'free';
+      const newPlan = subscription.status === 'active' ? 'Plus' : 'Free';
       
       await db.collection('users').doc(uid).set({
         subscriptionId: subscription.id,
-        subscriptionStatus: subscription.status,
         stripeCustomerId: customerId,
-        planType: planType,
+        plan: newPlan,
+        planSelected: true,
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
 
       // Set custom claims for immediate access
-      await admin.auth().setCustomUserClaims(uid, { plan: planType });
+      await admin.auth().setCustomUserClaims(uid, { plan: newPlan.toLowerCase() });
       
-      console.log(`✅ User ${uid} plan immediately updated to: ${planType}`);
+      console.log(`✅ User ${uid} plan immediately updated to: ${newPlan}`);
     } catch (dbError) {
       console.error('⚠️ Failed to update user plan immediately (webhook will handle):', dbError);
     }

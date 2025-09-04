@@ -235,8 +235,8 @@ switch (event.type) {
     // Update Firestore user document
     await db.collection('users').doc(firebaseUid).set({
       subscriptionId: subscription.id,
-      subscriptionStatus: status,
-      planType: status === 'active' ? 'plus' : 'free',
+      plan: status === 'active' ? 'Plus' : 'Free',
+      planSelected: true,
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
     

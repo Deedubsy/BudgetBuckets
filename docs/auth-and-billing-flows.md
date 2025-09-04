@@ -166,15 +166,15 @@ sequenceDiagram
     
     alt User Exists, Email Verified, No Plan
         Firebase->>App: User object (emailVerified: true)
-        App->>Firestore: Check user document planType
-        Firestore->>App: planType: null or 'free_pending'
+        App->>Firestore: Check user document planSelected
+        Firestore->>App: planSelected: false
         App->>U: Redirect to /auth/choose-plan
     end
     
     alt User Exists, Complete Setup
         Firebase->>App: User object (emailVerified: true)
         App->>Firestore: Check user document
-        Firestore->>App: planType: 'free' or 'plus'
+        Firestore->>App: plan: 'Free' or 'Plus', planSelected: true
         App->>U: Access granted to /app
     end
 ```
@@ -193,7 +193,7 @@ sequenceDiagram
     App->>Firebase: createUserWithEmailAndPassword()
     Firebase->>App: User created (emailVerified: false)
     
-    App->>Firestore: Create user document (planType: 'free_pending')
+    App->>Firestore: Create user document (plan: 'Free', planSelected: false)
     App->>Firebase: sendEmailVerification()
     Firebase->>Email: Send verification email
     App->>Firebase: signOut() - force verification first
@@ -205,7 +205,7 @@ sequenceDiagram
     App->>U: Redirect to /auth/choose-plan
     
     U->>App: Select Free or Plus plan
-    App->>Firestore: Update planType: 'free' or 'plus'
+    App->>Firestore: Update plan: 'Free' or 'Plus', planSelected: true
     App->>U: Redirect to /app (full access granted)
 ```
 
@@ -545,8 +545,8 @@ app.post('/api/billing/webhook', async (req, res) => {
           // Update Firestore
           await db.collection('users').doc(firebaseUid).set({
             subscriptionId: subscription.id,
-            subscriptionStatus: status,
-            planType: status === 'active' ? 'plus' : 'free',
+            plan: status === 'active' ? 'Plus' : 'Free',
+            planSelected: true,
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
           }, { merge: true });
           
@@ -565,8 +565,8 @@ app.post('/api/billing/webhook', async (req, res) => {
           // Revert to free plan
           await admin.auth().setCustomUserClaims(uid, { plan: 'free' });
           await db.collection('users').doc(uid).set({
-            subscriptionStatus: 'canceled',
-            planType: 'free'
+            plan: 'Free',
+            planSelected: true
           }, { merge: true });
         }
         break;

@@ -2435,10 +2435,10 @@ const DEFAULT_BUCKET_COLORS = [
         await authHelpers.waitForAuth();
         currentUser = await authHelpers.getCompleteUserData();
         
-        // Debug: Log subscription status
-        console.log('💳 User subscription status:', {
-            planType: currentUser.planType,
-            subscriptionStatus: currentUser.subscriptionStatus,
+        // Debug: Log plan status
+        console.log('💳 User plan status:', {
+            plan: currentUser.plan,
+            planSelected: currentUser.planSelected,
             subscriptionId: currentUser.subscriptionId
         });
         

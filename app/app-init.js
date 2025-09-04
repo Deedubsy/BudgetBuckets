@@ -78,8 +78,8 @@ async function enforceAuthFlow(user) {
     
     // Enhanced debug logging
     console.log('🔍 Plan validation debug:', {
-      planType: userData.planType,
-      subscriptionStatus: userData.subscriptionStatus,
+      plan: userData.plan,
+      planSelected: userData.planSelected,
       subscriptionId: userData.subscriptionId,
       stripeCustomerId: userData.stripeCustomerId,
       updatedAt: userData.updatedAt,
@@ -94,33 +94,15 @@ async function enforceAuthFlow(user) {
       return;
     }
     
-    // Check if subscription is active but planType is outdated (fallback logic)
-    if (userData.subscriptionStatus === 'active' && userData.planType === 'free_pending') {
-      console.log('🔧 Found active subscription with outdated planType, correcting...');
-      try {
-        // Update the planType to match subscription status
-        const { setDoc } = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js');
-        await setDoc(userDocRef, {
-          planType: 'plus',
-          updatedAt: new Date()
-        }, { merge: true });
-        console.log('✅ Fixed planType from free_pending to plus');
-        return; // Allow access
-      } catch (updateError) {
-        console.error('Failed to update planType:', updateError);
-        // Continue with normal flow
-      }
-    }
-    
-    // Only redirect if plan is not selected or still pending (and not active subscription)
-    if (!userData.planType || userData.planType === 'free_pending') {
-      console.log('Plan not selected (planType:', userData.planType, ', subscriptionStatus:', userData.subscriptionStatus, ') - redirecting to plan selection');
+    // Only redirect if plan is not selected
+    if (userData.planSelected !== true) {
+      console.log('Plan not selected (plan:', userData.plan, ', planSelected:', userData.planSelected, ') - redirecting to plan selection');
       location.assign('/auth/choose-plan');
       return;
     }
     
-    // Valid plan types: 'free' and 'plus' - both allow access to app
-    console.log('✅ User has valid plan:', userData.planType);
+    // User has selected a plan - allow access to app
+    console.log('✅ User has selected plan:', userData.plan);
     
     console.log('✅ Authentication flow complete, user can access app');
   } catch (error) {

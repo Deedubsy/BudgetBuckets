@@ -107,7 +107,7 @@ function testBootstrap() {
   
   const mockBootstrap = (uid, email) => {
     const operations = [
-      { collection: 'users', doc: uid, data: { email, subscriptionStatus: 'free' }},
+      { collection: 'users', doc: uid, data: { email, plan: 'Free', planSelected: false }},
       { collection: 'users/meta', doc: 'bucketCounts', data: { total: 0 }}
     ];
     

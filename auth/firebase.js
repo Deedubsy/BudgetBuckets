@@ -313,8 +313,8 @@ const authHelpers = {
         providerData: user.providerData,
         
         // Firestore properties
-        planType: userData.planType || 'free',
-        subscriptionStatus: userData.subscriptionStatus || 'free',
+        plan: userData.plan || 'Free',
+        planSelected: userData.planSelected || false,
         subscriptionId: userData.subscriptionId,
         stripeCustomerId: userData.stripeCustomerId,
         createdAt: userData.createdAt,
@@ -330,8 +330,8 @@ const authHelpers = {
         displayName: user.displayName,
         photoURL: user.photoURL,
         providerData: user.providerData,
-        planType: 'free',
-        subscriptionStatus: 'free'
+        plan: 'Free',
+        planSelected: false
       };
     }
   },
