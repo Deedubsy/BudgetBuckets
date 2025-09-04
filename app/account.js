@@ -19,6 +19,9 @@ import {
   getBillingConfig
 } from '/app/lib/billing-client.js';
 
+// Import auth helpers for complete user data
+const authHelpers = (await import('/auth/firebase.js')).default;
+
 let auth, db, currentUser = null, userDoc = null;
 let isLoading = false;
 let stripe = null;
@@ -68,37 +71,46 @@ export function hideAccountView() {
  * @param {User|null} user - Firebase user object
  */
 async function handleAuthStateChange(user) {
-  currentUser = user;
-  
   if (!user) {
+    currentUser = null;
     showSignInPrompt();
     return;
   }
   
   try {
-    // Get user claims and document
+    // Get complete user data (includes subscription status from Firestore)
+    currentUser = await authHelpers.getCompleteUserData();
+    
+    // Get user claims for additional data
     const tokenResult = await getIdTokenResult(user);
-    const userDocRef = doc(db, 'users', user.uid);
-    const userDocSnap = await getDoc(userDocRef);
     
-    userDoc = userDocSnap.exists() ? userDocSnap.data() : {};
+    // Set userDoc from the complete user data for compatibility
+    userDoc = {
+      email: currentUser.email,
+      subscriptionStatus: currentUser.subscriptionStatus,
+      planType: currentUser.planType,
+      subscriptionId: currentUser.subscriptionId,
+      stripeCustomerId: currentUser.stripeCustomerId,
+      createdAt: currentUser.createdAt,
+      updatedAt: currentUser.updatedAt
+    };
     
-    console.log('🔍 Account data debug:', {
-      uid: user.uid,
-      email: user.email,
+    console.log('🔍 Account data debug (enhanced):', {
+      uid: currentUser.uid,
+      email: currentUser.email,
       claims: tokenResult.claims,
-      userDoc: userDoc,
       claimsPlan: tokenResult.claims.plan,
-      subscriptionStatus: userDoc.subscriptionStatus,
-      stripeCustomerId: userDoc.stripeCustomerId,
-      planType: userDoc.planType
+      subscriptionStatus: currentUser.subscriptionStatus,
+      stripeCustomerId: currentUser.stripeCustomerId,
+      planType: currentUser.planType,
+      userDocStatus: userDoc.subscriptionStatus
     });
     
     // Show account content and populate UI
     showAccountContent();
-    populateProfileSection(user, tokenResult.claims);
-    populateBillingSection(user, tokenResult.claims, userDoc);
-    populateSecuritySection(user);
+    populateProfileSection(currentUser, tokenResult.claims);
+    populateBillingSection(currentUser, tokenResult.claims, userDoc);
+    populateSecuritySection(currentUser);
     populatePreferencesSection(userDoc);
     
   } catch (error) {
