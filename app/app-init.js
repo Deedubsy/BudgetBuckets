@@ -496,5 +496,48 @@ if (document.readyState === 'loading') {
     initializeAnimations();
 }
 
+/**
+ * Add scroll detection for sticky totals shrinking
+ */
+function initializeScrollEffects() {
+    const stickyTotals = document.querySelector('.sticky-totals');
+    if (!stickyTotals) return;
+    
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+    
+    function updateStickyTotals() {
+        const scrollY = window.scrollY;
+        const scrollThreshold = 100; // Start shrinking after 100px scroll
+        
+        if (scrollY > scrollThreshold) {
+            stickyTotals.classList.add('scrolled');
+        } else {
+            stickyTotals.classList.remove('scrolled');
+        }
+        
+        lastScrollY = scrollY;
+        ticking = false;
+    }
+    
+    function onScroll() {
+        if (!ticking) {
+            requestAnimationFrame(updateStickyTotals);
+            ticking = true;
+        }
+    }
+    
+    // Add scroll listener with throttling
+    window.addEventListener('scroll', onScroll, { passive: true });
+    
+    // Initial check
+    updateStickyTotals();
+}
+
+// Initialize scroll effects
+window.addEventListener('load', () => {
+    initializeScrollEffects();
+});
+
 // Expose animation functions globally
 window.animateNumber = animateNumber;

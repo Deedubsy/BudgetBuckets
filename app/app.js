@@ -1135,6 +1135,26 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
             debouncedSave();
         });
         
+        // FontAwesome color button handler
+        const colorBtn = card.querySelector('.bucket-color-btn');
+        if (colorBtn) {
+            colorBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Trigger the hidden color input
+                colorInput.click();
+            });
+            
+            // Update the color indicator on the button
+            const updateColorIndicator = () => {
+                colorBtn.style.setProperty('--bucket-color', bucket.color || '#00cdd6');
+            };
+            updateColorIndicator();
+            
+            // Update when color changes
+            colorInput.addEventListener('change', updateColorIndicator);
+        }
+        
         
         notesTextarea.addEventListener('input', debouncedUpdateNotes);
         

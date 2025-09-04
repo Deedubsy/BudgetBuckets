@@ -2163,6 +2163,76 @@ input[type="number"][placeholder*="amount"],
     }
 }
 
+/* FontAwesome Bucket Color Button */
+.bucket-color-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 200ms ease-out;
+    color: var(--text);
+    font-size: 14px;
+    position: relative;
+}
+
+.bucket-color-btn:hover {
+    background: var(--accent);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 205, 214, 0.3);
+}
+
+.bucket-color-btn i {
+    transition: transform 200ms ease-out;
+}
+
+.bucket-color-btn:hover i {
+    transform: scale(1.1);
+}
+
+/* Color indicator on the button based on bucket color */
+.bucket-color-btn::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 16px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--bucket-color, #00cdd6);
+    transition: all 200ms ease-out;
+}
+
+.bucket-color-btn:hover::after {
+    width: 20px;
+    height: 4px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .bucket-color-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+    
+    .bucket-color-btn::after {
+        width: 14px;
+        height: 2px;
+    }
+    
+    .bucket-color-btn:hover::after {
+        width: 16px;
+        height: 3px;
+    }
+}
+
 /* =====================================================
    SECTION COLOR THEMING
    ===================================================== */
@@ -2637,11 +2707,71 @@ html {
    ===================================================== */
 
 /* Enhanced Totals Grid Layout */
+.sticky-totals {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem;
+    margin: -1rem -1rem 2rem -1rem;
+    transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .sticky-totals h2 {
     font-size: 1.5rem;
     font-weight: 700;
     margin-bottom: 1.5rem;
     color: var(--text);
+    transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Compact state when scrolled */
+.sticky-totals.scrolled {
+    padding: 0.75rem 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.sticky-totals.scrolled h2 {
+    font-size: 1.125rem;
+    margin-bottom: 1rem;
+}
+
+.sticky-totals.scrolled .totals-grid {
+    gap: 0.75rem;
+}
+
+.sticky-totals.scrolled .total-cell {
+    padding: 12px;
+    gap: 8px;
+}
+
+.sticky-totals.scrolled .total-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+}
+
+.sticky-totals.scrolled .total-info .total-value {
+    font-size: 1rem;
+}
+
+.sticky-totals.scrolled .remaining-balance-card {
+    padding: 16px;
+    gap: 12px;
+}
+
+.sticky-totals.scrolled .remaining-icon-wrapper {
+    width: 40px;
+    height: 40px;
+}
+
+.sticky-totals.scrolled .remaining-icon {
+    font-size: 20px;
+}
+
+.sticky-totals.scrolled .remaining-value {
+    font-size: 1.5rem;
 }
 
 .totals-grid {
