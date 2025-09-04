@@ -1519,3 +1519,115 @@ select:focus {
     opacity: 1;
 }
 
+
+/* ===== TABULAR NUMBERS FOR MONETARY VALUES ===== */
+
+/* Apply tabular numbers to all monetary displays for perfect alignment */
+.total-value,
+.mini-value,
+.remaining-value,
+.bucket-total-value,
+.progress-current,
+.progress-goal,
+.progress-percentage,
+#totalIncome,
+#totalExpenses,
+#totalSavings,
+#totalDebt,
+#totalRemaining,
+#incomeMonthly,
+#incomeFortnightly,
+#leftoverAfterSavings,
+#savingsRate,
+.item-row input[type="number"],
+.bucket-header-total,
+.track-amount,
+.contrib-freq,
+.payoff-text {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+}
+
+/* Ensure percentage displays also align properly */
+.pct {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+}
+
+/* Input fields for monetary values */
+input[type="number"][id*="amount"],
+input[type="number"][name*="amount"],
+input[type="number"][placeholder*="$"],
+input[type="number"][placeholder*="amount"],
+.goal-amount input,
+.saved-so-far input {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+    text-align: right; /* Right-align for better number readability */
+}
+
+/* Table cell monetary values */
+.items-table td:nth-child(2), /* Amount column */
+.items-table input[type="number"] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+    text-align: right;
+}
+
+/* Special handling for currency symbols to maintain alignment */
+.total-value::before,
+.mini-value::before,
+.bucket-total-value::before {
+    font-variant-numeric: normal; /* Currency symbols don't need tabular */
+}
+
+/* Ensure monospace fonts support tabular numbers */
+* {
+    --font-mono-tabular: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', 'Courier New', monospace;
+}
+
+/* Apply tabular monospace to all monetary values */
+[id*="total"],
+[class*="amount"],
+[class*="value"],
+.remaining-value,
+.mini-value,
+.bucket-total-value {
+    font-family: var(--font-mono-tabular);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+}
+
+/* Ensure consistent width for percentage displays */
+.pct,
+.progress-percent,
+#savingsRate {
+    font-family: var(--font-mono-tabular);
+    font-variant-numeric: tabular-nums;
+    min-width: 3ch; /* Consistent width for percentages */
+    text-align: right;
+}
+
+/* Right-align numeric content in table cells */
+.items-table th:nth-child(2),
+.items-table td:nth-child(2) {
+    text-align: right;
+}
+
+/* Progress display alignment */
+.progress-text {
+    font-family: var(--font-mono-tabular);
+}
+
+.progress-current,
+.progress-goal {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+}
+
+/* Bank account input alignment */
+.bank-account input[type="text"] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+}
+
