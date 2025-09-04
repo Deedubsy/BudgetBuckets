@@ -2433,7 +2433,14 @@ const DEFAULT_BUCKET_COLORS = [
         
         // Wait for auth to be ready
         await authHelpers.waitForAuth();
-        currentUser = authHelpers.getCurrentUser();
+        currentUser = await authHelpers.getCompleteUserData();
+        
+        // Debug: Log subscription status
+        console.log('💳 User subscription status:', {
+            planType: currentUser.planType,
+            subscriptionStatus: currentUser.subscriptionStatus,
+            subscriptionId: currentUser.subscriptionId
+        });
         
         // Bootstrap user on first sign-in
         if (currentUser) {

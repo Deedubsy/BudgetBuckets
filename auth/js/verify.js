@@ -77,6 +77,8 @@ import {
 
     async function checkVerificationStatus() {
         try {
+            const checkBtn = document.getElementById('checkVerificationBtn');
+            
             if (!currentUser) {
                 // If no current user but we have email parameter, show sign-in prompt
                 const urlParams = new URLSearchParams(location.search);
@@ -96,6 +98,12 @@ import {
             if (checkingVerification) return; // Prevent double-clicking
             checkingVerification = true;
 
+            // Update button state
+            if (checkBtn) {
+                checkBtn.disabled = true;
+                checkBtn.innerHTML = '<span class="spinner-inline"></span> Checking verification...';
+            }
+
             showLoading();
             
             // Force reload the user to get latest emailVerified status
@@ -103,17 +111,32 @@ import {
             
             if (currentUser.emailVerified) {
                 hideLoading();
+                if (checkBtn) {
+                    checkBtn.innerHTML = '✅ Email verified!';
+                    checkBtn.classList.add('success');
+                }
                 showSuccess('Email verified successfully! Taking you to plan selection...');
                 setTimeout(() => {
                     location.assign('/auth/choose-plan');
-                }, 1000);
+                }, 1500);
             } else {
                 hideLoading();
+                if (checkBtn) {
+                    checkBtn.disabled = false;
+                    checkBtn.innerHTML = 'I\'ve verified my email';
+                    checkBtn.classList.remove('success');
+                }
                 showError('Email not verified yet. Please check your inbox and click the verification link.');
             }
         } catch (error) {
             hideLoading();
             console.error('Check verification error:', error);
+            const checkBtn = document.getElementById('checkVerificationBtn');
+            if (checkBtn) {
+                checkBtn.disabled = false;
+                checkBtn.innerHTML = 'I\'ve verified my email';
+                checkBtn.classList.remove('success');
+            }
             showError('Failed to check verification status. Please try again.');
         } finally {
             checkingVerification = false;

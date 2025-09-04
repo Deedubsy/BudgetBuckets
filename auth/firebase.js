@@ -288,6 +288,54 @@ const authHelpers = {
     return currentUser;
   },
 
+  // Get complete user data including subscription status from Firestore
+  async getCompleteUserData() {
+    const user = await this.waitForAuth();
+    if (!user) throw new Error('User not authenticated');
+    
+    try {
+      // Get Firestore user document
+      const { doc, getDoc, getFirestore } = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js');
+      const db = getFirestore();
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      
+      // Combine Firebase Auth user with Firestore data
+      const userData = userDocSnap.exists() ? userDocSnap.data() : {};
+      
+      return {
+        // Firebase Auth properties
+        uid: user.uid,
+        email: user.email,
+        emailVerified: user.emailVerified,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        providerData: user.providerData,
+        
+        // Firestore properties
+        planType: userData.planType || 'free',
+        subscriptionStatus: userData.subscriptionStatus || 'free',
+        subscriptionId: userData.subscriptionId,
+        stripeCustomerId: userData.stripeCustomerId,
+        createdAt: userData.createdAt,
+        updatedAt: userData.updatedAt
+      };
+    } catch (error) {
+      console.error('Error loading complete user data:', error);
+      // Return basic auth user data if Firestore fails
+      return {
+        uid: user.uid,
+        email: user.email,
+        emailVerified: user.emailVerified,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        providerData: user.providerData,
+        planType: 'free',
+        subscriptionStatus: 'free'
+      };
+    }
+  },
+
   // Check if user is authenticated
   isAuthenticated() {
     return !!currentUser;
