@@ -344,12 +344,35 @@ import debounce from "https://cdn.jsdelivr.net/npm/lodash.debounce@4.0.8/+esm";
         document.getElementById('totalDebt').textContent = formatCurrency(debt) + ` (${debtPct}%)`;
         document.getElementById('totalRemaining').textContent = formatCurrency(remaining) + ` (${remainingPct}%)`;
         
-        // Update remaining color
-        const remainingEl = document.getElementById('totalRemaining');
-        if (remaining < 0) {
-            remainingEl.style.color = 'var(--danger-color, #ff6b6b)';
+        // Update remaining card styling and icon
+        updateRemainingCard(remaining);
+    }
+
+    /**
+     * Update the remaining card styling and icon based on the remaining amount
+     * @param {number} remaining - The remaining budget amount
+     */
+    function updateRemainingCard(remaining) {
+        const remainingCard = document.querySelector('.remaining-card');
+        const remainingIcon = document.getElementById('remainingIcon');
+        
+        if (!remainingCard || !remainingIcon) return;
+        
+        // Remove existing classes
+        remainingCard.classList.remove('positive', 'negative', 'zero');
+        
+        if (remaining > 0) {
+            // Positive remaining - budget is balanced with leftover
+            remainingCard.classList.add('positive');
+            remainingIcon.textContent = '✓';
+        } else if (remaining < 0) {
+            // Negative remaining - over budget
+            remainingCard.classList.add('negative');
+            remainingIcon.textContent = '⚠';
         } else {
-            remainingEl.style.color = 'var(--success-color, #5eead4)';
+            // Exactly zero remaining - perfectly balanced
+            remainingCard.classList.add('zero');
+            remainingIcon.textContent = '✓';
         }
     }
 
