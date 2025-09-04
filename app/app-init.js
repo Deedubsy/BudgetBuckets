@@ -252,13 +252,19 @@ function handleEmailVerification(user) {
       });
       
       // Try direct import method as fallback
+      // Action code settings for email verification
+      const actionCodeSettings = {
+        url: `${location.origin}/auth/verify`,
+        handleCodeInApp: false
+      };
+      
       if (window.firebase?.authHelpers?.sendEmailVerification) {
         console.log('📧 Using authHelpers.sendEmailVerification...');
-        await window.firebase.authHelpers.sendEmailVerification(currentUser);
+        await window.firebase.authHelpers.sendEmailVerification(currentUser, actionCodeSettings);
       } else {
         console.log('📧 Using direct Firebase import...');
         const { sendEmailVerification } = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js');
-        await sendEmailVerification(currentUser);
+        await sendEmailVerification(currentUser, actionCodeSettings);
       }
       
       console.log('✅ Verification email sent successfully');

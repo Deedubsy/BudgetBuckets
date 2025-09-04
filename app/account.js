@@ -1076,7 +1076,13 @@ async function handleResendVerification() {
   }
   
   try {
-    await sendEmailVerification(currentUser);
+    // Action code settings for email verification
+    const actionCodeSettings = {
+      url: `${location.origin}/auth/verify`,
+      handleCodeInApp: false
+    };
+    
+    await sendEmailVerification(currentUser, actionCodeSettings);
     showToast('Verification email sent successfully', 'success');
     
   } catch (error) {
@@ -1139,8 +1145,12 @@ async function handleChangeEmail() {
     // Update email
     await updateEmail(currentUser, newEmail);
     
-    // Send verification email
-    await sendEmailVerification(currentUser);
+    // Send verification email with proper action code settings
+    const actionCodeSettings = {
+      url: `${location.origin}/auth/verify`,
+      handleCodeInApp: false
+    };
+    await sendEmailVerification(currentUser, actionCodeSettings);
     
     showToast(`Email updated successfully. Verification sent to ${newEmail}`, 'success');
     
