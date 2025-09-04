@@ -1161,3 +1161,208 @@ input[type="checkbox"] {
         height: 28px;
     }
 }
+
+/* ===== SMOOTH TRANSITIONS ===== */
+
+/* Value change transitions */
+.total-value,
+.mini-value,
+.bucket-total-value,
+.remaining-value {
+    transition: color 0.3s ease, font-size 0.3s ease, transform 0.2s ease;
+}
+
+/* Color transition for dynamic value updates */
+#totalIncome,
+#totalExpenses, 
+#totalSavings,
+#totalDebt,
+#totalRemaining {
+    transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+/* Card fade-in animation */
+@keyframes fadeInUp {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Apply fade-in to major sections */
+.card,
+.section,
+.bucket-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Stagger animations for multiple cards */
+.bucket-card:nth-child(1) { animation-delay: 0.1s; }
+.bucket-card:nth-child(2) { animation-delay: 0.2s; }
+.bucket-card:nth-child(3) { animation-delay: 0.3s; }
+.bucket-card:nth-child(4) { animation-delay: 0.4s; }
+.bucket-card:nth-child(5) { animation-delay: 0.5s; }
+
+/* Smooth hover states for interactive elements */
+.bucket-toggle,
+.add-bucket-btn,
+button,
+input[type="text"],
+input[type="number"],
+select,
+.bucket-name {
+    transition: all 0.3s ease;
+}
+
+/* Enhanced button hover transitions */
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+button:active {
+    transform: translateY(0);
+    transition: transform 0.1s ease;
+}
+
+/* Form input smooth focus transitions */
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.1);
+}
+
+/* Bucket toggle smooth expansion */
+.bucket-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+}
+
+.bucket-toggle[aria-expanded="true"] ~ .bucket-controls + .bucket-content,
+.bucket-card:has(.bucket-toggle[aria-expanded="true"]) .bucket-content {
+    max-height: 1000px; /* Large enough for content */
+    opacity: 1;
+    padding: var(--spacing-md);
+}
+
+/* Add item button smooth appearance */
+.add-item-btn {
+    transition: all 0.3s ease, border-style 0.2s ease;
+}
+
+.add-item-btn:hover {
+    background: var(--bg-hover);
+    border-style: solid;
+    transform: translateY(-1px);
+}
+
+/* Smooth table row additions */
+.item-row {
+    animation: fadeInUp 0.4s ease-out;
+}
+
+/* Progress bar smooth animations */
+.progress-fill {
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Delete button hover transition */
+.delete-btn {
+    transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    transform: scale(1.1);
+    border-radius: var(--radius);
+}
+
+/* Modal smooth appearance */
+.modal {
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Navigation smooth transitions */
+.header-actions button,
+.footer-nav a {
+    transition: all 0.2s ease;
+}
+
+/* Bucket color picker enhanced transitions */
+.bucket-color {
+    transition: all 0.3s ease;
+}
+
+.bucket-color:hover {
+    transform: translateY(-2px) scale(1.05);
+}
+
+/* Include checkbox smooth transitions */
+input[type="checkbox"] {
+    transition: all 0.2s ease;
+}
+
+input[type="checkbox"]:hover {
+    transform: scale(1.1);
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Loading state for value changes */
+.total-value.updating {
+    position: relative;
+}
+
+.total-value.updating::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -20px;
+    width: 12px;
+    height: 12px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
