@@ -2,6 +2,9 @@ import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/f
 import { doc, setDoc, getDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
 import { initializeStripe, createPaymentElement, processSubscriptionPayment } from '/app/lib/billing-client.js';
 
+// Import auth helpers for complete user data
+const authHelpers = (await import('/auth/firebase.js')).default;
+
 (function() {
     'use strict';
 
@@ -253,30 +256,37 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
         }
     }
 
-    async function checkUserPlanStatus() {
+    function checkUserPlanStatus() {
         try {
-            if (!currentUser) return;
+            if (!currentUser || processingPlan) return;
 
-            // Check if user already has a plan set
-            const userDoc = await getDoc(doc(window.firebase.db, 'users', currentUser.uid));
+            console.log('🔍 Choose-plan validation debug:', {
+                planType: currentUser.planType,
+                subscriptionStatus: currentUser.subscriptionStatus,
+                subscriptionId: currentUser.subscriptionId,
+                stripeCustomerId: currentUser.stripeCustomerId
+            });
             
-            if (userDoc.exists()) {
-                const userData = userDoc.data();
-                
-                // Only redirect if user has a complete plan (free or plus), not free_pending
-                if (userData.planType === 'free' || userData.planType === 'plus') {
-                    console.log('User already has complete plan:', userData.planType);
-                    // Set sessionStorage to prevent auth flow from redirecting back
-                    sessionStorage.setItem('planJustSelected', userData.planType);
-                    location.assign('/app');
-                    return;
-                }
-                
-                // If user has free_pending or no plan, stay on plan selection page
-                console.log('User needs to select plan, current status:', userData.planType || 'none');
+            // Check if user has active subscription (should redirect even if planType is outdated)
+            if (currentUser.subscriptionStatus === 'active' || currentUser.planType === 'plus') {
+                console.log('✅ User has active subscription/plus plan, redirecting to main app');
+                sessionStorage.setItem('planJustSelected', 'plus');
+                location.assign('/app');
+                return;
             }
+            
+            // Check if user has completed free plan selection
+            if (currentUser.planType === 'free') {
+                console.log('✅ User has completed free plan selection, redirecting to main app');
+                sessionStorage.setItem('planJustSelected', 'free');
+                location.assign('/app');
+                return;
+            }
+            
+            // If user has free_pending or no plan, stay on plan selection page
+            console.log('📋 User needs to select plan, current status:', currentUser.planType || 'none');
         } catch (error) {
-            console.error('Failed to check user plan status:', error);
+            console.error('❌ Failed to check user plan status:', error);
         }
     }
 
@@ -310,7 +320,23 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
         // Listen for auth state changes
         onAuthStateChanged(window.firebase.auth, async (user) => {
             console.log('Auth state change:', user ? `User ${user.uid}` : 'No user');
-            currentUser = user;
+            
+            if (user) {
+                // Get complete user data including subscription status
+                try {
+                    currentUser = await authHelpers.getCompleteUserData();
+                    console.log('🔍 Choose-plan currentUser loaded:', {
+                        uid: currentUser.uid,
+                        planType: currentUser.planType,
+                        subscriptionStatus: currentUser.subscriptionStatus
+                    });
+                } catch (error) {
+                    console.error('Failed to load complete user data, falling back to auth user:', error);
+                    currentUser = user;
+                }
+            } else {
+                currentUser = null;
+            }
             
             if (!user && !isTestMode && !processingPlan) {
                 // No user signed in, redirect to login (unless in test mode or processing plan)
@@ -329,7 +355,7 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
 
             // Check if user already has a plan (but not while processing)
             if (!processingPlan) {
-                await checkUserPlanStatus();
+                checkUserPlanStatus();
             }
         });
 
