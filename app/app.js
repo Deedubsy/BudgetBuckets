@@ -2,6 +2,7 @@ import { authHelpers } from '../auth/firebase.js';
 import cloudStore from './cloud-store.js';
 import { isPlus } from './lib/plan.js';
 import { bootstrapUser } from './lib/bucket-store.js';
+import { showAccountView, hideAccountView } from './account.js';
 
 // Import new libraries for enhanced features
 import Sortable from "https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/modular/sortable.esm.js";
@@ -2368,6 +2369,7 @@ const DEFAULT_BUCKET_COLORS = [
         if (accountItem) {
             accountItem.addEventListener('click', (e) => {
                 userDropdown.classList.remove('show');
+                showAccountView();
             });
         }
         
@@ -2385,6 +2387,15 @@ const DEFAULT_BUCKET_COLORS = [
                 userDropdown.classList.remove('show');
             }
         });
+        
+        // Handle back to budgets button in account view
+        const backToBudgetsBtn = document.getElementById('backToBudgetsBtn');
+        if (backToBudgetsBtn) {
+            backToBudgetsBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                hideAccountView();
+            });
+        }
     }
 
     // Initialize Tippy.js tooltips
