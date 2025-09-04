@@ -6,6 +6,7 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
     'use strict';
 
     let currentUser = null;
+    let firebaseUser = null; // Keep reference to actual Firebase User object for getIdToken()
     let stripeInitialized = false;
     let processingPlan = false;
 
@@ -99,7 +100,7 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
 
     async function choosePlus() {
         try {
-            if (!currentUser) {
+            if (!currentUser || !firebaseUser) {
                 showError('Please sign in again.');
                 const isTestMode = window.location.search.includes('test=true') || window.location.hostname === 'localhost';
                 if (!isTestMode) {
@@ -158,7 +159,10 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
                 </style>
             `;
             
-            const idToken = await currentUser.getIdToken();
+            if (!firebaseUser) {
+                throw new Error('Firebase user not available');
+            }
+            const idToken = await firebaseUser.getIdToken();
             
             console.log('🔧 About to call createPaymentElement...');
             
@@ -192,7 +196,7 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
                             uid: currentUser.uid,
                             customerId: paymentInfo.customerId,
                             priceId: paymentInfo.priceId,
-                            idToken: await currentUser.getIdToken(true)
+                            idToken: await firebaseUser?.getIdToken(true)
                         });
                         
                         if (success) {
@@ -311,6 +315,8 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
             console.log('Auth state change:', user ? `User ${user.uid}` : 'No user');
             
             if (user) {
+                firebaseUser = user; // Store reference to Firebase User object
+                
                 // Get complete user data including subscription status
                 try {
                     // Import auth helpers dynamically
@@ -325,9 +331,11 @@ import { initializeStripe, createPaymentElement, processSubscriptionPayment } fr
                 } catch (error) {
                     console.error('Failed to load complete user data, falling back to auth user:', error);
                     currentUser = user;
+                    firebaseUser = user;
                 }
             } else {
                 currentUser = null;
+                firebaseUser = null;
             }
             
             if (!user && !isTestMode && !processingPlan) {
