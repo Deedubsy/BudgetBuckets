@@ -2369,6 +2369,14 @@ const DEFAULT_BUCKET_COLORS = [
         if (accountItem) {
             accountItem.addEventListener('click', (e) => {
                 userDropdown.classList.remove('show');
+                
+                // Use the hash-based view management system
+                location.hash = '#account';
+                
+                // Manually trigger view switch in case popstate doesn't fire
+                const mainContent = document.querySelector('.main-content');
+                if (mainContent) mainContent.style.display = 'none';
+                
                 showAccountView();
             });
         }
@@ -2388,11 +2396,18 @@ const DEFAULT_BUCKET_COLORS = [
             }
         });
         
-        // Handle back to budgets button in account view
+        // Handle back to budgets button in account view (work with hash system)
         const backToBudgetsBtn = document.getElementById('backToBudgetsBtn');
         if (backToBudgetsBtn) {
             backToBudgetsBtn.addEventListener('click', (e) => {
                 e.preventDefault();
+                
+                // Clear the hash to return to main view
+                location.hash = '';
+                
+                // Manually trigger view switch
+                const mainContent = document.querySelector('.main-content');
+                if (mainContent) mainContent.style.display = 'block';
                 hideAccountView();
             });
         }
