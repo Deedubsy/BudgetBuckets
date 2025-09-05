@@ -2367,7 +2367,7 @@ const DEFAULT_BUCKET_COLORS = [
         const signoutItem = userDropdown.querySelector('[data-action="signout"]');
         
         if (accountItem) {
-            accountItem.addEventListener('click', (e) => {
+            accountItem.addEventListener('click', async (e) => {
                 userDropdown.classList.remove('show');
                 
                 // Use the hash-based view management system
@@ -2377,7 +2377,7 @@ const DEFAULT_BUCKET_COLORS = [
                 const mainContent = document.querySelector('.main-content');
                 if (mainContent) mainContent.style.display = 'none';
                 
-                showAccountView();
+                await showAccountView();
             });
         }
         

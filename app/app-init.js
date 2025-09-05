@@ -121,7 +121,9 @@ if (navAccount) {
     if (mainContent) mainContent.style.display = 'none';
     
     accountRoot.hidden = false;
-    if (typeof showAccountView === 'function') showAccountView();
+    if (typeof showAccountView === 'function') {
+      showAccountView().catch(console.error);
+    }
     history.replaceState(null, '', '#account');
   });
 }
@@ -132,7 +134,9 @@ if (location.hash === '#account') {
   if (mainContent) mainContent.style.display = 'none';
   
   accountRoot.hidden = false;
-  if (typeof showAccountView === 'function') showAccountView();
+  if (typeof showAccountView === 'function') {
+    showAccountView().catch(console.error);
+  }
 }
 
 // Handle back navigation or closing account view

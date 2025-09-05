@@ -49,10 +49,28 @@ export function mountAccountView(rootEl, { auth: authInstance, db: dbInstance })
 /**
  * Show the account view
  */
-export function showAccountView() {
+export async function showAccountView() {
   const accountView = document.getElementById('accountView');
   if (accountView) {
     accountView.hidden = false;
+  }
+  
+  // Try to get current user and populate account data
+  try {
+    // Import auth helpers to get current user data
+    const { authHelpers } = await import('/auth/firebase.js');
+    const user = await authHelpers.waitForAuth();
+    
+    if (user) {
+      console.log('🔍 showAccountView: User found, loading account data');
+      handleAuthStateChange(user);
+    } else {
+      console.log('🔍 showAccountView: No authenticated user, showing sign-in prompt');
+      showSignInPrompt();
+    }
+  } catch (error) {
+    console.error('🔍 showAccountView: Error loading user data:', error);
+    showSignInPrompt();
   }
 }
 
