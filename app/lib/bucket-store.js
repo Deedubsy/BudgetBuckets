@@ -74,14 +74,34 @@ export async function bootstrapUser(uid, email) {
   const db = getDB();
   const batch = writeBatch(db);
   
-  // Create user profile document
+  // Create user profile document (only if it doesn't exist)
   const userRef = doc(db, 'users', uid);
-  batch.set(userRef, {
-    email,
-    createdAt: serverTimestamp(),
-    plan: 'Free',
-    planSelected: false
-  }, { merge: true });
+  
+  // Check if user document already exists to avoid overwriting subscription data
+  const userDoc = await getDoc(userRef);
+  
+  if (!userDoc.exists()) {
+    // Only create initial document for truly new users
+    batch.set(userRef, {
+      email,
+      createdAt: serverTimestamp(),
+      plan: 'Free',
+      planSelected: false
+    });
+    console.log(`👤 Creating new user profile for ${uid}`);
+  } else {
+    // User exists, just update email if needed (preserve plan data)
+    const existingData = userDoc.data();
+    if (existingData.email !== email) {
+      batch.set(userRef, {
+        email,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      console.log(`📧 Updated email for existing user ${uid}`);
+    } else {
+      console.log(`✅ User profile exists for ${uid}, preserving subscription data`);
+    }
+  }
   
   // Initialize bucket counter
   const counterRef = doc(db, 'users', uid, 'meta', 'bucketCounts');

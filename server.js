@@ -688,8 +688,11 @@ app.post('/api/billing/webhook', async (req, res) => {
         });
 
         if (firebaseUid) {
-          // Update Firestore user document
-          const newPlan = status === 'active' ? 'Plus' : 'Free';
+          // Update Firestore user document - handle both active and trialing as Plus
+          const plusStatuses = ['active', 'trialing'];
+          const newPlan = plusStatuses.includes(status) ? 'Plus' : 'Free';
+          
+          console.log(`🔍 Webhook - Subscription status: ${status} → Plan: ${newPlan}`);
           await db.collection('users').doc(firebaseUid).set({
             subscriptionId: subscription.id,
             stripeCustomerId: customerId,
@@ -964,20 +967,46 @@ app.post('/api/billing/create-subscription', async (req, res) => {
     console.log('🔧 Updating user plan in database immediately...');
     try {
       const db = admin.firestore();
-      const newPlan = subscription.status === 'active' ? 'Plus' : 'Free';
+      // Handle both active and trialing subscriptions as Plus
+      const plusStatuses = ['active', 'trialing'];
+      const newPlan = plusStatuses.includes(subscription.status) ? 'Plus' : 'Free';
       
-      await db.collection('users').doc(uid).set({
+      console.log(`🔍 Subscription status: ${subscription.status} → Plan: ${newPlan}`);
+      
+      // Always update subscription metadata
+      const updateData = {
         subscriptionId: subscription.id,
         stripeCustomerId: customerId,
-        plan: newPlan,
         planSelected: true,
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-
-      // Set custom claims for immediate access
-      await admin.auth().setCustomUserClaims(uid, { plan: newPlan.toLowerCase() });
+      };
       
-      console.log(`✅ User ${uid} plan immediately updated to: ${newPlan}`);
+      // Only update plan and claims for successful subscriptions
+      if (plusStatuses.includes(subscription.status)) {
+        updateData.plan = newPlan;
+        
+        await db.collection('users').doc(uid).set(updateData, { merge: true });
+        
+        // Set custom claims for immediate access
+        await admin.auth().setCustomUserClaims(uid, { plan: newPlan.toLowerCase() });
+        
+        console.log(`✅ User ${uid} plan immediately updated to: ${newPlan}`);
+      } else if (subscription.status === 'incomplete') {
+        console.log('⏳ Subscription incomplete, waiting for payment confirmation before updating plan...');
+        
+        // Don't update plan for incomplete - preserve current plan until payment succeeds
+        await db.collection('users').doc(uid).set(updateData, { merge: true });
+        
+        console.log(`⏳ User ${uid} subscription created but incomplete - plan update pending`);
+      } else {
+        // For other failed statuses, set to Free
+        updateData.plan = 'Free';
+        
+        await db.collection('users').doc(uid).set(updateData, { merge: true });
+        await admin.auth().setCustomUserClaims(uid, { plan: 'free' });
+        
+        console.log(`❌ User ${uid} subscription failed (${subscription.status}) - plan set to Free`);
+      }
     } catch (dbError) {
       console.error('⚠️ Failed to update user plan immediately (webhook will handle):', dbError);
     }
