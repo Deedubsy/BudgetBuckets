@@ -186,6 +186,79 @@ tippy('[title]', {
 
 ---
 
+## Data Model Consolidation - 2025-09-04
+
+### Problem Statement
+The application had a complex subscription tracking system using multiple inconsistent fields:
+- `subscriptionStatus: 'active' | 'canceled' | 'free'` 
+- `planType: 'free' | 'plus' | 'free_pending'`
+
+This led to data inconsistencies, complex validation logic, and user experience issues like:
+- Plus users showing as "free_pending" 
+- App redirecting paid users to plan selection
+- Mismatched subscription status across different code paths
+
+### Solution: Simplified Data Model
+Consolidated to two clear fields:
+- `plan: 'Free' | 'Plus'` - Single source of truth for plan type
+- `planSelected: boolean` - Tracks if user completed plan selection flow
+
+### Files Updated (13 total)
+
+#### Core Application Files
+- `app/app.js`: Updated user data loading and debug logging
+- `app/app-init.js`: Simplified plan validation (only check `planSelected`)
+- `app/account.js`: Updated user document display logic
+- `app/lib/plan.js`: Simplified Firestore fallback plan detection
+- `app/lib/bucket-store.js`: Updated user bootstrap to use new fields
+
+#### Authentication & Plan Selection  
+- `auth/firebase.js`: Updated `getCompleteUserData()` to return new fields
+- `auth/js/auth.js`: Updated registration to set new fields
+- `auth/js/choose-plan.js`: Updated plan selection logic and debug logging
+
+#### Server-Side Integration
+- `server.js`: Updated all webhook handlers and API endpoints:
+  - Stripe subscription creation/update/deletion
+  - Manual plan override endpoints
+  - Webhook status mapping logic
+
+#### Documentation & Tests
+- `SMOKE_TEST_CHECKLIST.md`: Updated expected user document structure
+- `docs/auth-and-billing-flows.md`: Updated sequence diagrams and field references
+- `docs/setup-stripe.md`: Updated webhook implementation examples
+- `test-production-fixes.js`: Updated mock user bootstrap data
+
+### Technical Benefits
+- ✅ **Eliminated data inconsistencies** between subscription status and plan type
+- ✅ **Simplified validation logic** across all authentication flows  
+- ✅ **Reduced code complexity** - net removal of 25 lines of code
+- ✅ **Improved debugging** with clearer field names and consolidated logging
+- ✅ **Enhanced user experience** - no more incorrect plan detection/redirects
+
+### Migration Strategy
+- No data migration required - user confirmed clearing existing data
+- All old field references removed from source code
+- Only auto-generated coverage reports contain old field references (safe to ignore)
+
+### Database Schema Changes
+```javascript
+// Before (complex, inconsistent)
+{
+  subscriptionStatus: 'active' | 'canceled' | 'free',
+  planType: 'free' | 'plus' | 'free_pending'
+}
+
+// After (simple, consistent)  
+{
+  plan: 'Free' | 'Plus',
+  planSelected: boolean
+}
+```
+
+---
+
 **Migration completed successfully on 2025-08-23**  
 **UI Enhancement session completed on 2025-09-04**  
-**Result**: Clean, maintainable template system with unified header/footer, centralized CSS architecture, and professional tooltip system for enhanced user guidance.
+**Data Model Consolidation completed on 2025-09-04**  
+**Result**: Clean, maintainable template system with unified header/footer, centralized CSS architecture, professional tooltip system, and simplified subscription data model eliminating user experience issues.
