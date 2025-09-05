@@ -42,10 +42,35 @@ import {
   enableMultiTabIndexedDbPersistence
 } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
 
+// Determine auth domain based on environment
+function getAuthDomain() {
+  const hostname = window.location.hostname;
+  let authDomain;
+  
+  // Use custom domain in production
+  if (hostname === 'budgetbucket.app') {
+    authDomain = 'budgetbucket.app';
+  }
+  // Use default Firebase domain for localhost development
+  else if (hostname === 'localhost') {
+    authDomain = 'budgetbuckets-79b3b.firebaseapp.com';
+  }
+  // Default to custom domain for other cases
+  else {
+    authDomain = 'budgetbucket.app';
+  }
+  
+  console.log('🔧 Firebase Auth Domain Configuration:');
+  console.log(`  Current hostname: ${hostname}`);
+  console.log(`  Selected authDomain: ${authDomain}`);
+  
+  return authDomain;
+}
+
 // Firebase configuration (from existing config)
 const firebaseConfig = {
   apiKey: "AIzaSyAyQnI3I5IRm2MZ16ttVaaA-8bneE3lWeo",
-  authDomain: "budgetbuckets-79b3b.firebaseapp.com", 
+  authDomain: getAuthDomain(), // Dynamic auth domain based on environment
   projectId: "budgetbuckets-79b3b",
   storageBucket: "budgetbuckets-79b3b.firebasestorage.app",
   messagingSenderId: "268145092645",
