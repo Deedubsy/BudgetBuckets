@@ -20,7 +20,7 @@ import {
 } from '/app/lib/billing-client.js';
 
 // Import auth helpers for complete user data
-const authHelpers = (await import('/auth/firebase.js')).default;
+const { authHelpers } = await import('/auth/firebase.js');
 
 let auth, db, currentUser = null, userDoc = null;
 let isLoading = false;
@@ -57,8 +57,6 @@ export async function showAccountView() {
   
   // Try to get current user and populate account data
   try {
-    // Import auth helpers to get current user data
-    const { authHelpers } = await import('/auth/firebase.js');
     const user = await authHelpers.waitForAuth();
     
     if (user) {
