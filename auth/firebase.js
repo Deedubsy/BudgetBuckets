@@ -402,7 +402,20 @@ const authHelpers = {
         console.log('✅ Google sign-in successful:', result.user.uid);
         return result.user;
       } catch (popupError) {
-        console.log('🔄 Popup failed, trying redirect method...');
+        console.log('🔄 Popup failed:', popupError.code, popupError.message);
+        
+        // Only try redirect for certain error types
+        if (popupError.code === 'auth/popup-closed-by-user') {
+          console.log('💡 User closed the popup. You can try clicking the Google sign-in button again.');
+          throw popupError; // Don't automatically redirect for user-closed popups
+        }
+        
+        if (popupError.code === 'auth/popup-blocked') {
+          console.log('🚫 Popup blocked. Trying redirect method...');
+        } else {
+          console.log('🔄 Popup method failed, trying redirect method...');
+        }
+        
         await signInWithRedirect(auth, provider);
         // The redirect will handle the rest
         return null;

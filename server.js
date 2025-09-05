@@ -103,6 +103,7 @@ app.use(helmet({
         "https://*.web.app",             // <— required for Firebase Auth
         "https://apis.google.com",
         "https://accounts.google.com",
+        "https://*.googleusercontent.com",  // <— required for Google OAuth popup
         "https://js.stripe.com",
         "https://hooks.stripe.com"
       ],
