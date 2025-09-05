@@ -89,6 +89,7 @@ app.use(helmet({
         "https://identitytoolkit.googleapis.com",
         "https://securetoken.googleapis.com",
         "https://www.googleapis.com",
+        "https://www.gstatic.com",
         // Stripe API
         "https://api.stripe.com",
         "https://r.stripe.com", // Optional Stripe radar
@@ -98,6 +99,10 @@ app.use(helmet({
       frameSrc: [
         "'self'",
         // Stripe iframes for 3DS challenges
+        "https://*.firebaseapp.com",     // <— required for Firebase Auth
+        "https://*.web.app",             // <— required for Firebase Auth
+        "https://apis.google.com",
+        "https://accounts.google.com",
         "https://js.stripe.com",
         "https://hooks.stripe.com"
       ],
