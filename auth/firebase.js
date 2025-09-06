@@ -281,6 +281,7 @@ async function initializeFirebase() {
     
     // Check for redirect result from Google OAuth
     try {
+      console.log('🔍 Checking for redirect result, current flag:', window.__authFlowInProgress);
       const result = await getRedirectResult(auth);
       if (result) {
         console.log('✅ Google redirect sign-in successful:', result.user.uid);
@@ -289,10 +290,12 @@ async function initializeFirebase() {
         await EnsureUserDoc(result.user, result);
       }
       // Clear auth flow flag after handling redirect result (success or no result)
+      console.log('🔍 Clearing auth flow flag after redirect check');
       window.__authFlowInProgress = false;
     } catch (error) {
       console.warn('⚠️ Redirect result check failed:', error);
       // Clear auth flow flag even on error
+      console.log('🔍 Clearing auth flow flag after redirect error');
       window.__authFlowInProgress = false;
     }
     

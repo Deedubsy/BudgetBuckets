@@ -11,7 +11,12 @@ function isAuthFlowInProgress() {
   try { return Boolean(window[AUTH_FLOW_FLAG]); } catch { return false; }
 }
 function noopIfAuthFlowInProgress(msg) {
-  if (isAuthFlowInProgress()) { console.debug(`guard: ${msg} (auth flow in progress; skipping)`); return true; }
+  const inProgress = isAuthFlowInProgress();
+  console.log(`🛡️ guard check: ${msg} - flag: ${inProgress} (window.__authFlowInProgress: ${window.__authFlowInProgress})`);
+  if (inProgress) { 
+    console.debug(`guard: ${msg} (auth flow in progress; skipping)`); 
+    return true; 
+  }
   return false;
 }
 

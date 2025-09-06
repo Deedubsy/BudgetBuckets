@@ -13,6 +13,9 @@ import { doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs
     let authStateReady = false;
     let currentAuthUser = null;
     let isSigningIn = false; // Debouncing flag for Google sign-in
+    
+    // Debug logging for auth flow flag
+    console.log('🔍 auth.js loaded, current auth flow flag:', window.__authFlowInProgress);
 
     // Action code settings for email verification
     const actionCodeSettings = {
@@ -273,10 +276,12 @@ import { doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs
         if (isSigningIn) return;
         isSigningIn = true;
         
+        // Set auth flow flag IMMEDIATELY to prevent guard interference
+        window.__authFlowInProgress = true;
+        console.log('🔐 Auth flow flag SET before any async operations');
+        
         try {
             showLoading();
-            // Set auth flow flag to prevent guard interference
-            window.__authFlowInProgress = true;
             // Prefer popup; signInWithGoogle internally tries popup first
             // Note: signInWithGoogle now calls EnsureUserDoc internally
             const user = await authHelpers.signInWithGoogle();
