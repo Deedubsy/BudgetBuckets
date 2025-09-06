@@ -75,7 +75,13 @@ async function EnsureUserDoc(user, resultMaybe) {
 // Determine auth domain based on environment
 function getAuthDomain() {
   const hostname = window.location.hostname;
-  const authDomain = 'budgetbuckets-79b3b.firebaseapp.com'; // Always use Firebase default domain
+  let authDomain;
+
+  if (hostname === 'budgetbucket.app') {
+    authDomain = 'budgetbucket.app'; // Production custom domain
+  } else {
+    authDomain = 'budgetbuckets-79b3b.firebaseapp.com'; // Default for dev/localhost
+  }
   
   console.log('🔧 Firebase Auth Domain Configuration:');
   console.log(`  Current hostname: ${hostname}`);
