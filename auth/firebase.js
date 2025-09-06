@@ -411,32 +411,31 @@ const authHelpers = {
       const provider = new GoogleAuthProvider();
       provider.addScope('email');
       provider.addScope('profile');
-      
-      // Try popup first, fallback to redirect if it fails
+      provider.setCustomParameters({ prompt: 'select_account', nonce: Date.now().toString() });
+
+      // Try popup first from a direct user click handler
       try {
-        const result = await retryAuthOperation(
-          () => signInWithPopup(auth, provider)
-        );
+        const result = await signInWithPopup(auth, provider);
         currentUser = result.user;
         console.log('✅ Google sign-in successful:', result.user.uid);
         return result.user;
       } catch (popupError) {
         console.log('🔄 Popup failed:', popupError.code, popupError.message);
-        
-        // Only try redirect for certain error types
+
+        // Do not auto-redirect if user closed the popup
         if (popupError.code === 'auth/popup-closed-by-user') {
-          console.log('💡 User closed the popup. You can try clicking the Google sign-in button again.');
-          throw popupError; // Don't automatically redirect for user-closed popups
+          console.log('💡 User closed the popup. Ask them to try again.');
+          throw popupError;
         }
-        
-        if (popupError.code === 'auth/popup-blocked') {
-          console.log('🚫 Popup blocked. Trying redirect method...');
+
+        // Redirect only when popup is blocked or not supported
+        if (popupError.code === 'auth/popup-blocked' || popupError.code === 'auth/operation-not-supported-in-this-environment') {
+          console.log('🚫 Popup blocked/unsupported. Falling back to redirect…');
         } else {
-          console.log('🔄 Popup method failed, trying redirect method...');
+          console.log('🔄 Non-blocking popup error; attempting redirect fallback…');
         }
-        
+
         await signInWithRedirect(auth, provider);
-        // The redirect will handle the rest
         return null;
       }
     } catch (error) {
