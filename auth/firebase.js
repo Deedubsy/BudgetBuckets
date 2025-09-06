@@ -7,6 +7,10 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
 import { 
   getAuth, 
+  initializeAuth,
+  browserPopupRedirectResolver,
+  indexedDBLocalPersistence,
+  inMemoryPersistence,
   connectAuthEmulator,
   onAuthStateChanged,
   signInWithEmailAndPassword,
@@ -140,7 +144,10 @@ if (USE_EMULATORS) {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+const auth = initializeAuth(app, {
+  persistence: [indexedDBLocalPersistence, browserLocalPersistence, inMemoryPersistence],
+  popupRedirectResolver: browserPopupRedirectResolver
+});
 const db = getFirestore(app);
 
 // Global auth state
