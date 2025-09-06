@@ -450,6 +450,7 @@ const authHelpers = {
 
       // Try popup first from a direct user click handler
       try {
+        console.log('🔐 About to call signInWithPopup - this should happen immediately from user click');
         const result = await signInWithPopup(auth, provider);
         currentUser = result.user;
         console.log('✅ Google sign-in successful:', result.user.uid);
