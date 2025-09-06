@@ -45,20 +45,7 @@ import {
 // Determine auth domain based on environment
 function getAuthDomain() {
   const hostname = window.location.hostname;
-  let authDomain;
-  
-  // Use custom domain in production
-  if (hostname === 'budgetbucket.app') {
-    authDomain = 'budgetbucket.app';
-  }
-  // Use default Firebase domain for localhost development
-  else if (hostname === 'localhost') {
-    authDomain = 'budgetbuckets-79b3b.firebaseapp.com';
-  }
-  // Default to custom domain for other cases
-  else {
-    authDomain = 'budgetbucket.app';
-  }
+  const authDomain = 'budgetbuckets-79b3b.firebaseapp.com'; // Always use Firebase default domain
   
   console.log('🔧 Firebase Auth Domain Configuration:');
   console.log(`  Current hostname: ${hostname}`);
