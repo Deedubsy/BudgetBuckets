@@ -275,17 +275,11 @@ import { doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs
         try {
             showLoading();
             // Prefer popup; signInWithGoogle internally tries popup first
+            // Note: signInWithGoogle now calls EnsureUserDoc internally
             const user = await authHelpers.signInWithGoogle();
             
-            // For Google users, create user doc if missing and go to plan selection
+            // For Google users, go to plan selection (user doc creation handled in firebase.js)
             if (user) {
-                await setDoc(doc(window.firebase.db, 'users', user.uid), {
-                    email: user.email,
-                    createdAt: serverTimestamp(),
-                    plan: 'Free',
-                    planSelected: false
-                }, { merge: true });
-                
                 hideLoading();
                 location.assign('/auth/choose-plan');
             }

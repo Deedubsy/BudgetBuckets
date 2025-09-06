@@ -18,6 +18,7 @@ import {
   signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
+  getAdditionalUserInfo,
   GoogleAuthProvider,
   sendPasswordResetEmail,
   signOut,
@@ -45,6 +46,31 @@ import {
   writeBatch,
   enableMultiTabIndexedDbPersistence
 } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+
+// Helper function to ensure user document exists in Firestore
+async function EnsureUserDoc(user, resultMaybe) {
+  const isNew = 
+    (resultMaybe && getAdditionalUserInfo(resultMaybe)?.isNewUser)
+    ?? false;
+    
+  const ref = doc(db, 'users', user.uid);
+  const snap = await getDoc(ref);
+  
+  if (!snap.exists() || isNew) {
+    console.log(`✅ User doc ensured for ${isNew ? 'new' : 'existing'} user:`, user.uid);
+    await setDoc(ref, {
+      email: user.email ?? null,
+      displayName: user.displayName ?? null,
+      photoURL: user.photoURL ?? null,
+      plan: 'Free',
+      planSelected: false,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  } else {
+    console.log('✅ User doc already exists:', user.uid);
+  }
+}
 
 // Determine auth domain based on environment
 function getAuthDomain() {
@@ -259,6 +285,8 @@ async function initializeFirebase() {
       if (result) {
         console.log('✅ Google redirect sign-in successful:', result.user.uid);
         currentUser = result.user;
+        // Ensure user document exists for redirect flow
+        await EnsureUserDoc(result.user, result);
       }
     } catch (error) {
       console.warn('⚠️ Redirect result check failed:', error);
@@ -418,6 +446,8 @@ const authHelpers = {
         const result = await signInWithPopup(auth, provider);
         currentUser = result.user;
         console.log('✅ Google sign-in successful:', result.user.uid);
+        // Ensure user document exists for popup flow
+        await EnsureUserDoc(result.user, result);
         return result.user;
       } catch (popupError) {
         console.log('🔄 Popup failed:', popupError.code, popupError.message);
@@ -553,6 +583,7 @@ window.firebase = {
   authHelpers,
   firestoreHelpers,
   initializeFirebase,
+  EnsureUserDoc,
   USE_EMULATORS
 };
 
@@ -600,5 +631,6 @@ export {
   authHelpers,
   firestoreHelpers,
   initializeFirebase,
+  EnsureUserDoc,
   USE_EMULATORS
 };
