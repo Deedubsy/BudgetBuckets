@@ -280,27 +280,14 @@ import { doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs
         window.__authFlowInProgress = true;
         console.log('🔐 Auth flow flag SET before any async operations');
         
+        // CRITICAL: Call signInWithGoogle IMMEDIATELY from user click (before showLoading)
+        // showLoading() DOM manipulation might break the trusted user gesture chain
+        let user;
         try {
-            showLoading();
             // Prefer popup; signInWithGoogle internally tries popup first
             // Note: signInWithGoogle now calls EnsureUserDoc internally
-            const user = await authHelpers.signInWithGoogle();
-            
-            // For Google users, go to plan selection (user doc creation handled in firebase.js)
-            if (user) {
-                // Clear auth flow flag on successful popup completion
-                window.__authFlowInProgress = false;
-                hideLoading();
-                location.assign('/auth/choose-plan');
-            } else {
-                // user is null - signInWithRedirect was called, don't clear flag
-                // The redirect will handle the rest and firebase.js will clear the flag after getRedirectResult
-                console.log('🔄 Redirect initiated, keeping auth flow flag set');
-                hideLoading();
-            }
-            
+            user = await authHelpers.signInWithGoogle();
         } catch (error) {
-            hideLoading();
             const code = error.code || '';
             if (code === 'auth/popup-closed-by-user') {
                 // Clear auth flow flag when popup is cancelled (no redirect happening)
@@ -320,8 +307,25 @@ import { doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs
                 console.error('Google sign-in failed:', error);
                 showError('Google sign-in failed. Please try again.');
             }
+            return;
         } finally {
             isSigningIn = false;
+        }
+        
+        // Handle successful auth result (showLoading after popup to avoid breaking user gesture)
+        showLoading();
+        
+        // For Google users, go to plan selection (user doc creation handled in firebase.js)
+        if (user) {
+            // Clear auth flow flag on successful popup completion
+            window.__authFlowInProgress = false;
+            hideLoading();
+            location.assign('/auth/choose-plan');
+        } else {
+            // user is null - signInWithRedirect was called, don't clear flag
+            // The redirect will handle the rest and firebase.js will clear the flag after getRedirectResult
+            console.log('🔄 Redirect initiated, keeping auth flow flag set');
+            hideLoading();
         }
     }
     
