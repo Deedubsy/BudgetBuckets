@@ -424,7 +424,7 @@ const authHelpers = {
 
         // Do not auto-redirect if user closed the popup
         if (popupError.code === 'auth/popup-closed-by-user') {
-          console.log('💡 User closed the popup. Ask them to try again.');
+          console.log('💡 User closed the popup. No redirect fallback.');
           throw popupError;
         }
 

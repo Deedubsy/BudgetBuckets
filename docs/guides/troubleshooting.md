@@ -78,36 +78,95 @@ TypeError: Failed to resolve module specifier
 
 **Source**: auth/firebase.js:1-10
 
-### Google Sign-In Problems
+### Google Sign-In Problems (Updated 2025-09-05)
 
 **Symptoms:**
 ```
 auth/popup-closed-by-user
 auth/popup-blocked
 Error: Sign-in popup was closed. Please try again.
+FirebaseError: Firebase: Error (auth/popup-closed-by-user)
+OAuth popup redirecting to wrong domain (budgetbuckets-79b3b.firebaseapp.com instead of budgetbucket.app)
+Content Security Policy violations for Google OAuth domains
 ```
 
 **Solutions:**
-1. **Check authorized domains:**
-   - Firebase Console → Authentication → Settings → Authorized domains
-   - Add: `localhost`, `127.0.0.1`, your production domain
 
-2. **Disable popup blockers:**
+1. **Check authorized domains (Firebase Console):**
+   - Firebase Console → Authentication → Settings → Authorized domains
+   - Add: `localhost`, `127.0.0.1`, `budgetbucket.app` (production domain)
+   - Verify `budgetbucket.app` is listed for production
+
+2. **Check authorized redirect URIs (Google Cloud Console):**
+   - Google Cloud Console → APIs & Credentials → OAuth 2.0 Client IDs
+   - Add authorized redirect URIs:
+     - `https://budgetbucket.app/__/auth/handler`
+     - `http://localhost:8080/__/auth/handler` (for development)
+
+3. **Custom domain configuration (Fixed 2025-09-05):**
+   - OAuth popups now use correct custom domain (`budgetbucket.app`) instead of Firebase default
+   - Dynamic auth domain selection based on environment
+   - Debug logging shows selected auth domain
+
+4. **Content Security Policy fixes (Fixed 2025-09-05):**
+   - Removed conflicting CSP meta tag from `login.html` (frame-ancestors can only be set via HTTP headers)
+   - Added missing `*.googleusercontent.com` to CSP frameSrc directive
+   - Server CSP now includes all required Google OAuth domains
+
+5. **Improved error handling (Fixed 2025-09-05):**
+   - User cancellation (popup-closed-by-user) no longer auto-redirects
+   - Better distinction between popup blocked vs user cancelled
+   - User-friendly messaging for common OAuth scenarios
+
+6. **Disable popup blockers:**
    - Check browser popup blocker settings
    - Try incognito mode
+   - Allow popups for your domain
 
-3. **Use redirect fallback:**
+7. **Use redirect fallback:**
    ```javascript
-   // App automatically falls back to redirect
-   // From auth/firebase.js:253-264
+   // App automatically falls back to redirect when popup fails
+   // From auth/firebase.js (enhanced error handling)
    try {
-     await signInWithPopup(auth, provider);
+     const result = await signInWithPopup(auth, provider);
+     return result;
    } catch (popupError) {
-     await signInWithRedirect(auth, provider);
+     if (popupError.code === 'auth/popup-blocked') {
+       console.log('🚫 Popup blocked. Trying redirect method...');
+       await signInWithRedirect(auth, provider);
+     } else if (popupError.code === 'auth/popup-closed-by-user') {
+       console.log('💡 User closed the popup. You can try clicking the Google sign-in button again.');
+       throw popupError; // Don't automatically redirect
+     } else {
+       throw popupError;
+     }
    }
    ```
 
-**Source**: auth/firebase.js:240-270
+**Verification Steps:**
+```javascript
+// Test OAuth domain configuration in browser console:
+
+// 1. Check auth domain
+console.log('Auth domain:', firebase.app().options.authDomain);
+// Should be 'budgetbucket.app' in production, 'budgetbuckets-79b3b.firebaseapp.com' in development
+
+// 2. Check CSP headers
+fetch(window.location.href).then(r => console.log('CSP:', r.headers.get('content-security-policy')));
+// Should include accounts.google.com, apis.google.com, *.googleusercontent.com
+
+// 3. Monitor OAuth process
+// Open browser DevTools → Network tab → Click Google sign-in
+// OAuth redirect URLs should use budgetbucket.app domain in production
+```
+
+**Common Issues Fixed:**
+- ✅ OAuth popup immediately closing → Fixed CSP frame-ancestors violation
+- ✅ Wrong redirect domain → Fixed dynamic auth domain configuration  
+- ✅ User cancellation loops → Improved error handling
+- ✅ Missing Google domains → Added *.googleusercontent.com to CSP
+
+**Source**: auth/firebase.js:240-300, server.js:30-45, auth/login.html
 
 ### "Permission denied" in Firestore
 

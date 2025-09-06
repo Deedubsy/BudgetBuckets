@@ -12,6 +12,7 @@ import { doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs
 
     let authStateReady = false;
     let currentAuthUser = null;
+    let isSigningIn = false; // Debouncing flag for Google sign-in
 
     // Action code settings for email verification
     const actionCodeSettings = {
@@ -265,10 +266,15 @@ import { doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs
         }
     }
 
-    // Google sign in handler (treated as verified, goes to plan selection)
-    async function handleGoogleSignIn() {
+    // Google sign in handler with debouncing and clean user gesture
+    async function handleGoogleSignIn(e) {
+        e?.preventDefault();
+        if (isSigningIn) return;
+        isSigningIn = true;
+        
         try {
             showLoading();
+            // Prefer popup; signInWithGoogle internally tries popup first
             const user = await authHelpers.signInWithGoogle();
             
             // For Google users, create user doc if missing and go to plan selection
@@ -286,8 +292,42 @@ import { doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs
             
         } catch (error) {
             hideLoading();
-            console.error('Google sign-in error:', error);
-            showError('Google sign-in failed. Please try again.');
+            const code = error.code || '';
+            if (code === 'auth/popup-closed-by-user') {
+                // Friendly UX and optional fallback control
+                console.warn('Popup closed. User can retry or use redirect.');
+                showError('Google sign-in was cancelled. You can try again or use the "Continue without popup" option below.');
+                // Expose the redirect fallback button
+                const redirectBtn = document.getElementById('googleRedirectBtn');
+                if (redirectBtn) {
+                    redirectBtn.style.display = 'block';
+                    redirectBtn.classList.remove('hidden');
+                }
+            } else {
+                console.error('Google sign-in failed:', error);
+                showError('Google sign-in failed. Please try again.');
+            }
+        } finally {
+            isSigningIn = false;
+        }
+    }
+    
+    // Optional explicit redirect button handler
+    async function handleGoogleRedirect(e) {
+        e?.preventDefault();
+        try {
+            showLoading();
+            const { GoogleAuthProvider, signInWithRedirect } = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js');
+            const provider = new GoogleAuthProvider();
+            provider.addScope('email');
+            provider.addScope('profile');
+            provider.setCustomParameters({ prompt: 'select_account', nonce: Date.now().toString() });
+            await signInWithRedirect(window.firebase.auth, provider);
+            // Redirect will handle the rest
+        } catch (error) {
+            hideLoading();
+            console.error('Google redirect sign-in failed:', error);
+            showError('Google redirect sign-in failed. Please try again.');
         }
     }
 
@@ -331,9 +371,11 @@ import { doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs
         if (registerForm) registerForm.addEventListener('submit', handleCreateAccount);
         if (resetPasswordForm) resetPasswordForm.addEventListener('submit', handlePasswordReset);
         
-        // Google sign-in button
+        // Google sign-in buttons
         const googleBtn = document.getElementById('googleSignInBtn');
+        const googleRedirectBtn = document.getElementById('googleRedirectBtn');
         if (googleBtn) googleBtn.addEventListener('click', handleGoogleSignIn);
+        if (googleRedirectBtn) googleRedirectBtn.addEventListener('click', handleGoogleRedirect);
         
         // Forgot password modal
         const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');

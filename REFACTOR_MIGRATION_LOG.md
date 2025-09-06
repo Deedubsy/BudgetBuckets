@@ -258,7 +258,86 @@ Consolidated to two clear fields:
 
 ---
 
+## Google OAuth Authentication Fixes - 2025-09-05
+
+### Problem Statement
+Google OAuth authentication was failing with popup-closed-by-user errors and redirecting to the wrong domain. Issues included:
+- OAuth popups redirecting to `budgetbuckets-79b3b.firebaseapp.com` instead of custom domain `budgetbucket.app`
+- Conflicting CSP meta tag in login.html causing frame-ancestors violations
+- Poor error handling for popup-closed scenarios
+
+### Solutions Implemented
+
+#### Dynamic Auth Domain Configuration
+Updated Firebase configuration to use environment-aware auth domains:
+- **Production**: `budgetbucket.app` for OAuth redirects
+- **Development**: `budgetbuckets-79b3b.firebaseapp.com` for localhost
+- Added debug logging to show selected auth domain
+
+#### CSP Meta Tag Conflicts Resolved
+- Removed conflicting CSP meta tag from `login.html` 
+- Server CSP headers already included necessary Google OAuth domains
+- Fixed `frame-ancestors` directive issue (can only be set via HTTP headers)
+
+#### Enhanced Error Handling
+- Improved Google OAuth error handling with user-friendly messaging
+- Added distinction between user-closed popups vs popup-blocked scenarios
+- Better fallback to redirect method when appropriate
+
+#### Missing CSP Domains Added
+- Added `*.googleusercontent.com` to frameSrc directive for Google OAuth popups
+- Updated server CSP configuration for complete OAuth support
+
+### Files Updated
+- `auth/firebase.js`: Dynamic auth domain configuration and improved error handling
+- `server.js`: Added missing Google OAuth domains to CSP frameSrc
+- `auth/login.html`: Removed conflicting CSP meta tag
+
+### Technical Benefits
+- ✅ **Fixed OAuth Domain Mismatch** - Redirects now use correct custom domain
+- ✅ **Eliminated CSP Conflicts** - Removed duplicate CSP policies causing violations
+- ✅ **Improved Error Handling** - Better user experience for popup scenarios
+- ✅ **Enhanced Debug Logging** - Clear visibility into auth domain selection
+
+---
+
+## Comprehensive Google OAuth Test Suite - 2025-09-05
+
+### Test Coverage Added
+Created complete E2E testing framework for Google OAuth authentication flows using Playwright.
+
+#### Test Files Created
+- `tests/e2e/google-auth.spec.js` - Core authentication behavior tests (70+ scenarios)
+- `tests/e2e/google-auth-flows.spec.js` - Complete authentication flow tests
+- `tests/e2e/helpers/auth-helpers.js` - Sophisticated mocking framework and utilities
+- `tests/e2e/README.md` - Comprehensive documentation and usage guide
+
+#### Test Scenarios Covered
+- **UI & Integration**: Button visibility, Firebase initialization, network monitoring
+- **Complete Flows**: Login, account creation, redirect handling for new/existing users
+- **Error Scenarios**: Popup blocking, network failures, user cancellation, CSP violations
+- **Security Testing**: CSP compliance validation, domain security checks
+- **Cross-Browser**: Chrome, Firefox, Safari, Mobile compatibility
+- **Accessibility**: Keyboard navigation, ARIA attributes, screen reader support
+
+#### Test Framework Features
+- **Sophisticated Mocking**: No external OAuth dependencies required
+- **GoogleAuthTestHelper**: Mock successful auth, popup blocking, user cancellation
+- **FirebaseTestHelper**: Mock Firestore operations and auth state changes
+- **TestEnvironmentHelper**: Environment setup and page readiness utilities
+- **Real Network Monitoring**: Uses Playwright to monitor actual auth requests
+
+### Testing Benefits
+- ✅ **Comprehensive Coverage** - Tests both happy path and error scenarios
+- ✅ **No External Dependencies** - Uses sophisticated mocking for reliable tests
+- ✅ **Cross-Browser Testing** - Validates OAuth across all major browsers
+- ✅ **Security Validation** - Ensures CSP compliance and security best practices
+- ✅ **Maintainable Framework** - Reusable helpers and clear documentation
+
+---
+
 **Migration completed successfully on 2025-08-23**  
 **UI Enhancement session completed on 2025-09-04**  
 **Data Model Consolidation completed on 2025-09-04**  
-**Result**: Clean, maintainable template system with unified header/footer, centralized CSS architecture, professional tooltip system, and simplified subscription data model eliminating user experience issues.
+**Google OAuth Fixes & Testing completed on 2025-09-05**  
+**Result**: Clean, maintainable template system with unified header/footer, centralized CSS architecture, professional tooltip system, simplified subscription data model, robust Google OAuth authentication, and comprehensive test coverage.
