@@ -229,7 +229,7 @@ async function configureLongPolling() {
 }
 
 // Set auth persistence
-async function initializeAuth() {
+async function initializeAuthPersistence() {
   try {
     await setPersistence(auth, browserLocalPersistence);
     console.log('🔐 Auth persistence enabled');
@@ -250,7 +250,7 @@ async function initializeFirebase() {
   
   try {
     await initializeEmulators();
-    await initializeAuth();
+    await initializeAuthPersistence();
     await configureLongPolling();
     
     // Check for redirect result from Google OAuth
