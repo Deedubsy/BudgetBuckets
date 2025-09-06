@@ -288,8 +288,12 @@ async function initializeFirebase() {
         // Ensure user document exists for redirect flow
         await EnsureUserDoc(result.user, result);
       }
+      // Clear auth flow flag after handling redirect result (success or no result)
+      window.__authFlowInProgress = false;
     } catch (error) {
       console.warn('⚠️ Redirect result check failed:', error);
+      // Clear auth flow flag even on error
+      window.__authFlowInProgress = false;
     }
     
     // Wait for auth state with timeout

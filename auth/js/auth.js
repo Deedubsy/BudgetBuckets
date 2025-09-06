@@ -269,25 +269,37 @@ import { doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs
     // Google sign in handler with debouncing and clean user gesture
     async function handleGoogleSignIn(e) {
         e?.preventDefault();
+        e?.stopPropagation();
         if (isSigningIn) return;
         isSigningIn = true;
         
         try {
             showLoading();
+            // Set auth flow flag to prevent guard interference
+            window.__authFlowInProgress = true;
             // Prefer popup; signInWithGoogle internally tries popup first
             // Note: signInWithGoogle now calls EnsureUserDoc internally
             const user = await authHelpers.signInWithGoogle();
             
             // For Google users, go to plan selection (user doc creation handled in firebase.js)
             if (user) {
+                // Clear auth flow flag on successful popup completion
+                window.__authFlowInProgress = false;
                 hideLoading();
                 location.assign('/auth/choose-plan');
+            } else {
+                // user is null - signInWithRedirect was called, don't clear flag
+                // The redirect will handle the rest and firebase.js will clear the flag after getRedirectResult
+                console.log('🔄 Redirect initiated, keeping auth flow flag set');
+                hideLoading();
             }
             
         } catch (error) {
             hideLoading();
             const code = error.code || '';
             if (code === 'auth/popup-closed-by-user') {
+                // Clear auth flow flag when popup is cancelled (no redirect happening)
+                window.__authFlowInProgress = false;
                 // Friendly UX and optional fallback control
                 console.warn('Popup closed. User can retry or use redirect.');
                 showError('Google sign-in was cancelled. You can try again or use the "Continue without popup" option below.');
@@ -298,6 +310,8 @@ import { doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs
                     redirectBtn.classList.remove('hidden');
                 }
             } else {
+                // Clear auth flow flag on other errors (not redirect fallback)
+                window.__authFlowInProgress = false;
                 console.error('Google sign-in failed:', error);
                 showError('Google sign-in failed. Please try again.');
             }

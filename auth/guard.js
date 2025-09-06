@@ -5,6 +5,16 @@
 
 import { authHelpers, auth } from './firebase.js';
 
+// Auth flow protection helpers
+const AUTH_FLOW_FLAG = '__authFlowInProgress';
+function isAuthFlowInProgress() {
+  try { return Boolean(window[AUTH_FLOW_FLAG]); } catch { return false; }
+}
+function noopIfAuthFlowInProgress(msg) {
+  if (isAuthFlowInProgress()) { console.debug(`guard: ${msg} (auth flow in progress; skipping)`); return true; }
+  return false;
+}
+
 // Route protection with loading states
 class AuthGuard {
   constructor() {
@@ -80,6 +90,9 @@ class AuthGuard {
 
   // Require authentication with redirect on failure
   async requireAuth(redirectPath = '/auth/login.html', hideLoadingAfterAuth = false) {
+    // Skip redirects during auth flow
+    if (noopIfAuthFlowInProgress('requireAuth early')) return null;
+    
     try {
       this.showAuthLoading('Verifying authentication...');
       
@@ -91,6 +104,11 @@ class AuthGuard {
       if (!user) {
         console.log('❌ No authenticated user, redirecting to login');
         this.hideAuthLoading();
+        // Don't redirect if auth flow is in progress
+        if (isAuthFlowInProgress()) {
+          console.debug('guard: requireAuth skipping redirect (auth flow in progress)');
+          return null;
+        }
         window.location.href = redirectPath;
         return null;
       }
@@ -149,6 +167,9 @@ class AuthGuard {
 
   // Redirect to app if authenticated (for login pages)
   async redirectIfAuthenticated(appPath = '/app/index.html') {
+    // Skip redirects during auth flow
+    if (noopIfAuthFlowInProgress('redirectIfAuthenticated')) return false;
+    
     try {
       const user = await authHelpers.waitForAuth();
       
@@ -237,7 +258,7 @@ class AuthGuard {
       
       // Automatically redirect if auth state changes to null
       onAuthStateChanged(auth, (user) => {
-        if (this.isInitialized && !user) {
+        if (this.isInitialized && !user && !isAuthFlowInProgress()) {
           console.log('🔐 Auth state changed to null, redirecting to login');
           window.location.href = '/auth/login.html';
         }
@@ -254,7 +275,10 @@ class AuthGuard {
     
     // Login page - redirect if already authenticated
     if (currentPath.includes('/auth/login.html')) {
-      await this.redirectIfAuthenticated();
+      // Skip redirect check if auth flow is in progress
+      if (!isAuthFlowInProgress()) {
+        await this.redirectIfAuthenticated();
+      }
       return;
     }
     
